@@ -9,17 +9,11 @@ ComputerTools is a modular collection of intelligent CLI utilities that leverage
 ## 🛠️ Available Tools
 
 ### 📋 Blueprint Manager
+
 AI-enhanced code blueprint management with semantic search and automatic metadata generation.
 
-**Features:**
-- 🤖 **AI-Generated Metadata**: Automatic names, descriptions, and categorization using Google Gemini
-- 🔍 **Semantic Search**: Vector-powered similarity search across code blueprints  
-- 📊 **Direct Database**: PostgreSQL with pgvector for efficient operations
-- ✏️ **Smart Editing**: Delete-and-resubmit workflow ensures fresh embeddings
-- 📤 **Export/Import**: Multiple format support with metadata preservation
-- 🎯 **Interactive UI**: TTY-powered browsing and management interface
-
 **Quick Start:**
+
 ```bash
 # Submit a code blueprint
 exe/ComputerTools blueprint submit my_script.rb
@@ -34,17 +28,44 @@ exe/ComputerTools blueprint browse
 exe/ComputerTools blueprint view 123 --analyze
 ```
 
+**📖 For complete setup instructions, features, and Rails server integration, see [Blueprint Manager Documentation](docs/blueprint-manager.md)**
+
+### 🎙️ Deepgram Parser
+
+Parse, analyze, and convert Deepgram JSON output with AI-enhanced insights and multiple output formats.
+
+**Quick Start:**
+
+```bash
+# Parse Deepgram JSON to markdown
+exe/ComputerTools deepgram parse transcript.json
+
+# Convert to SRT subtitles
+exe/ComputerTools deepgram convert transcript.json srt --console
+
+# Interactive segment analysis
+exe/ComputerTools deepgram analyze segments.json --interactive
+
+# Configuration setup
+exe/ComputerTools deepgram config setup
+```
+
+**📖 For detailed usage, formats, and AI features, see [Deepgram Parser Documentation](docs/deepgram-parser.md)**
+
 ### 🔧 Additional Tools
-*Coming Soon - More AI-powered development tools*
+
+*More AI-powered development tools coming soon*
 
 ## 📦 Installation
 
 ### Prerequisites
+
 - Ruby 3.4+
 - PostgreSQL with pgvector extension (for blueprint management)
 - Google Gemini API key (for AI features)
 
 ### Setup
+
 ```bash
 # Install dependencies
 bundle install
@@ -100,6 +121,7 @@ graph TB
 ## 🔧 Configuration
 
 ### Global Configuration
+
 Configuration is managed through YAML files in `lib/ComputerTools/config/`:
 
 ```yaml
@@ -118,6 +140,7 @@ features:
 ```
 
 ### Environment Variables
+
 ```bash
 # AI Provider Keys
 GEMINI_API_KEY=your_gemini_key
@@ -134,6 +157,7 @@ VISUAL=code
 ## 📚 Usage Examples
 
 ### Blueprint Management Workflow
+
 ```bash
 # 1. Submit a new blueprint with auto-generated metadata
 exe/ComputerTools blueprint submit app/models/user.rb
@@ -152,6 +176,7 @@ exe/ComputerTools blueprint export 42 user_model.rb
 ```
 
 ### Interactive Mode
+
 ```bash
 # Launch interactive blueprint browser
 exe/ComputerTools blueprint browse
@@ -163,6 +188,7 @@ exe/ComputerTools blueprint config setup
 ## 🧪 Development
 
 ### Testing
+
 ```bash
 # Run the full test suite
 bundle exec rspec
@@ -172,6 +198,7 @@ bundle exec rspec spec/path/to/specific_spec.rb
 ```
 
 ### Code Quality
+
 ```bash
 # Lint with RuboCop
 bundle exec rubocop
@@ -181,6 +208,7 @@ bundle exec rubocop --autocorrect
 ```
 
 ### Documentation
+
 ```bash
 # Generate documentation
 bundle exec yard doc
@@ -192,18 +220,21 @@ bundle exec yard server
 ## 🎯 Key Features
 
 ### AI-Powered Intelligence
+
 - **Automatic Metadata Generation**: Smart names, descriptions, and categories
 - **Semantic Search**: Find code by meaning, not just keywords
 - **Improvement Suggestions**: AI analysis for code quality enhancement
 - **Language Detection**: Automatic programming language identification
 
 ### Developer Experience
+
 - **Interactive CLI**: Rich TTY interface with colors and prompts
 - **Multiple Output Formats**: JSON, table, summary views
 - **Flexible Configuration**: YAML files + environment variables
 - **Comprehensive Help**: Built-in documentation and examples
 
 ### Performance & Reliability
+
 - **Direct Database Access**: No HTTP overhead for local operations
 - **Vector Embeddings**: Efficient semantic search with pgvector
 - **Connection Pooling**: Optimized database connections
@@ -212,18 +243,21 @@ bundle exec yard server
 ## 🚦 Roadmap
 
 ### Phase 1: Foundation ✅
+
 - [x] Blueprint management system
 - [x] AI-powered metadata generation
 - [x] Semantic search with vector embeddings
 - [x] Interactive CLI interface
 
 ### Phase 2: Expansion 🚧
+
 - [ ] Code analysis and refactoring tools
 - [ ] Documentation generation utilities
 - [ ] Test automation helpers
 - [ ] Git workflow automation
 
 ### Phase 3: Intelligence 📋
+
 - [ ] Multi-language support
 - [ ] Advanced code understanding
 - [ ] Automated code review
@@ -241,6 +275,7 @@ bundle exec yard server
 ### Adding New Tools
 
 Each new tool should follow the modular pattern:
+
 ```
 lib/ComputerTools/
 ├── commands/your_tool_command.rb     # CLI interface

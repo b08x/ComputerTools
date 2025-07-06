@@ -1,0 +1,17 @@
+---
+output:
+  default_format: markdown
+  auto_timestamp: true
+  include_confidence: true
+ai:
+  provider: gemini
+  model: gemini-1.5-flash-latest
+  enable_insights: true
+  enable_summaries: true
+formats:
+  srt:
+    include_milliseconds: true
+    line_length: 42
+  markdown:
+    include_stats: true
+    include_metadata: true
