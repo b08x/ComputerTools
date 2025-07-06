@@ -493,7 +493,7 @@ module ComputerTools
     # @example Processing a document file
     #   processor = FilesDB::Processors::Document.new
     #   result = processor.process('document.pdf')
-    class Document < Base
+    class Document
       # Processes a document file based on its extension.
       #
       # @param [String] file_path The path to the document file to process
@@ -502,7 +502,10 @@ module ComputerTools
       #   processor = FilesDB::Processors::Document.new
       #   markdown = processor.process('report.pdf')
       def process(file_path)
-        validate_file_exists(file_path)
+        unless File.exist?(file_path)
+          log_error("File not found: #{file_path}")
+          return ''
+        end
 
         case File.extname(file_path).downcase
         when '.pdf', '.docx', '.doc', '.odt'
@@ -530,6 +533,11 @@ module ComputerTools
       rescue StandardError => e
         log_error("Failed to process document #{file_path}: #{e.message}")
         ''
+      end
+
+      # Simple logging method
+      def log_error(message)
+        puts "❌ #{message}".colorize(:red)
       end
     end
   end
