@@ -43,3 +43,5 @@ gem 'tty-table', '~> 0.12'
 gem 'tty-tree', '~> 0.4.0'
 gem 'tty-which', '~> 0.5.0'
 gem "colorize", "~> 1.1"
+
+gem "rufo", "~> 0.18.1"

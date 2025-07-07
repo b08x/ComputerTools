@@ -57,11 +57,13 @@ exe/ComputerTools deepgram parse <json_file> [format] [--console]
 ```
 
 **Arguments:**
+
 - `json_file`: Path to Deepgram JSON output file
 - `format`: Output format (markdown, srt, json, summary) - defaults to markdown
 - `--console`: Display output in console instead of saving to file
 
 **Examples:**
+
 ```bash
 # Basic parsing to markdown
 exe/ComputerTools deepgram parse interview.json
@@ -82,11 +84,13 @@ exe/ComputerTools deepgram convert <json_file> [format] [--console]
 ```
 
 **Arguments:**
+
 - `json_file`: Path to Deepgram JSON output file
 - `format`: Target format (markdown, srt, json, summary) - defaults to srt
 - `--console`: Display output in console instead of saving to file
 
 **Examples:**
+
 ```bash
 # Convert to SRT subtitles
 exe/ComputerTools deepgram convert meeting.json srt
@@ -104,10 +108,12 @@ exe/ComputerTools deepgram analyze <json_file> [--interactive]
 ```
 
 **Arguments:**
+
 - `json_file`: Path to analyzed segments JSON file
 - `--interactive`: Enable interactive mode with prompts and selections
 
 **Examples:**
+
 ```bash
 # Automatic analysis showing all fields
 exe/ComputerTools deepgram analyze analyzed_segments.json
@@ -125,6 +131,7 @@ exe/ComputerTools deepgram config [show|setup|edit|reset]
 ```
 
 **Subcommands:**
+
 - `show`: Display current configuration (default)
 - `setup`: Create default configuration file
 - `edit`: Open configuration in editor
@@ -144,6 +151,7 @@ Rich analysis with organized sections including:
 - Segmented sentences
 
 **Example Output:**
+
 ```markdown
 # Deepgram Analysis Results
 
@@ -503,11 +511,13 @@ If migrating from the previous standalone `deepgram_parser.rb` script:
 ### Command Equivalents
 
 **Old Script:**
+
 ```bash
 ruby deepgram_parser.rb transcript.json --srt --console
 ```
 
 **New CLI:**
+
 ```bash
 exe/ComputerTools deepgram convert transcript.json srt --console
 ```
