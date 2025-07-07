@@ -1,9 +1,11 @@
 require "yaml"
 require "thor"
 require "sublayer"
+require "colorize"
 require_relative "ComputerTools/version"
 require_relative "ComputerTools/config"
 
+Dir[File.join(__dir__, "ComputerTools", "wrappers", "*.rb")].each { |file| require file }
 Dir[File.join(__dir__, "ComputerTools", "commands", "*.rb")].each { |file| require file }
 Dir[File.join(__dir__, "ComputerTools", "generators", "*.rb")].each { |file| require file }
 Dir[File.join(__dir__, "ComputerTools", "actions", "*.rb")].each { |file| require file }
