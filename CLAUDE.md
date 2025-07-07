@@ -21,45 +21,114 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Installation and Setup
 - `bundle install` - Install dependencies
 - `bin/ComputerTools` - Run the CLI application
+- `exe/ComputerTools` - Alternative executable path
 
 ## Architecture
 
-This is a Ruby CLI application built with the Sublayer framework, following a modular architecture:
+This is a Ruby CLI application built with the Sublayer framework and Thor, following a modular autoloaded architecture using Zeitwerk.
 
 ### Core Components
 
-**CLI Framework**: Built on Thor for command-line interface management with dynamic command registration from the Commands module.
+**CLI Framework**: Built on Thor with dynamic command registration. Commands are automatically discovered and registered from nested module structures using metaprogramming (cli.rb:36-42).
 
-**Sublayer Integration**: Uses Sublayer framework for AI-powered text generation with configurable AI providers (currently configured for Gemini).
+**Zeitwerk Autoloading**: Uses Zeitwerk for automatic code loading with custom inflections (computertools.rb:7-11). The loader is made available globally via `ComputerTools.loader` for eager loading when needed.
+
+**Sublayer Integration**: AI-powered text generation through Sublayer framework with configurable providers (currently Gemini via config/sublayer.yml).
 
 **Modular Structure**:
-- `Commands/` - CLI command implementations inheriting from BaseCommand
+- `Commands/` - Organized by category (Analysis, ContentManagement, Interface, MediaProcessing)
+- `Actions/` - Organized by domain (Blueprints, Deepgram, Utilities, VersionControl)  
 - `Generators/` - AI-powered content generators using Sublayer
-- `Actions/` - Reusable action classes for common operations
-- `Agents/` - AI agent implementations for complex workflows
-- `Wrappers/` - External tool wrappers (Docling, Trafilatura) with fluent interfaces
+- `Wrappers/` - External tool integrations (Audio, Backup, Database, Documents, VersionControl)
 
 ### Key Architecture Patterns
 
-**Command Pattern**: Commands are automatically registered via metaprogramming in cli.rb:5-11, scanning all classes in the Commands module.
+**Namespace Organization**: All components are properly namespaced under domain-specific modules:
+- `Commands::Analysis::*` - Analysis commands
+- `Commands::ContentManagement::*` - Content management commands
+- `Commands::Interface::*` - Interface commands (Base, Menu)
+- `Commands::MediaProcessing::*` - Media processing commands
+- `Actions::Blueprints::*` - Blueprint-related actions
+- `Actions::Deepgram::*` - Deepgram audio processing actions
+- `Actions::Utilities::*` - General utility actions
+- `Actions::VersionControl::*` - Version control actions
 
-**Builder Pattern**: Wrapper classes (Docling, Trafilatura) use fluent interfaces for configuring external CLI tools.
+**Command Discovery**: CLI dynamically discovers command classes by:
+1. Eager loading all classes via Zeitwerk
+2. Scanning nested modules in `Commands` namespace
+3. Excluding base classes (BaseCommand, MenuCommand)
+4. Auto-registering found commands with Thor
 
-**Template Method**: BaseCommand provides common structure while concrete commands implement specific execute methods.
+**Interactive Mode**: When no arguments provided, launches TTY-based interactive menu system with guided parameter collection.
+
+### Directory Structure
+
+```
+lib/
+├── computertools.rb              # Main entry point with Zeitwerk setup
+├── computertools/
+│   ├── cli.rb                   # Thor CLI with dynamic command registration
+│   ├── commands.rb              # Commands namespace holder
+│   ├── commands/
+│   │   ├── analysis.rb          # Analysis namespace
+│   │   ├── analysis/
+│   │   │   └── latest_changes.rb
+│   │   ├── content_management.rb # Content management namespace
+│   │   ├── content_management/
+│   │   │   ├── blueprint.rb
+│   │   │   └── overview.rb
+│   │   ├── interface.rb         # Interface namespace
+│   │   ├── interface/
+│   │   │   ├── base.rb          # Base command class
+│   │   │   └── menu.rb          # Interactive menu
+│   │   └── media_processing.rb  # Media processing namespace
+│   ├── actions/                 # Domain-specific business logic
+│   ├── generators/              # AI-powered content generation
+│   ├── wrappers/                # External tool integrations
+│   ├── config/                  # Configuration files
+│   └── prompts/                 # AI prompt templates
+```
 
 ### Configuration
 
-- `config/sublayer.yml` - AI provider configuration (Gemini with gemini-1.5-flash-latest model)
+- `config/sublayer.yml` - AI provider configuration (Gemini with gemini-1.5-flash-latest)
+- `config/blueprints.yml` - Blueprint management settings
+- `config/deepgram.yml` - Deepgram audio processing settings
 - Logging configured to `log/sublayer.log` with JSON format
 
 ### External Dependencies
 
-The application integrates with external Python tools:
-- **Docling**: Document processing and conversion (requires `pip install docling`)
+The application integrates with external tools:
+- **Docling**: Document processing (requires `pip install docling`)
 - **Trafilatura**: Web content extraction (requires `pip install trafilatura`)
+- **PostgreSQL + pgvector**: For blueprint database with vector embeddings
+- **TTY Toolkit**: Rich terminal interfaces (tty-prompt, tty-table, etc.)
 
-Both tools are wrapped with Ruby DSLs providing fluent interfaces for complex operations.
+### Key Implementation Details
 
-## Project Structure
+**Command Registration**: Commands are dynamically registered at runtime in `CLI.start()` method. Each command class must implement:
+- `self.command_name` - Thor command name
+- `self.description` - Command description
+- `#execute(*args)` - Command execution logic
 
-- the ComputerTools main executable is located in exe/ComputerTools
+**Autoloading**: Zeitwerk handles automatic loading of all classes. The loader is configured with custom inflections and made available globally for eager loading during command discovery.
+
+**Error Handling**: Graceful degradation when optional dependencies (like TTY::Prompt) are missing, with helpful error messages guiding users to install required gems.
+
+## Important Notes
+
+- Main executable is located at `exe/ComputerTools`
+- The codebase uses `computertools/` (no underscore) as the directory name  
+- All new classes should follow the established namespace patterns
+- Command classes should inherit from appropriate base classes in the Interface module
+- AI integration happens through Sublayer generators, configured via YAML files
+
+## Recent Restructuring
+
+The codebase has undergone major restructuring with:
+- Migration from manual requires to Zeitwerk autoloading
+- Proper namespace organization by domain
+- Dynamic command discovery replacing static registration
+- Enhanced modularity and separation of concerns
+
+When adding new functionality, follow the established patterns and ensure proper namespacing within the domain-specific modules.

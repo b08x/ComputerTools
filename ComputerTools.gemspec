@@ -1,4 +1,4 @@
-require_relative "lib/ComputerTools/version"
+require_relative "lib/computertools/version"
 
 Gem::Specification.new do |spec|
   spec.name = "ComputerTools"
