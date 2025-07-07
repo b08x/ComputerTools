@@ -1,9 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+lib_dir = File.expand_path(File.join(__dir__, "..", "computertools"))
+$LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
+
 require "yaml"
 require "thor"
 require "sublayer"
 require "colorize"
 require "zeitwerk"
 require "tty-prompt"
+
+require 'computertools/actions/blueprints/blueprint_list'
 
 module ComputerTools
   # Configure Zeitwerk autoloader
@@ -22,9 +30,9 @@ module ComputerTools
   end
 end
 
-require_relative "computertools/version"
-require_relative "computertools/config"
-require_relative "computertools/cli"
+require "computertools/version"
+require "computertools/config"
+require "computertools/cli"
 
 module ComputerTools
   class Error < StandardError; end
