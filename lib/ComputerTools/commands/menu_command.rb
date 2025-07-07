@@ -12,10 +12,10 @@ module ComputerTools
       def start
         loop do
           choice = main_menu
-          
+
           # Debug logging
           debug_log("Choice selected: #{choice.inspect} (#{choice.class})")
-          
+
           case choice
           when :exit
             puts "👋 Goodbye!".colorize(:green)
@@ -55,7 +55,7 @@ module ComputerTools
 
       def main_menu
         debug_log("Building main menu with commands: #{@commands.map { |cmd| cmd[:name] }}")
-        
+
         result = @prompt.select("🚀 ComputerTools - Select a command:".colorize(:cyan)) do |menu|
           @commands.each do |cmd|
             debug_log("Adding menu choice: '#{cmd[:name].capitalize} - #{cmd[:description]}' -> #{cmd[:name].inspect}")
@@ -63,7 +63,7 @@ module ComputerTools
           end
           menu.choice "Exit", :exit
         end
-        
+
         debug_log("Menu selection returned: #{result.inspect}")
         result
       end
@@ -71,10 +71,10 @@ module ComputerTools
       def handle_command(command_name)
         debug_log("Looking for command: #{command_name.inspect}")
         debug_log("Available commands: #{@commands.map { |cmd| cmd[:name] }}")
-        
+
         command_info = @commands.find { |cmd| cmd[:name] == command_name }
         debug_log("Command found: #{command_info ? 'YES' : 'NO'}")
-        
+
         return :continue unless command_info
 
         debug_log("Executing command handler for: #{command_name}")
@@ -99,6 +99,7 @@ module ComputerTools
           menu.choice "Browse blueprints interactively", "browse"
           menu.choice "View specific blueprint", "view"
           menu.choice "Edit blueprint", "edit"
+          menu.choice "Delete blueprint", "delete"
           menu.choice "Search blueprints", "search"
           menu.choice "Export blueprint", "export"
           menu.choice "Configuration", "config"
@@ -119,6 +120,8 @@ module ComputerTools
             handle_blueprint_view
           when "edit"
             handle_blueprint_edit
+          when "delete"
+            handle_blueprint_delete
           when "search"
             handle_blueprint_search
           when "export"
@@ -249,6 +252,33 @@ module ComputerTools
 
         blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
         blueprint_command.execute('edit', id)
+      end
+
+      def handle_blueprint_delete
+        # Give user options: enter ID or select interactively
+        choice = @prompt.select("🗑️ How would you like to select the blueprint to delete?") do |menu|
+          menu.choice "Enter blueprint ID", "id"
+          menu.choice "Select from list", "interactive"
+        end
+
+        case choice
+        when "id"
+          id = @prompt.ask("🗑️ Enter blueprint ID to delete:")
+          return if id.nil? || id.empty?
+
+          # Ask about force deletion
+          force = @prompt.yes?("⚠️ Skip confirmation? (Use with caution)")
+
+          args = [id]
+          args << "--force" if force
+
+          blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
+          blueprint_command.execute('delete', *args)
+        when "interactive"
+          # Use interactive selection (no ID provided)
+          blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
+          blueprint_command.execute('delete')
+        end
       end
 
       def handle_blueprint_search

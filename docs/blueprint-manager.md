@@ -13,6 +13,7 @@ The Blueprint Manager is a comprehensive tool for storing, searching, and managi
 - 📊 **Direct Database**: PostgreSQL with pgvector for efficient operations
 - ✏️ **Smart Editing**: Delete-and-resubmit workflow ensures fresh embeddings
 - 📤 **Export/Import**: Multiple format support with metadata preservation
+- 🗑️ **Safe Deletion**: Confirmation-protected blueprint removal with force option
 - 🎯 **Interactive UI**: TTY-powered browsing and management interface
 
 ## Prerequisites
@@ -136,6 +137,12 @@ exe/ComputerTools blueprint browse
 
 # View with AI analysis
 exe/ComputerTools blueprint view 123 --analyze
+
+# Delete a blueprint (with confirmation)
+exe/ComputerTools blueprint delete 123
+
+# Force delete without confirmation
+exe/ComputerTools blueprint delete 123 --force
 ```
 
 ### Advanced Workflows
@@ -150,8 +157,43 @@ exe/ComputerTools blueprint export 42 user_model.rb
 # Edit existing blueprint (triggers re-embedding)
 exe/ComputerTools blueprint edit 42
 
+# Delete blueprint with interactive selection
+exe/ComputerTools blueprint delete
+
 # List all blueprints with filtering
 exe/ComputerTools blueprint list --category "Authentication"
+```
+
+### Deletion Operations
+
+The Blueprint Manager provides safe deletion operations with multiple confirmation layers:
+
+```bash
+# Delete specific blueprint (shows confirmation dialog)
+exe/ComputerTools blueprint delete 123
+
+# Force delete without confirmation (use with caution)
+exe/ComputerTools blueprint delete 123 --force
+
+# Interactive deletion - select from list
+exe/ComputerTools blueprint delete
+```
+
+#### Safety Features
+
+- **Confirmation Dialog**: Shows blueprint details before deletion
+- **Code Preview**: Displays first few lines of code to confirm selection
+- **Warning Messages**: Clear indication that deletion is permanent
+- **Interactive Selection**: Browse and select from a list when no ID provided
+- **Force Flag**: Skip confirmations for automation scripts (use carefully)
+
+#### Interactive Menu Access
+
+The delete functionality is also available through the interactive menu system:
+
+```bash
+exe/ComputerTools
+# Then navigate: Blueprint → Delete blueprint → [Enter ID | Select from list]
 ```
 
 ## Integration with Rails Server

@@ -28,6 +28,8 @@ module ComputerTools
           handle_view
         when 'edit'
           handle_edit
+        when 'delete'
+          handle_delete
         when 'search'
           handle_search
         when 'export'
@@ -117,6 +119,20 @@ module ComputerTools
         ).call
       end
 
+      def handle_delete
+        # Check for force flag in arguments
+        force = @args.include?('--force')
+
+        # Get ID (first non-flag argument)
+        id = @args.find { |arg| !arg.start_with?('--') }
+
+        # If no ID provided, will trigger interactive selection
+        ComputerTools::Actions::BlueprintDeleteAction.new(
+          id: id&.to_i,
+          force: force
+        ).call
+      end
+
       def handle_search
         query = @args.join(' ')
 
@@ -163,6 +179,7 @@ module ComputerTools
           📝 Content Management:
             blueprint submit <file_or_code>     Submit a new blueprint
             blueprint edit <id>                 Edit existing blueprint (delete + resubmit)
+            blueprint delete [id]               Delete blueprint (interactive if no ID)
             blueprint export <id> [file]        Export blueprint code to file
 
           📋 Browsing & Search:
@@ -179,6 +196,7 @@ module ComputerTools
             --interactive                       Interactive mode with prompts
             --output FILE                       Output file path
             --analyze                          Include AI analysis and suggestions
+            --force                            Skip confirmation prompts (use with caution)
             --auto_describe=false              Disable auto-description generation
             --auto_categorize=false            Disable auto-categorization
 
@@ -189,6 +207,9 @@ module ComputerTools
             blueprint browse
             blueprint view 123 --analyze
             blueprint edit 123
+            blueprint delete 123
+            blueprint delete --force 123
+            blueprint delete                        # Interactive selection
             blueprint search "ruby class"
             blueprint export 123 my_blueprint.rb
 
