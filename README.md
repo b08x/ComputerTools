@@ -6,6 +6,20 @@ A comprehensive Ruby CLI toolkit built on the Sublayer framework, providing AI-e
 
 ComputerTools is a modular collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework. Each tool is designed to streamline common development workflows with smart automation and semantic understanding.
 
+### 🎯 Interactive Menu System
+
+For easy discovery and usage, ComputerTools provides an interactive menu system:
+
+```bash
+# Launch interactive menu
+./exe/ComputerTools
+
+# Traditional CLI usage still works
+./exe/ComputerTools blueprint submit my_file.rb
+```
+
+The interactive menu guides you through all available commands with parameter prompts and format selections. **📖 For complete details, see [Interactive Menu Documentation](docs/interactive-menu.md)**
+
 ## 🛠️ Available Tools
 
 ### 📋 Blueprint Manager
@@ -76,6 +90,35 @@ exe/ComputerTools blueprint config setup
 # Set required environment variables
 export GEMINI_API_KEY="your_gemini_api_key"
 export BLUEPRINT_DATABASE_URL="postgresql://user:pass@host:port/database"
+```
+
+## 💻 Usage
+
+ComputerTools supports two usage modes:
+
+### Interactive Mode (Recommended for Discovery)
+
+```bash
+# Launch the interactive menu
+./exe/ComputerTools
+
+# Enable debug mode for troubleshooting
+COMPUTERTOOLS_DEBUG=true ./exe/ComputerTools
+```
+
+Navigate through menus to discover and execute commands with guided parameter collection.
+
+### Command Line Mode (Ideal for Automation)
+
+```bash
+# Direct command execution
+./exe/ComputerTools blueprint submit my_script.rb
+./exe/ComputerTools deepgram parse transcript.json markdown --console
+./exe/ComputerTools help
+
+# Get help for specific commands
+./exe/ComputerTools blueprint help
+./exe/ComputerTools deepgram help
 ```
 
 ## 🏗️ Architecture
