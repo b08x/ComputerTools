@@ -2,4 +2,4 @@
 :project_name: ComputerTools
 :project_template: CLI
 :ai_provider: Gemini
-:ai_model: gemini-1.5-flash-latest
+:ai_model: gemini-2.0-flash
