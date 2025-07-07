@@ -59,3 +59,7 @@ The application integrates with external Python tools:
 - **Trafilatura**: Web content extraction (requires `pip install trafilatura`)
 
 Both tools are wrapped with Ruby DSLs providing fluent interfaces for complex operations.
+
+## Project Structure
+
+- the ComputerTools main executable is located in exe/ComputerTools
