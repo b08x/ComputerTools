@@ -85,6 +85,8 @@ module ComputerTools
           handle_deepgram_command
         when 'example'
           handle_example_command
+        when 'latestchanges'
+          handle_latest_changes_command
         else
           puts "❌ Unknown command: #{command_name}".colorize(:red)
           :continue
@@ -179,6 +181,29 @@ module ComputerTools
           @prompt.keypress("Press any key to continue...")
         rescue StandardError => e
           puts "❌ Error running example: #{e.message}".colorize(:red)
+        end
+        :continue
+      end
+
+      def handle_latest_changes_command
+        debug_log("Entering handle_latest_changes_command")
+        
+        subcommand = @prompt.select("📊 Latest Changes - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "Analyze recent changes", "analyze"
+          menu.choice "Configure settings", "config"
+          menu.choice "Help", "help"
+          menu.choice "Back to main menu", :back
+        end
+
+        return :continue if subcommand == :back
+
+        case subcommand
+        when "analyze"
+          handle_latest_changes_analyze
+        when "config"
+          handle_latest_changes_config
+        when "help"
+          handle_latest_changes_help
         end
         :continue
       end
@@ -375,6 +400,52 @@ module ComputerTools
 
         deepgram_command = ComputerTools::Commands::DeepgramCommand.new(options)
         deepgram_command.execute('convert', *args)
+      end
+
+      # Latest Changes subcommand handlers
+      def handle_latest_changes_analyze
+        directory = @prompt.ask("📁 Directory to analyze (default: current):", default: ".")
+        
+        time_range = @prompt.select("⏰ Time range:") do |menu|
+          menu.choice "Last hour", "1h"
+          menu.choice "Last 6 hours", "6h"
+          menu.choice "Last 24 hours", "24h"
+          menu.choice "Last 2 days", "2d"
+          menu.choice "Last week", "7d"
+          menu.choice "Custom", "custom"
+        end
+
+        if time_range == "custom"
+          time_range = @prompt.ask("Enter custom time range (e.g., 3h, 5d, 2w):")
+        end
+
+        format = @prompt.select("📊 Output format:") do |menu|
+          menu.choice "Table", "table"
+          menu.choice "Summary", "summary"
+          menu.choice "JSON", "json"
+        end
+
+        interactive = @prompt.yes?("🔄 Interactive mode?")
+
+        options = {
+          'directory' => directory,
+          'time_range' => time_range,
+          'format' => format
+        }
+        options['interactive'] = true if interactive
+
+        latest_changes_command = ComputerTools::Commands::LatestChangesCommand.new(options)
+        latest_changes_command.execute('analyze')
+      end
+
+      def handle_latest_changes_config
+        latest_changes_command = ComputerTools::Commands::LatestChangesCommand.new({})
+        latest_changes_command.execute('config')
+      end
+
+      def handle_latest_changes_help
+        latest_changes_command = ComputerTools::Commands::LatestChangesCommand.new({})
+        latest_changes_command.execute('help')
       end
     end
   end

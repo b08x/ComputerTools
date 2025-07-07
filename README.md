@@ -66,6 +66,28 @@ exe/ComputerTools deepgram config setup
 
 **📖 For detailed usage, formats, and AI features, see [Deepgram Parser Documentation](docs/deepgram-parser.md)**
 
+### 📊 Latest Changes Analyzer
+
+Comprehensive file activity tracking across Git, YADM, and Restic with intelligent analysis and beautiful reporting.
+
+**Quick Start:**
+
+```bash
+# Analyze recent changes (last 24h)
+exe/ComputerTools latestchanges
+
+# Custom time range and format
+exe/ComputerTools latestchanges --time-range 7d --format summary
+
+# Interactive file browser
+exe/ComputerTools latestchanges --interactive
+
+# Configure tracking preferences
+exe/ComputerTools latestchanges config
+```
+
+**📖 For complete setup, configuration, and multi-platform tracking, see [Latest Changes Documentation](docs/latest-changes-analyzer.md)**
+
 ### 🔧 Additional Tools
 
 *More AI-powered development tools coming soon*
@@ -77,6 +99,11 @@ exe/ComputerTools deepgram config setup
 - Ruby 3.4+
 - PostgreSQL with pgvector extension (for blueprint management)
 - Google Gemini API key (for AI features)
+- Additional tools for latest changes analysis:
+  - `fd` command (file discovery)
+  - `git` (repository analysis)
+  - `yadm` (optional, for dotfile tracking)
+  - `restic` (optional, for backup comparison)
 
 ### Setup
 
@@ -86,6 +113,9 @@ bundle install
 
 # Configure the blueprint database (if using blueprint tools)
 exe/ComputerTools blueprint config setup
+
+# Configure latest changes analyzer (if using tracking tools)
+exe/ComputerTools latestchanges config
 
 # Set required environment variables
 export GEMINI_API_KEY="your_gemini_api_key"
@@ -114,11 +144,13 @@ Navigate through menus to discover and execute commands with guided parameter co
 # Direct command execution
 ./exe/ComputerTools blueprint submit my_script.rb
 ./exe/ComputerTools deepgram parse transcript.json markdown --console
+./exe/ComputerTools latestchanges --time-range 7d --format summary
 ./exe/ComputerTools help
 
 # Get help for specific commands
 ./exe/ComputerTools blueprint help
 ./exe/ComputerTools deepgram help
+./exe/ComputerTools latestchanges help
 ```
 
 ## 🏗️ Architecture
@@ -292,12 +324,13 @@ bundle exec yard server
 - [x] Semantic search with vector embeddings
 - [x] Interactive CLI interface
 
-### Phase 2: Expansion 🚧
+### Phase 2: Expansion ✅
 
+- [x] Latest changes analyzer with multi-platform tracking
+- [x] Deepgram audio transcription processing
 - [ ] Code analysis and refactoring tools
 - [ ] Documentation generation utilities
 - [ ] Test automation helpers
-- [ ] Git workflow automation
 
 ### Phase 3: Intelligence 📋
 
