@@ -1,0 +1,32 @@
+{
+  "directory_path": ".",
+  "output_file": "ComputerTools.json",
+  "include_ext": [],
+  "exclude_ext": [
+    ".gemspec",
+    ".lock",
+    ".sh"
+  ],
+  "include_files": [],
+  "exclude_files": [
+    "console",
+    "setup"
+  ],
+  "exclude_dirs": [
+    "lib/scripts/"
+  ],
+  "include_dirs": [
+    "bin",
+    "docs",
+    "exe",
+    "lib"
+  ],
+  "exclude_no_ext": 1,
+  "max_size": 10240,
+  "respect_gitignore": 1,
+  "include_dot_files": 0,
+  "zip_output": 0,
+  "max_depth": "",
+  "project_name": "",
+  "vector_store_format": 0
+}
