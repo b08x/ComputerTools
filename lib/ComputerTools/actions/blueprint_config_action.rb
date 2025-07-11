@@ -49,13 +49,13 @@ module ComputerTools
         when 'reset'
           reset_configuration
         else
-          puts "❌ Unknown config subcommand: #{@subcommand}".colorize(:red)
+          ComputerTools.logger.failure("Unknown config subcommand: '#{@subcommand}'")
           show_config_help
           false
         end
       rescue => e
-        puts "❌ Error managing configuration: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        ComputerTools.logger.failure("Error managing configuration: #{e.message}")
+        ComputerTools.logger.debug(e) # tty-logger will format the exception and backtrace
         false
       end
 
@@ -72,7 +72,7 @@ module ComputerTools
       def show_configuration
         config = load_configuration
         
-        puts "\n📋 Blueprint Configuration".colorize(:blue)
+        ComputerTools.logger.step("Blueprint Configuration")
         puts "=" * 60
         puts "Config file: #{CONFIG_PATH}"
         puts "File exists: #{File.exist?(CONFIG_PATH) ? 'Yes' : 'No'}"
@@ -99,8 +99,8 @@ module ComputerTools
           puts "  Auto-categorization: #{config.dig('features', 'auto_categorize') || 'Not set'}"
           puts "  Debug mode: #{config.dig('debug') || 'Not set'}"
         else
-          puts "❌ No configuration found".colorize(:red)
-          puts "💡 Run 'blueprint config setup' to create configuration".colorize(:yellow)
+          ComputerTools.logger.failure("No configuration found")
+          ComputerTools.logger.tip("Run 'blueprint config setup' to create configuration")
         end
         
         puts "=" * 60
@@ -122,7 +122,7 @@ module ComputerTools
       # @return [Boolean] Returns `true` if the configuration is saved
       #   successfully, `false` otherwise.
       def setup_configuration
-        puts "🔧 Blueprint Configuration Setup".colorize(:blue)
+        ComputerTools.logger.step("Blueprint Configuration Setup")
         puts "=" * 50
         puts ""
         
@@ -185,12 +185,10 @@ module ComputerTools
         save_success = save_configuration(config)
         
         if save_success
-          puts "✅ Configuration saved successfully!".colorize(:green)
-          puts "📁 Config file: #{CONFIG_PATH}".colorize(:cyan)
-          puts ""
-          puts "🧪 Run 'blueprint config test' to validate the configuration".colorize(:yellow)
+          ComputerTools.logger.success("Configuration saved successfully!", file: CONFIG_PATH)
+          ComputerTools.logger.tip("Run 'blueprint config test' to validate the configuration")
         else
-          puts "❌ Failed to save configuration".colorize(:red)
+          ComputerTools.logger.failure("Failed to save configuration")
         end
         
         save_success
@@ -204,12 +202,12 @@ module ComputerTools
       #
       # @return [Boolean] Returns `true` if all tests pass, `false` otherwise.
       def test_configuration
-        puts "🧪 Testing Blueprint Configuration".colorize(:blue)
+        ComputerTools.logger.step("Testing Blueprint Configuration")
         puts "=" * 50
         
         config = load_configuration
         unless config
-          puts "❌ No configuration found".colorize(:red)
+          ComputerTools.logger.failure("No configuration found")
           return false
         end
         
@@ -232,10 +230,10 @@ module ComputerTools
         
         puts "\n" + "=" * 50
         if all_tests_passed
-          puts "✅ All configuration tests passed!".colorize(:green)
+          ComputerTools.logger.success("All configuration tests passed!")
         else
-          puts "❌ Some configuration tests failed".colorize(:red)
-          puts "💡 Run 'blueprint config setup' to fix issues".colorize(:yellow)
+          ComputerTools.logger.failure("Some configuration tests failed")
+          ComputerTools.logger.tip("Run 'blueprint config setup' to fix issues")
         end
         
         all_tests_passed
@@ -255,15 +253,15 @@ module ComputerTools
           
           if response == 'y' || response == 'yes'
             File.delete(CONFIG_PATH)
-            puts "✅ Configuration reset successfully".colorize(:green)
-            puts "💡 Run 'blueprint config setup' to create new configuration".colorize(:yellow)
+            ComputerTools.logger.success("Configuration reset successfully")
+            ComputerTools.logger.tip("Run 'blueprint config setup' to create new configuration")
             true
           else
-            puts "❌ Reset cancelled".colorize(:yellow)
+            ComputerTools.logger.warn("Reset cancelled")
             false
           end
         else
-          puts "ℹ️  No configuration file found to reset".colorize(:blue)
+          ComputerTools.logger.info("No configuration file found to reset")
           true
         end
       end
@@ -293,7 +291,7 @@ module ComputerTools
         return nil unless File.exist?(CONFIG_PATH)
         YAML.load_file(CONFIG_PATH)
       rescue => e
-        puts "⚠️  Error loading configuration: #{e.message}".colorize(:yellow)
+        ComputerTools.logger.warn("Error loading configuration: #{e.message}")
         nil
       end
 
@@ -312,7 +310,7 @@ module ComputerTools
         File.write(CONFIG_PATH, config.to_yaml)
         true
       rescue => e
-        puts "❌ Error saving configuration: #{e.message}".colorize(:red)
+        ComputerTools.logger.failure("Error saving configuration: #{e.message}")
         false
       end
 
@@ -349,10 +347,10 @@ module ComputerTools
           db_url = config.dig('database', 'url')
           db = Sequel.connect(db_url)
           db.test_connection
-          puts "✅ Database connection successful".colorize(:green)
+          ComputerTools.logger.success("Database connection successful")
           true
         rescue => e
-          puts "❌ Database connection failed: #{e.message}".colorize(:red)
+          ComputerTools.logger.failure("Database connection failed: #{e.message}")
           false
         end
       end
@@ -376,10 +374,10 @@ module ComputerTools
                   end
         
         if api_key
-          puts "✅ AI API key found for #{provider}".colorize(:green)
+          ComputerTools.logger.success("AI API key found for #{provider}")
           true
         else
-          puts "❌ AI API key not found for #{provider}".colorize(:red)
+          ComputerTools.logger.failure("AI API key not found for #{provider}")
           false
         end
       end
@@ -392,10 +390,10 @@ module ComputerTools
       def test_editor(config)
         editor = config.dig('editor')
         if system("which #{editor} > /dev/null 2>&1")
-          puts "✅ Editor '#{editor}' found".colorize(:green)
+          ComputerTools.logger.success("Editor '#{editor}' found")
           true
         else
-          puts "❌ Editor '#{editor}' not found".colorize(:red)
+          ComputerTools.logger.failure("Editor '#{editor}' not found")
           false
         end
       end

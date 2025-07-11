@@ -42,6 +42,7 @@ gem 'tty-spinner', '~> 0.9.3'
 gem 'tty-table', '~> 0.12'
 gem 'tty-tree', '~> 0.4.0'
 gem 'tty-which', '~> 0.5.0'
+gem 'tty-logger', '~> 0.6.0'
 gem "colorize", "~> 1.1"
 gem "sequel", "~> 5.94"
 gem "tty-cursor", "~> 0.7.1"

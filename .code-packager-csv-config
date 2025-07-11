@@ -3,17 +3,17 @@
   "output_file": "ComputerTools.csv",
   "include_ext": [],
   "exclude_ext": [
-    ".csv",
     ".gemspec",
     ".lock",
-    ".yml"
+    ".md"
   ],
   "include_files": [],
   "exclude_files": [
     "console",
+    "execute_shell_action.rb",
     "setup",
     "Gemfile",
-    "README.md"
+    "version.rb"
   ],
   "exclude_dirs": [],
   "include_dirs": [

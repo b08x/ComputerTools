@@ -214,6 +214,31 @@ features:
   improvement_analysis: true
 ```
 
+### User Configuration
+
+User-specific settings are stored in `~/.config/computertools/config.yml`:
+
+```yaml
+# User configuration example
+paths:
+  home_dir: "/home/user"
+  restic_mount_point: "/home/user/mnt/restic"
+  restic_repo: "/path/to/restic/repo"
+
+display:
+  time_format: "%Y-%m-%d %H:%M:%S"
+
+terminal:
+  command: "kitty"
+  args: "-e"
+
+logger:
+  level: "info"           # Console log level: debug, info, warn, error
+  file_logging: false     # Enable file logging
+  file_path: "~/.local/state/computertools/app.log"
+  file_level: "debug"     # File log level (more verbose than console)
+```
+
 ### Environment Variables
 
 ```bash
@@ -227,6 +252,85 @@ BLUEPRINT_DATABASE_URL=postgresql://...
 # Editor Preferences  
 EDITOR=vim
 VISUAL=code
+
+# Logger Configuration (optional)
+COMPUTERTOOLS_LOG_LEVEL=debug
+COMPUTERTOOLS_LOG_FILE_ENABLED=true
+COMPUTERTOOLS_LOG_FILE_PATH=/path/to/app.log
+COMPUTERTOOLS_LOG_FILE_LEVEL=debug
+```
+
+## 📝 Logging System
+
+ComputerTools features a unified logging system that preserves the rich emoji-driven UI while providing professional debugging capabilities.
+
+### Quick Setup
+
+```bash
+# Configure logging interactively
+exe/ComputerTools config setup
+
+# Or configure just logging
+exe/ComputerTools config edit
+# Select "📝 Logger settings"
+```
+
+### Logging Features
+
+- **Rich Console Output**: Emoji-enhanced messages with colors
+- **File Logging**: Structured JSON logs for analysis
+- **Configurable Levels**: Control verbosity per output destination
+- **Structured Data**: Key-value pairs for better debugging
+- **Exception Handling**: Clean user messages + detailed debug traces
+
+### Log Types
+
+| Type | Symbol | Usage |
+|------|--------|--------|
+| `success` | ✅ | Operation completed successfully |
+| `failure` | ❌ | Critical errors that halt operations |
+| `warning` | ⚠️ | Non-critical issues or warnings |
+| `tip` | 💡 | Helpful guidance for users |
+| `step` | 🚀 | Major process steps or milestones |
+| `info` | ℹ️ | General informational messages |
+| `debug` | 🐞 | Verbose diagnostic information |
+
+### Usage Examples
+
+```bash
+# View current logging configuration
+exe/ComputerTools config show
+
+# Set console logging to debug level
+COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools blueprint submit file.rb
+
+# Enable file logging for troubleshooting
+COMPUTERTOOLS_LOG_FILE_ENABLED=true exe/ComputerTools latestchanges --time-range 7d
+
+# Configure persistent logging settings
+exe/ComputerTools config edit
+```
+
+### Log File Location
+
+By default, log files are written to:
+- **Linux/macOS**: `~/.local/state/computertools/app.log`
+- **Custom Path**: Configurable via settings or environment variables
+
+### Structured Logging
+
+All log messages support structured data for better analysis:
+
+```ruby
+# Example: Internal API calls include context
+ComputerTools.logger.success("Blueprint created", id: 123, file: "script.rb")
+ComputerTools.logger.failure("Database connection failed", error: "timeout", retry_count: 3)
+```
+
+This produces JSON output in log files:
+```json
+{"level":"info","message":"Blueprint created","id":123,"file":"script.rb","timestamp":"2024-01-01T10:30:00Z"}
+{"level":"error","message":"Database connection failed","error":"timeout","retry_count":3,"timestamp":"2024-01-01T10:30:05Z"}
 ```
 
 ## 📚 Usage Examples

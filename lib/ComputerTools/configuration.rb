@@ -33,6 +33,7 @@ module ComputerTools
       configure_display
       configure_restic
       configure_terminals
+      configure_logger
 
       save_config
       puts "\n✅ Configuration saved to #{@config_file}".colorize(:green)
@@ -154,6 +155,12 @@ module ComputerTools
       @config.set(:terminal, :command, value: 'kitty')
       @config.set(:terminal, :args, value: '-e')
 
+      # Logger defaults
+      @config.set(:logger, :level, value: 'info')
+      @config.set(:logger, :file_logging, value: false)
+      @config.set(:logger, :file_path, value: default_log_path_for_config)
+      @config.set(:logger, :file_level, value: 'debug')
+
       setup_environment_variables
       setup_validators
 
@@ -172,6 +179,10 @@ module ComputerTools
       @config.set_from_env(:restic, :mount_timeout) { 'COMPUTERTOOLS_RESTIC_TIMEOUT' }
       @config.set_from_env(:terminal, :command) { 'COMPUTERTOOLS_TERMINAL_COMMAND' }
       @config.set_from_env(:terminal, :args) { 'COMPUTERTOOLS_TERMINAL_ARGS' }
+      @config.set_from_env(:logger, :level) { 'COMPUTERTOOLS_LOG_LEVEL' }
+      @config.set_from_env(:logger, :file_logging) { 'COMPUTERTOOLS_LOG_FILE_ENABLED' }
+      @config.set_from_env(:logger, :file_path) { 'COMPUTERTOOLS_LOG_FILE_PATH' }
+      @config.set_from_env(:logger, :file_level) { 'COMPUTERTOOLS_LOG_FILE_LEVEL' }
     end
 
     def setup_validators
@@ -257,6 +268,32 @@ module ComputerTools
 
       args = @prompt.ask("Terminal arguments:", default: current_args)
       @config.set(:terminal, :args, value: args)
+    end
+
+    def configure_logger
+      puts "\n📝 Logger Configuration".colorize(:blue)
+
+      current_level = @config.fetch(:logger, :level) { 'info' }
+      level = @prompt.select("Console log level:", %w[debug info warn error], default: current_level)
+      @config.set(:logger, :level, value: level)
+
+      enable_file_logging = @prompt.yes?("Enable logging to a file?", default: @config.fetch(:logger, :file_logging))
+      @config.set(:logger, :file_logging, value: enable_file_logging)
+
+      if enable_file_logging
+        current_path = @config.fetch(:logger, :file_path) { default_log_path_for_config }
+        path = @prompt.ask("Log file path:", default: current_path)
+        @config.set(:logger, :file_path, value: path)
+
+        current_file_level = @config.fetch(:logger, :file_level) { 'debug' }
+        file_level = @prompt.select("File log level:", %w[debug info warn error], default: current_file_level)
+        @config.set(:logger, :file_level, value: file_level)
+      end
+    end
+
+    def default_log_path_for_config
+      state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
+      File.join(state_home, 'computertools', 'app.log')
     end
   end
 end

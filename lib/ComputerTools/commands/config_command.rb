@@ -82,6 +82,7 @@ module ComputerTools
           display_config_section("Display", config_hash['display']) if config_hash['display']
           display_config_section("Restic", config_hash['restic']) if config_hash['restic']
           display_config_section("Terminal", config_hash['terminal']) if config_hash['terminal']
+          display_config_section("Logger", config_hash['logger']) if config_hash['logger']
 
           true
         rescue StandardError => e
@@ -103,6 +104,7 @@ module ComputerTools
             menu.choice "🎨 Display settings", :display
             menu.choice "📦 Restic backup settings", :restic
             menu.choice "💻 Terminal settings", :terminal
+            menu.choice "📝 Logger settings", :logger
             menu.choice "🔄 Full setup (all sections)", :all
             menu.choice "❌ Cancel", :cancel
           end
@@ -118,6 +120,8 @@ module ComputerTools
             config.send(:configure_restic)
           when :terminal
             config.send(:configure_terminals)
+          when :logger
+            config.send(:configure_logger)
           when :all
             config.interactive_setup
           end
@@ -231,6 +235,7 @@ module ComputerTools
             • Display: Time format and output preferences#{'  '}
             • Restic: Backup mounting timeout and settings
             • Terminal: Default terminal emulator command and arguments
+            • Logger: Log levels, file logging, and output preferences
 
           💾 Configuration File:
             Location: ~/.config/computertools/config.yml
