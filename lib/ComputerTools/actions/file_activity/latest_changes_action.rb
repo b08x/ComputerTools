@@ -1,13 +1,5 @@
 # frozen_string_literal: true
 
-require 'colorize'
-require_relative 'file_discovery_action'
-require_relative 'git_analysis_action'
-require_relative 'yadm_analysis_action'
-require_relative 'restic_analysis_action'
-require_relative '../generators/file_activity_report_generator'
-require_relative '../configuration'
-
 module ComputerTools
   module Actions
     class LatestChangesAction < Sublayer::Actions::Base

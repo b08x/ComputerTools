@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'tty-table'
-require 'json'
-
 module ComputerTools
   module Generators
     class FileActivityReportGenerator < Sublayer::Generators::Base

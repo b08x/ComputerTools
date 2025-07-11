@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'colorize'
-require_relative 'base_command'
-
 module ComputerTools
   module Commands
     class LatestChangesCommand < BaseCommand

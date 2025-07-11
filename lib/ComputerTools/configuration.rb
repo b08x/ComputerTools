@@ -1,11 +1,5 @@
 # frozen_string_literal: true
 
-require 'tty-config'
-require 'tty-prompt'
-require 'terrapin'
-require 'tty-file'
-require 'colorize'
-
 module ComputerTools
   class Configuration
     def initialize
@@ -280,15 +274,15 @@ module ComputerTools
       enable_file_logging = @prompt.yes?("Enable logging to a file?", default: @config.fetch(:logger, :file_logging))
       @config.set(:logger, :file_logging, value: enable_file_logging)
 
-      if enable_file_logging
-        current_path = @config.fetch(:logger, :file_path) { default_log_path_for_config }
-        path = @prompt.ask("Log file path:", default: current_path)
-        @config.set(:logger, :file_path, value: path)
+      return unless enable_file_logging
 
-        current_file_level = @config.fetch(:logger, :file_level) { 'debug' }
-        file_level = @prompt.select("File log level:", %w[debug info warn error], default: current_file_level)
-        @config.set(:logger, :file_level, value: file_level)
-      end
+      current_path = @config.fetch(:logger, :file_path) { default_log_path_for_config }
+      path = @prompt.ask("Log file path:", default: current_path)
+      @config.set(:logger, :file_path, value: path)
+
+      current_file_level = @config.fetch(:logger, :file_level) { 'debug' }
+      file_level = @prompt.select("File log level:", %w[debug info warn error], default: current_file_level)
+      @config.set(:logger, :file_level, value: file_level)
     end
 
     def default_log_path_for_config

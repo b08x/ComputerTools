@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'tty-logger'
-require 'fileutils'
-
 module ComputerTools
   # Centralized logger module for the ComputerTools application.
   # Encapsulates TTY::Logger configuration and provides a singleton instance.
@@ -80,11 +77,11 @@ module ComputerTools
           level: level,
           output: $stderr, # Log to stderr to separate from program output
           styles: {
-            info:    { symbol: 'ℹ️', color: :blue },
-            debug:   { symbol: '🐞', color: :magenta },
-            error:   { symbol: '❌', color: :red },
-            warn:    { symbol: '⚠️', color: :yellow },
-            fatal:   { symbol: '💀', color: :red, bold: true }
+            info:  { symbol: 'ℹ️', color: :blue },
+            debug: { symbol: '🐞', color: :magenta },
+            error: { symbol: '❌', color: :red },
+            warn:  { symbol: '⚠️', color: :yellow },
+            fatal: { symbol: '💀', color: :red, bold: true }
           }
         }
       ]

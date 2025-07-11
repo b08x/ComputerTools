@@ -347,6 +347,7 @@ DEPENDENCIES
   pg (~> 1.5)
   pry (~> 0.14.2)
   pry-doc (~> 1.6)
+  rbs (~> 3.9)
   rdoc
   rspec (~> 3.10)
   rubocop

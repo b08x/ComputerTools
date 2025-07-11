@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'tty-prompt'
-
 module ComputerTools
   module Actions
     class DeepgramAnalyzeAction < Sublayer::Actions::Base

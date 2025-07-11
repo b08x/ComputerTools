@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'tempfile'
-
 module ComputerTools
   module Actions
     class BlueprintEditAction < Sublayer::Actions::Base
@@ -21,10 +19,10 @@ module ComputerTools
         puts "✏️  Editing blueprint: #{blueprint[:name]}".colorize(:blue)
         puts "Original description: #{blueprint[:description]}"
         puts "Categories: #{blueprint[:categories].map { |c| c[:title] }.join(', ')}" if blueprint[:categories].any?
-        
+
         # Step 2: Open editor with current code
         temp_file = create_temp_file(blueprint)
-        
+
         begin
           # Step 3: Launch editor
           editor_success = launch_editor(temp_file)
@@ -35,7 +33,7 @@ module ComputerTools
 
           # Step 4: Read modified content
           modified_code = File.read(temp_file)
-          
+
           # Step 5: Check if content actually changed
           if modified_code.strip == blueprint[:code].strip
             puts "ℹ️  No changes detected".colorize(:blue)
@@ -43,7 +41,7 @@ module ComputerTools
           end
 
           puts "✅ Changes detected".colorize(:green)
-          
+
           # Step 6: Confirm the edit operation
           unless confirm_edit_operation(blueprint, modified_code)
             puts "❌ Edit operation cancelled".colorize(:yellow)
@@ -52,12 +50,11 @@ module ComputerTools
 
           # Step 7: Execute delete-and-resubmit workflow
           perform_delete_and_resubmit(blueprint, modified_code)
-          
         ensure
           # Clean up temporary file
           File.delete(temp_file) if File.exist?(temp_file)
         end
-      rescue => e
+      rescue StandardError => e
         puts "❌ Error during edit operation: #{e.message}".colorize(:red)
         puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
         false
@@ -68,7 +65,7 @@ module ComputerTools
       def create_temp_file(blueprint)
         # Detect file extension based on code content
         extension = detect_file_extension(blueprint[:code])
-        
+
         # Create safe filename
         safe_name = blueprint[:name].gsub(/[^a-zA-Z0-9_-]/, '_').downcase
         temp_file = Tempfile.new(["blueprint_#{@id}_#{safe_name}", extension])
@@ -101,10 +98,10 @@ module ComputerTools
       def launch_editor(temp_file)
         # Get editor preference from config or environment
         editor = get_editor_preference
-        
+
         puts "🔧 Opening #{editor} with blueprint code...".colorize(:cyan)
         puts "💡 Save and exit when done editing".colorize(:cyan)
-        
+
         # Launch editor and wait for it to complete
         system("#{editor} #{temp_file}")
       end
@@ -123,7 +120,7 @@ module ComputerTools
       end
 
       def confirm_edit_operation(original_blueprint, modified_code)
-        puts "\n" + "=" * 60
+        puts "\n" + ("=" * 60)
         puts "🔄 Edit Operation Confirmation".colorize(:blue)
         puts "=" * 60
         puts "Original blueprint: #{original_blueprint[:name]} (ID: #{@id})"
@@ -135,63 +132,63 @@ module ComputerTools
         puts "   2. CREATE a new blueprint with the modified code".colorize(:yellow)
         puts "   3. Generate NEW embeddings for better search".colorize(:yellow)
         puts ""
-        
+
         # Show a preview of changes
         show_change_preview(original_blueprint[:code], modified_code)
-        
+
         print "Continue with edit operation? (y/N): "
         response = STDIN.gets.chomp.downcase
-        response == 'y' || response == 'yes'
+        ['y', 'yes'].include?(response)
       end
 
       def show_change_preview(original_code, modified_code)
         puts "📋 Change Preview:".colorize(:cyan)
-        
+
         # Show first and last few lines to give context
         original_lines = original_code.lines
         modified_lines = modified_code.lines
-        
+
         puts "Original (first 3 lines):"
         original_lines.first(3).each_with_index do |line, i|
-          puts "  #{i+1}: #{line.chomp}"
+          puts "  #{i + 1}: #{line.chomp}"
         end
-        
+
         puts "\nModified (first 3 lines):"
         modified_lines.first(3).each_with_index do |line, i|
-          puts "  #{i+1}: #{line.chomp}"
+          puts "  #{i + 1}: #{line.chomp}"
         end
-        
+
         if original_lines.length != modified_lines.length
           puts "\nLine count changed: #{original_lines.length} → #{modified_lines.length}".colorize(:yellow)
         end
-        
+
         puts ""
       end
 
       def perform_delete_and_resubmit(original_blueprint, modified_code)
         puts "🔄 Starting delete-and-resubmit workflow...".colorize(:blue)
-        
+
         # Store original metadata for rollback
         original_data = {
           name: original_blueprint[:name],
           description: original_blueprint[:description],
           categories: original_blueprint[:categories].map { |c| c[:title] }
         }
-        
+
         # Step 1: Delete the existing blueprint
         puts "🗑️  Deleting original blueprint...".colorize(:yellow)
         delete_success = @db.delete_blueprint(@id)
-        
+
         unless delete_success
           puts "❌ Failed to delete original blueprint. Aborting edit.".colorize(:red)
           return false
         end
-        
+
         puts "✅ Original blueprint deleted".colorize(:green)
-        
+
         # Step 2: Submit the modified code as a new blueprint
         puts "📝 Creating new blueprint with modified code...".colorize(:yellow)
-        
+
         submit_action = ComputerTools::Actions::BlueprintSubmitAction.new(
           code: modified_code,
           name: original_data[:name], # Keep original name initially
@@ -200,9 +197,9 @@ module ComputerTools
           auto_describe: true,
           auto_categorize: false # Keep original categories unless user wants new ones
         )
-        
+
         new_blueprint_success = submit_action.call
-        
+
         if new_blueprint_success
           puts "✅ Edit operation completed successfully!".colorize(:green)
           puts "💡 The blueprint now has fresh embeddings for improved search".colorize(:cyan)

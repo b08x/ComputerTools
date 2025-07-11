@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'git'
-
 module ComputerTools
   module Wrappers
     class GitWrapper
@@ -41,9 +39,7 @@ module ComputerTools
 
       def get_file_diff(git, file_path)
         # For untracked files, we can't diff against HEAD
-        if git.status.untracked.include?(file_path)
-          return { additions: 0, deletions: 0, chunks: 0 }
-        end
+        return { additions: 0, deletions: 0, chunks: 0 } if git.status.untracked.include?(file_path)
 
         diff = git.diff('HEAD', file_path)
 

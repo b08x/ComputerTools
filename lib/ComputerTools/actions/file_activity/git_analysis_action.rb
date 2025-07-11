@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'git'
-require_relative '../wrappers/git_wrapper'
-
 module ComputerTools
   module Actions
     class GitAnalysisAction < Sublayer::Actions::Base

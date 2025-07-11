@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'tty-which'
-
 module ComputerTools
   module Actions
     class FileDiscoveryAction < Sublayer::Actions::Base

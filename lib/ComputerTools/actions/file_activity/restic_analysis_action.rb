@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'tty-which'
-require 'open3'
-require_relative '../wrappers/restic_wrapper'
-
 module ComputerTools
   module Actions
     class ResticAnalysisAction < Sublayer::Actions::Base

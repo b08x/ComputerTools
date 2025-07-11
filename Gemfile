@@ -48,3 +48,5 @@ gem "sequel", "~> 5.94"
 gem "tty-cursor", "~> 0.7.1"
 gem "pg", "~> 1.5"
 gem "solargraph", "~> 0.56.0"
+
+gem "rbs", "~> 3.9"

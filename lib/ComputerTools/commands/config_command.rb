@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'colorize'
-require 'tty-prompt'
-require_relative 'base_command'
-
 module ComputerTools
   module Commands
     class ConfigCommand < BaseCommand
