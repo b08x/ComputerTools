@@ -2,7 +2,27 @@
 
 module ComputerTools
   module Actions
+    ##
+    # BlueprintSubmitAction handles the submission of blueprints to the database.
+    # It provides functionality to generate missing metadata, validate the blueprint data,
+    # and store the blueprint in the database. This class is useful for automating the
+    # process of submitting blueprints with minimal initial information, as it can
+    # auto-generate names, descriptions, and categories.
+    #
+    # @example Basic usage:
+    #   action = BlueprintSubmitAction.new(code: "puts 'Hello, World!'")
+    #   action.call
     class BlueprintSubmitAction < Sublayer::Actions::Base
+      ##
+      # Initializes a new BlueprintSubmitAction with the provided code and optional metadata.
+      #
+      # @param code [String] The code content of the blueprint. This is the only required parameter.
+      # @param name [String, nil] The name of the blueprint. If not provided, it will be auto-generated.
+      # @param description [String, nil] The description of the blueprint. If not provided and auto_describe is true, it will be auto-generated.
+      # @param categories [Array, nil] The categories of the blueprint. If not provided and auto_categorize is true, they will be auto-generated.
+      # @param auto_describe [Boolean] Whether to auto-generate the description if not provided. Defaults to true.
+      # @param auto_categorize [Boolean] Whether to auto-generate the categories if not provided. Defaults to true.
+      # @return [BlueprintSubmitAction] A new instance of BlueprintSubmitAction.
       def initialize(code:, name: nil, description: nil, categories: nil, auto_describe: true, auto_categorize: true)
         @code = code
         @name = name
@@ -13,12 +33,18 @@ module ComputerTools
         @db = ComputerTools::Wrappers::BlueprintDatabase.new
       end
 
+      ##
+      # Executes the blueprint submission process. This includes generating missing metadata,
+      # validating the blueprint data, and creating the blueprint in the database.
+      #
+      # @return [Boolean] true if the blueprint was successfully created, false otherwise.
+      # @raise [StandardError] If an error occurs during the submission process.
       def call
         puts "🚀 Processing blueprint submission...".colorize(:blue)
-        
+
         # Generate missing metadata using AI
         generate_missing_metadata
-        
+
         # Validate required fields
         unless validate_blueprint_data
           return false
@@ -48,6 +74,10 @@ module ComputerTools
 
       private
 
+      ##
+      # Generates missing metadata for the blueprint, including name, description, and categories.
+      #
+      # @return [void]
       def generate_missing_metadata
         # Generate name if not provided
         if @name.nil? || @name.strip.empty?
@@ -79,6 +109,10 @@ module ComputerTools
         end
       end
 
+      ##
+      # Validates the blueprint data to ensure all required fields are present and valid.
+      #
+      # @return [Boolean] true if the blueprint data is valid, false otherwise.
       def validate_blueprint_data
         errors = []
 
@@ -107,6 +141,11 @@ module ComputerTools
         true
       end
 
+      ##
+      # Displays a summary of the created blueprint.
+      #
+      # @param blueprint [Hash] The blueprint data to display.
+      # @return [void]
       def display_blueprint_summary(blueprint)
         puts "\n" + "=" * 60
         puts "📋 Blueprint Summary".colorize(:blue)
@@ -114,18 +153,24 @@ module ComputerTools
         puts "ID: #{blueprint[:id]}"
         puts "Name: #{blueprint[:name]}"
         puts "Description: #{blueprint[:description]}"
-        
+
         if blueprint[:categories] && blueprint[:categories].any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
           puts "Categories: #{category_names.join(', ')}"
         end
-        
+
         puts "Code length: #{@code.length} characters"
         puts "Created: #{blueprint[:created_at]}"
         puts "=" * 60
         puts ""
       end
 
+      ##
+      # Truncates the given text to the specified length.
+      #
+      # @param text [String] The text to truncate.
+      # @param length [Integer] The maximum length of the text.
+      # @return [String] The truncated text.
       def truncate_text(text, length)
         return text if text.length <= length
         text[0..length-4] + "..."

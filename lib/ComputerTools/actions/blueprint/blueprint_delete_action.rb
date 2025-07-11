@@ -2,13 +2,48 @@
 
 module ComputerTools
   module Actions
+    # Handles the deletion of blueprints from the system with interactive confirmation.
+    #
+    # This action provides both direct deletion through ID specification and
+    # interactive selection from available blueprints. It includes safety
+    # mechanisms like confirmation dialogs and code previews to prevent
+    # accidental deletions.
+    #
+    # @example Delete a blueprint by ID
+    #   action = ComputerTools::Actions::BlueprintDeleteAction.new(id: 123)
+    #   action.call
+    #
+    # @example Interactive blueprint deletion
+    #   action = ComputerTools::Actions::BlueprintDeleteAction.new
+    #   action.call # Will prompt for interactive selection
     class BlueprintDeleteAction < Sublayer::Actions::Base
+      # Initializes a new BlueprintDeleteAction
+      #
+      # @param id [Integer, nil] The ID of the blueprint to delete (optional)
+      # @param force [Boolean] Whether to skip confirmation prompts (default: false)
       def initialize(id: nil, force: false)
         @id = id
         @force = force
         @db = ComputerTools::Wrappers::BlueprintDatabase.new
       end
 
+      # Executes the blueprint deletion process
+      #
+      # When no ID is provided, initiates interactive selection. Shows
+      # blueprint details and requests confirmation before deletion unless
+      # force flag is true.
+      #
+      # @return [Boolean] true if deletion was successful, false otherwise
+      #
+      # @raise [StandardError] If there's an error during the deletion process
+      #
+      # @example Successful deletion
+      #   action = ComputerTools::Actions::BlueprintDeleteAction.new(id: 123)
+      #   action.call # => true
+      #
+      # @example Failed deletion
+      #   action = ComputerTools::Actions::BlueprintDeleteAction.new(id: 999)
+      #   action.call # => false (blueprint not found)
       def call
         # If no ID provided, show interactive selection
         if @id.nil?
@@ -44,6 +79,16 @@ module ComputerTools
 
       private
 
+      # Presents an interactive menu to select a blueprint for deletion
+      #
+      # Displays a numbered list of available blueprints with their
+      # basic information and allows the user to select one by number.
+      #
+      # @return [Integer, nil] The ID of the selected blueprint or nil if cancelled
+      #
+      # @example
+      #   select_blueprint_interactively
+      #   # Shows menu and returns selected blueprint ID or nil
       def select_blueprint_interactively
         puts "🔍 Loading blueprints for selection...".colorize(:blue)
 
@@ -83,6 +128,18 @@ module ComputerTools
         end
       end
 
+      # Requests confirmation before deleting a blueprint
+      #
+      # Displays detailed information about the blueprint including a code preview
+      # and warns about the irreversible nature of the deletion.
+      #
+      # @param blueprint [Hash] The blueprint to be deleted
+      # @return [Boolean] true if deletion is confirmed, false otherwise
+      #
+      # @example
+      #   blueprint = { id: 123, name: "Example", code: "puts 'hello'" }
+      #   confirm_deletion?(blueprint)
+      #   # Shows confirmation dialog and returns true/false based on user input
       def confirm_deletion?(blueprint)
         puts "\n#{'=' * 60}"
         puts "🗑️  Blueprint Deletion Confirmation".colorize(:red)

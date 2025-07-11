@@ -2,12 +2,35 @@
 
 module ComputerTools
   module Actions
+    # Manages the Deepgram tool's configuration settings stored in `config/deepgram.yml`.
+    #
+    # This action class provides the backend logic for a command-line interface (CLI)
+    # to interact with the configuration file. It supports showing the current
+    # configuration, creating a default setup, opening the file for editing, and
+    # resetting it to its default state.
+    #
+    # @example Initializing and running the setup command
+    #   ComputerTools::Actions::DeepgramConfigAction.new(subcommand: 'setup').call
+    #
+    # @example Showing the current configuration
+    #   ComputerTools::Actions::DeepgramConfigAction.new(subcommand: 'show').call
     class DeepgramConfigAction < Sublayer::Actions::Base
+      # Initializes the configuration action.
+      #
+      # @param subcommand [String] The configuration command to execute.
+      #   Valid options are 'show', 'setup', 'edit', and 'reset'.
       def initialize(subcommand:)
         @subcommand = subcommand
         @config_file = File.join(__dir__, '..', 'config', 'deepgram.yml')
       end
 
+      # Executes the specified configuration subcommand.
+      #
+      # This is the main entry point for the action. It routes the flow to the
+      # appropriate private method based on the subcommand provided during
+      # initialization. If an unknown subcommand is given, it displays help text.
+      #
+      # @return [Boolean] Returns `true` if the action was successful, `false` otherwise.
       def call
         case @subcommand
         when 'show'
@@ -27,6 +50,12 @@ module ComputerTools
 
       private
 
+      # Displays the current configuration from the YAML file.
+      #
+      # If the configuration file does not exist, it prompts the user to run
+      # the `setup` command.
+      #
+      # @return [Boolean] Returns `true`.
       def show_config
         puts "🔧 Deepgram Configuration".colorize(:blue)
         puts "=" * 50
@@ -43,6 +72,13 @@ module ComputerTools
         true
       end
 
+      # Creates a new default configuration file.
+      #
+      # This method generates a `deepgram.yml` file with default settings for
+      # output formats, AI processing, and other tool features. It will create the
+      # `config` directory if it doesn't already exist.
+      #
+      # @return [Boolean] Returns `true` after creating the file.
       def setup_config
         puts "🚀 Setting up Deepgram configuration...".colorize(:blue)
 
@@ -84,6 +120,13 @@ module ComputerTools
         true
       end
 
+      # Opens the configuration file in the user's default text editor.
+      #
+      # It checks for the `EDITOR` or `VISUAL` environment variables, falling
+      # back to `nano` if neither is set.
+      #
+      # @return [Boolean] Returns `true` on success, `false` if the config file
+      #   does not exist.
       def edit_config
         unless File.exist?(@config_file)
           puts "❌ Configuration file not found".colorize(:red)
@@ -98,6 +141,12 @@ module ComputerTools
         true
       end
 
+      # Deletes the existing configuration file.
+      #
+      # This effectively resets the configuration. The user is prompted to run
+      # the `setup` command to create a new default configuration.
+      #
+      # @return [Boolean] Returns `true`.
       def reset_config
         if File.exist?(@config_file)
           File.delete(@config_file)
@@ -110,6 +159,11 @@ module ComputerTools
         true
       end
 
+      # Prints a formatted view of the configuration hash to the console.
+      #
+      # @param config [Hash] The configuration hash to display.
+      # @return [nil, Boolean] Returns `nil` if markdown settings are present,
+      #   otherwise returns `true`.
       def display_config(config)
         puts "\n📋 Current Configuration:".colorize(:cyan)
 
@@ -142,6 +196,9 @@ module ComputerTools
         puts "     • Include Metadata: #{formats['markdown']['include_metadata'] || true}"
       end
 
+      # Displays a help message with the available subcommands.
+      #
+      # @return [nil]
       def show_help
         puts <<~HELP
           Configuration Commands:

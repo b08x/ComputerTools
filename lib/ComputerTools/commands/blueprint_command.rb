@@ -2,17 +2,33 @@
 
 module ComputerTools
   module Commands
+    # BlueprintCommand provides a comprehensive interface for managing code blueprints
+    # with AI-enhanced capabilities. It allows developers to submit, organize,
+    # search, and manipulate code blueprints through a command-line interface.
+    #
+    # The command supports various subcommands for different operations and integrates
+    # with AI features for automatic description generation and categorization.
     class BlueprintCommand < BaseCommand
+      # Returns a description of what the BlueprintCommand does
+      #
+      # @return [String] A description of the command's purpose
       def self.description
         "Manage code blueprints with AI-enhanced metadata and vector search capabilities"
       end
 
+      # Initializes a new BlueprintCommand with the given options
+      #
+      # @param [Hash] options The options to configure the command
       def initialize(options)
         super
         @subcommand = nil
         @args = []
       end
 
+      # Executes the blueprint command with the provided arguments
+      #
+      # @param [Array<String>] args The arguments to process
+      # @return [Boolean, nil] Returns false if the command fails, nil otherwise
       def execute(*args)
         @subcommand = args.shift
         @args = args
@@ -47,6 +63,12 @@ module ComputerTools
 
       private
 
+      # Handles the submission of a new blueprint
+      #
+      # Accepts either a file path or direct code string as input.
+      # Supports automatic description and categorization through AI features.
+      #
+      # @return [Boolean] Returns false if submission fails due to missing input
       def handle_submit
         input = @args.first
 
@@ -71,6 +93,9 @@ module ComputerTools
         ).call
       end
 
+      # Lists available blueprints with optional formatting
+      #
+      # @return [void] Outputs the list of blueprints to the console
       def handle_list
         format = (@options['format'] || 'table').to_sym
         interactive = @options['interactive'] || false
@@ -81,12 +106,21 @@ module ComputerTools
         ).call
       end
 
+      # Provides an interactive browsing experience for blueprints
+      #
+      # @return [void] Initiates the interactive browsing session
       def handle_browse
         ComputerTools::Actions::BlueprintListAction.new(
           interactive: true
         ).call
       end
 
+      # Views a specific blueprint with detailed information
+      #
+      # @param [String] id The ID of the blueprint to view
+      # @option options [Symbol] :format (:detailed) The output format
+      # @option options [Boolean] :analyze (false) Whether to include AI analysis
+      # @return [Boolean] Returns false if no ID is provided
       def handle_view
         id = @args.first
 
@@ -105,6 +139,10 @@ module ComputerTools
         ).call
       end
 
+      # Edits an existing blueprint
+      #
+      # @param [String] id The ID of the blueprint to edit
+      # @return [Boolean] Returns false if no ID is provided
       def handle_edit
         id = @args.first
 
@@ -119,6 +157,11 @@ module ComputerTools
         ).call
       end
 
+      # Deletes a blueprint with optional force flag
+      #
+      # @param [String] id The ID of the blueprint to delete
+      # @param [Boolean] force Whether to skip confirmation prompts
+      # @return [void] Initiates the delete action
       def handle_delete
         # Check for force flag in arguments
         force = @args.include?('--force')
@@ -133,6 +176,11 @@ module ComputerTools
         ).call
       end
 
+      # Searches blueprints based on a query
+      #
+      # @param [String] query The search query
+      # @option options [Integer] :limit (10) The maximum number of results to return
+      # @return [Boolean] Returns false if no query is provided
       def handle_search
         query = @args.join(' ')
 
@@ -148,6 +196,11 @@ module ComputerTools
         ).call
       end
 
+      # Exports a blueprint to a file
+      #
+      # @param [String] id The ID of the blueprint to export
+      # @param [String] output_path The path to export the blueprint to
+      # @return [Boolean] Returns false if no ID is provided
       def handle_export
         id = @args.first
         output_path = @args[1] || @options['output']
@@ -164,6 +217,10 @@ module ComputerTools
         ).call
       end
 
+      # Manages blueprint configuration
+      #
+      # @param [String] subcommand The configuration subcommand (default: 'show')
+      # @return [void] Initiates the configuration action
       def handle_config
         subcommand = @args.first || 'show'
 
@@ -172,6 +229,9 @@ module ComputerTools
         ).call
       end
 
+      # Displays help information for the blueprint command
+      #
+      # @return [void] Outputs help information to the console
       def show_help
         puts <<~HELP
           Blueprint Management Commands:

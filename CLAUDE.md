@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Installation and Setup
 - `bundle install` - Install dependencies
-- `bin/ComputerTools` - Run the CLI application
+- `exe/ComputerTools` - Run the CLI application
 
 ## Architecture
 

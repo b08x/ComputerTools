@@ -1,7 +1,22 @@
 # frozen_string_literal: true
 
 module ComputerTools
+  # Main configuration manager for ComputerTools application.
+  #
+  # Handles loading, saving, and interactive setup of application configuration
+  # using TTY::Config. Manages paths, display settings, restic configuration,
+  # terminal preferences, and logging setup.
+  #
+  # @example Basic usage:
+  #   config = ComputerTools::Configuration.new
+  #   config.interactive_setup
   class Configuration
+    # Initializes a new Configuration instance.
+    #
+    # Sets up the configuration file path, initializes TTY::Config,
+    # and loads existing configuration or sets up defaults.
+    #
+    # @return [ComputerTools::Configuration] a new instance of Configuration
     def initialize
       @config_file = File.expand_path('~/.config/computertools/config.yml')
       @config = TTY::Config.new
@@ -13,8 +28,22 @@ module ComputerTools
       load_config
     end
 
+    # Provides read access to the configuration object.
+    #
+    # @return [TTY::Config] the configuration object
     attr_reader :config
 
+    # Runs interactive configuration setup process.
+    #
+    # Guides user through configuration of paths, display settings,
+    # restic parameters, terminal preferences, and logging options.
+    # Handles errors and validation issues during the process.
+    #
+    # @return [Boolean] true if configuration was successful, false otherwise
+    #
+    # @example Running interactive setup:
+    #   config = ComputerTools::Configuration.new
+    #   config.interactive_setup
     def interactive_setup
       puts "🔧 ComputerTools Configuration Setup".colorize(:blue)
       puts "=" * 40
@@ -42,7 +71,16 @@ module ComputerTools
       false
     end
 
-    # Compatibility method for the fetch pattern used in the original code
+    # Compatibility method for fetching configuration values.
+    #
+    # Provides a safe way to fetch configuration values with error handling.
+    # Logs warnings when debug mode is enabled.
+    #
+    # @param keys [Array<String, Symbol>] the configuration keys to fetch
+    # @return [Object, nil] the fetched configuration value or nil if an error occurs
+    #
+    # @example Fetching a configuration value:
+    #   timeout = config.fetch(:restic, :mount_timeout)
     def fetch(*keys)
       @config.fetch(*keys)
     rescue StandardError => e
@@ -52,6 +90,12 @@ module ComputerTools
 
     private
 
+    # Loads configuration from file or sets up defaults.
+    #
+    # Attempts to read existing configuration file, handles various error cases,
+    # and falls back to default configuration when needed.
+    #
+    # @return [void]
     def load_config
       if @config.exist?
         begin
@@ -76,6 +120,14 @@ module ComputerTools
       setup_defaults
     end
 
+    # Saves the current configuration to file.
+    #
+    # Creates backup of existing configuration if it exists,
+    # ensures directory structure exists, and writes the configuration.
+    #
+    # @return [void]
+    #
+    # @raise [TTY::Config::WriteError] if configuration cannot be saved
     def save_config
       TTY::File.create_directory(File.dirname(@config_file), verbose: false)
 
@@ -93,7 +145,12 @@ module ComputerTools
       raise
     end
 
-    # Create configuration file with user interaction and collision detection
+    # Creates configuration file interactively with user confirmation.
+    #
+    # Uses TTY::File to handle file creation with collision detection
+    # and user interaction for existing files.
+    #
+    # @return [Boolean] true if file was created successfully, false otherwise
     def create_config_file_interactive
       content = @config.marshal(@config.to_hash)
 
@@ -109,7 +166,12 @@ module ComputerTools
       false
     end
 
-    # Check if external command is available using Terrapin
+    # Checks if an external command is available on the system.
+    #
+    # Uses Terrapin to check command availability with proper error handling.
+    #
+    # @param command [String] the command to check
+    # @return [Boolean] true if command is available, false otherwise
     def command_available?(command)
       cmd = Terrapin::CommandLine.new("which", ":command", command: command)
       cmd.run
@@ -121,7 +183,12 @@ module ComputerTools
       false
     end
 
-    # Validate terminal command availability
+    # Validates that the configured terminal command is available.
+    #
+    # Checks if the terminal command specified in configuration is available
+    # on the system, with appropriate logging.
+    #
+    # @return [Boolean] true if terminal is available, false otherwise
     def validate_terminal_command
       command = @config.fetch(:terminal, 'kitty')
 
@@ -137,6 +204,15 @@ module ComputerTools
       false
     end
 
+    # Sets up default configuration values.
+    #
+    # Configures default values for paths, display settings, restic parameters,
+    # terminal preferences, and logging options. Also sets up environment
+    # variable mappings and validators.
+    #
+    # @return [void]
+    #
+    # @raise [StandardError] if default configuration cannot be set up
     def setup_defaults
       @config.set(:paths, :home_dir, value: File.expand_path('~'))
       @config.set(:paths, :restic_mount_point, value: File.expand_path('~/mnt/restic'))
@@ -164,6 +240,12 @@ module ComputerTools
       raise
     end
 
+    # Sets up environment variable mappings for configuration.
+    #
+    # Maps configuration keys to corresponding environment variables
+    # that can override the configuration values.
+    #
+    # @return [void]
     def setup_environment_variables
       # Map configuration keys to environment variables
       @config.set_from_env(:paths, :home_dir) { 'COMPUTERTOOLS_HOME_DIR' }
@@ -179,6 +261,12 @@ module ComputerTools
       @config.set_from_env(:logger, :file_level) { 'COMPUTERTOOLS_LOG_FILE_LEVEL' }
     end
 
+    # Sets up validators for configuration values.
+    #
+    # Adds validation rules for various configuration parameters
+    # to ensure they meet required criteria.
+    #
+    # @return [void]
     def setup_validators
       # Validate that home directory exists
       @config.validate(:paths, :home_dir) do |_key, value|
@@ -214,6 +302,12 @@ module ComputerTools
       end
     end
 
+    # Interactively configures path settings.
+    #
+    # Prompts user for home directory, restic mount point,
+    # and restic repository paths.
+    #
+    # @return [void]
     def configure_paths
       puts "\n📁 Path Configuration".colorize(:blue)
 
@@ -230,6 +324,11 @@ module ComputerTools
       @config.set(:paths, :restic_repo, value: repo)
     end
 
+    # Interactively configures display settings.
+    #
+    # Prompts user for time format preference.
+    #
+    # @return [void]
     def configure_display
       puts "\n🎨 Display Configuration".colorize(:blue)
 
@@ -238,6 +337,11 @@ module ComputerTools
       @config.set(:display, :time_format, value: time_format)
     end
 
+    # Interactively configures restic settings.
+    #
+    # Prompts user for mount timeout value with validation.
+    #
+    # @return [void]
     def configure_restic
       puts "\n📦 Restic Configuration".colorize(:blue)
 
@@ -249,6 +353,11 @@ module ComputerTools
       @config.set(:restic, :mount_timeout, value: timeout)
     end
 
+    # Interactively configures terminal settings.
+    #
+    # Prompts user for terminal command and arguments.
+    #
+    # @return [void]
     def configure_terminals
       puts "\n💻 Terminal Configuration".colorize(:blue)
 
@@ -264,6 +373,12 @@ module ComputerTools
       @config.set(:terminal, :args, value: args)
     end
 
+    # Interactively configures logging settings.
+    #
+    # Prompts user for log level, file logging preferences,
+    # log file path, and file log level.
+    #
+    # @return [void]
     def configure_logger
       puts "\n📝 Logger Configuration".colorize(:blue)
 
@@ -285,6 +400,12 @@ module ComputerTools
       @config.set(:logger, :file_level, value: file_level)
     end
 
+    # Determines the default log file path based on system configuration.
+    #
+    # Uses XDG_STATE_HOME environment variable if available, otherwise
+    # falls back to standard ~/.local/state path.
+    #
+    # @return [String] the default log file path
     def default_log_path_for_config
       state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
       File.join(state_home, 'computertools', 'app.log')

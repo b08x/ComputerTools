@@ -2,7 +2,23 @@
 
 module ComputerTools
   module Actions
+    # Discovers, analyzes, and reports on recently modified files within a specified
+    # directory. This action serves as a high-level orchestrator that:
+    # 1. Finds files changed within a given time frame using `FileDiscoveryAction`.
+    # 2. Categorizes files by their tracking method (:git, :yadm, or :none).
+    # 3. Delegates the analysis of each category to specialized actions.
+    # 4. Generates a consolidated report of all changes.
+    #
+    # This is useful for getting a quick overview of recent work, preparing for
+    # commits, or ensuring that important changes are properly tracked.
     class LatestChangesAction < Sublayer::Actions::Base
+      # Initializes the action with configuration for the file analysis.
+      #
+      # @param directory [String] The path to the directory to analyze.
+      # @param time_range [String] The lookback period for file changes (e.g., '24h', '7d').
+      #   This string is passed directly to the `fd` command.
+      # @param format [String] The desired output format for the report ('table', 'json', etc.).
+      # @param interactive [Boolean] If true, the report may include interactive elements.
       def initialize(directory:, time_range: '24h', format: 'table', interactive: false)
         @directory = File.expand_path(directory)
         @time_range = time_range
@@ -12,6 +28,18 @@ module ComputerTools
         @config = @configuration
       end
 
+      # Executes the file discovery, analysis, and reporting workflow.
+      #
+      # The method handles the entire process, from finding files to displaying the
+      # final report. It gracefully handles cases where no files are found or no
+      # analyzable data is produced. Errors during the process are caught and
+      # logged to the console.
+      #
+      # @example Run an analysis on the current directory for the last 24 hours
+      #   ComputerTools::Actions::LatestChangesAction.new(directory: '.').call
+      #
+      # @return [Boolean] Returns `true` if the analysis completes successfully
+      #   (even if no files are found), and `false` if an error occurs.
       def call
         puts "🔍 Starting file analysis...".colorize(:blue)
         puts "📁 Directory: #{@directory == File.expand_path('.') ? '.' : @directory}".colorize(:cyan)
@@ -40,6 +68,9 @@ module ComputerTools
 
       private
 
+      # @private
+      # Discovers recently modified files using FileDiscoveryAction.
+      # @return [Array<Hash>] A list of file hashes, or an empty array if none are found.
       def discover_recent_files
         puts "🔎 Discovering recent files...".colorize(:yellow)
 
@@ -50,6 +81,11 @@ module ComputerTools
         ).call
       end
 
+      # @private
+      # Analyzes a list of files by grouping them by their tracking method
+      # and delegating to the appropriate analysis action.
+      # @param recent_files [Array<Hash>] The list of files to analyze.
+      # @return [Array<Hash>] A consolidated list of analysis data from all sources.
       def analyze_files_by_tracking_method(recent_files)
         puts "📊 Analyzing files by tracking method...".colorize(:yellow)
 
@@ -93,6 +129,10 @@ module ComputerTools
         all_data
       end
 
+      # @private
+      # Generates and displays the final report.
+      # @param data [Array<Hash>] The consolidated analysis data.
+      # @return [void]
       def generate_report(data)
         puts "📋 Generating activity report...".colorize(:yellow)
 
@@ -105,11 +145,17 @@ module ComputerTools
         ).call
       end
 
+      # @private
+      # Handles the case where no recently modified files are found.
+      # @return [true]
       def handle_no_files
         puts "ℹ️  No files modified in the last #{@time_range}".colorize(:cyan)
         true
       end
 
+      # @private
+      # Handles the case where analysis yields no data.
+      # @return [true]
       def handle_no_data
         puts "ℹ️  No analyzable file data found".colorize(:cyan)
         true

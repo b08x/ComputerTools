@@ -2,12 +2,38 @@
 
 module ComputerTools
   module Actions
+    # Facilitates the interactive editing of an existing blueprint.
+    #
+    # This action provides a complete workflow for modifying a blueprint's code.
+    # It fetches the blueprint by its ID, opens its code in the user's
+    # preferred command-line editor (e.g., vim, nano), and waits for changes.
+    #
+    # Upon saving, it confirms the changes with the user and then performs a
+    # "delete-and-resubmit" operation. This ensures that the modified code
+    # gets new embeddings and a fresh AI-generated description, keeping the
+    # search index up-to-date.
     class BlueprintEditAction < Sublayer::Actions::Base
+      # Initializes the action with the ID of the blueprint to be edited.
+      #
+      # @param id [String, Integer] The unique identifier of the blueprint to edit.
       def initialize(id:)
         @id = id
         @db = ComputerTools::Wrappers::BlueprintDatabase.new
       end
 
+      # Executes the blueprint editing workflow.
+      #
+      # This method orchestrates the entire process:
+      # 1. Fetches the blueprint from the database.
+      # 2. Creates a temporary file with the blueprint's code.
+      # 3. Launches the user's configured editor to modify the file.
+      # 4. If changes are detected, it prompts the user for confirmation.
+      # 5. If confirmed, it deletes the original blueprint and creates a new one
+      #    with the modified code.
+      #
+      # @return [Boolean] Returns `true` if the edit was successful or if no
+      #   changes were made. Returns `false` if the blueprint is not found,
+      #   the editor fails, or the user cancels the operation.
       def call
         # Step 1: Fetch the current blueprint
         blueprint = @db.get_blueprint(@id)
@@ -62,6 +88,14 @@ module ComputerTools
 
       private
 
+      # Creates a temporary file containing the blueprint's code.
+      #
+      # It uses `detect_file_extension` to give the file the appropriate
+      # extension, which helps editors with syntax highlighting.
+      #
+      # @param blueprint [Hash] The blueprint data hash.
+      # @return [String] The path to the created temporary file.
+      # @private
       def create_temp_file(blueprint)
         # Detect file extension based on code content
         extension = detect_file_extension(blueprint[:code])
@@ -74,6 +108,14 @@ module ComputerTools
         temp_file.path
       end
 
+      # Detects the appropriate file extension for a given code snippet.
+      #
+      # Uses simple regex matching to infer the programming language and
+      # returns a corresponding file extension. Defaults to '.txt'.
+      #
+      # @param code [String] The source code of the blueprint.
+      # @return [String] The inferred file extension (e.g., '.rb', '.js').
+      # @private
       def detect_file_extension(code)
         case code
         when /class\s+\w+.*<.*ApplicationRecord/m, /def\s+\w+.*end/m, /require ['"].*['"]/m
@@ -95,6 +137,11 @@ module ComputerTools
         end
       end
 
+      # Launches the configured system editor to open the temporary file.
+      #
+      # @param temp_file [String] The path to the file to be opened.
+      # @return [Boolean] The success status of the system call.
+      # @private
       def launch_editor(temp_file)
         # Get editor preference from config or environment
         editor = get_editor_preference
@@ -106,6 +153,14 @@ module ComputerTools
         system("#{editor} #{temp_file}")
       end
 
+      # Determines the user's preferred editor.
+      #
+      # It checks for an 'editor' key in `config/blueprints.yml` first,
+      # then falls back to the `EDITOR` or `VISUAL` environment variables,
+      # and finally defaults to 'vim'.
+      #
+      # @return [String] The name of the editor command.
+      # @private
       def get_editor_preference
         # Check configuration file
         config_file = File.join(__dir__, '..', 'config', 'blueprints.yml')
@@ -119,6 +174,15 @@ module ComputerTools
         ENV['EDITOR'] || ENV['VISUAL'] || 'vim'
       end
 
+      # Prompts the user to confirm the destructive edit operation.
+      #
+      # It displays a warning and a preview of the changes before asking for
+      # user input.
+      #
+      # @param original_blueprint [Hash] The original blueprint data.
+      # @param modified_code [String] The code after being edited by the user.
+      # @return [Boolean] `true` if the user confirms, `false` otherwise.
+      # @private
       def confirm_edit_operation(original_blueprint, modified_code)
         puts "\n" + ("=" * 60)
         puts "🔄 Edit Operation Confirmation".colorize(:blue)
@@ -141,6 +205,15 @@ module ComputerTools
         ['y', 'yes'].include?(response)
       end
 
+      # Displays a simple preview of the code changes.
+      #
+      # Shows the first few lines of the original and modified code to give the
+      # user context for the changes they are about to confirm.
+      #
+      # @param original_code [String] The original, unmodified code.
+      # @param modified_code [String] The new, modified code.
+      # @return [void]
+      # @private
       def show_change_preview(original_code, modified_code)
         puts "📋 Change Preview:".colorize(:cyan)
 
@@ -165,6 +238,18 @@ module ComputerTools
         puts ""
       end
 
+      # Executes the core update logic by deleting the old blueprint and
+      # submitting a new one.
+      #
+      # This method reuses `BlueprintSubmitAction` to handle the creation of the
+      # new blueprint, ensuring consistency. It preserves the original name and
+      # categories but triggers AI regeneration of the description to match the
+      # new code.
+      #
+      # @param original_blueprint [Hash] The original blueprint data.
+      # @param modified_code [String] The new, modified code.
+      # @return [Boolean] `true` on success, `false` on failure.
+      # @private
       def perform_delete_and_resubmit(original_blueprint, modified_code)
         puts "🔄 Starting delete-and-resubmit workflow...".colorize(:blue)
 

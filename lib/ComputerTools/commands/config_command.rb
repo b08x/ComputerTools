@@ -2,16 +2,51 @@
 
 module ComputerTools
   module Commands
+    ##
+    # ConfigCommand handles all configuration management operations for ComputerTools.
+    # This command provides a comprehensive interface for setting up, viewing,
+    # editing, validating, and resetting the application configuration.
+    #
+    # The command follows a subcommand pattern where the first argument determines
+    # the specific configuration operation to perform. This design allows for a
+    # clean separation of concerns and provides a user-friendly interface for
+    # configuration management.
+    #
+    # @example Setup new configuration
+    #   ComputerTools::Commands::ConfigCommand.new({}).execute('setup')
+    #
+    # @example Show current configuration
+    #   ComputerTools::Commands::ConfigCommand.new({}).execute('show')
     class ConfigCommand < BaseCommand
+      ##
+      # Provides a description of what this command does, used in help text
+      #
+      # @return [String] A description of the command's purpose
       def self.description
         "Manage ComputerTools configuration settings"
       end
 
+      ##
+      # Initializes a new ConfigCommand instance
+      #
+      # @param [Hash] options The options to configure the command
       def initialize(options)
         super
         @prompt = TTY::Prompt.new
       end
 
+      ##
+      # Executes the configuration command with the provided arguments
+      #
+      # This method routes to the appropriate handler based on the subcommand provided.
+      # If no subcommand is provided, it defaults to the setup handler.
+      #
+      # @param [Array<String>] args The arguments to pass to the command
+      # @return [Boolean] true if the command executed successfully, false otherwise
+      #
+      # @example Execute with setup subcommand
+      #   command = ConfigCommand.new({})
+      #   command.execute(['setup'])
       def execute(*args)
         subcommand = args.shift
 
@@ -37,6 +72,18 @@ module ComputerTools
 
       private
 
+      ##
+      # Handles the configuration setup process
+      #
+      # This method guides the user through an interactive setup process to configure
+      # ComputerTools for their environment. It loads the configuration module and
+      # initiates the interactive setup procedure.
+      #
+      # @return [Boolean] true if setup was successful, false otherwise
+      #
+      # @example Run the setup handler
+      #   command = ConfigCommand.new({})
+      #   command.send(:handle_setup)
       def handle_setup
         puts "🔧 ComputerTools Configuration Setup".colorize(:blue)
         puts "=" * 40
@@ -60,6 +107,18 @@ module ComputerTools
         end
       end
 
+      ##
+      # Displays the current configuration settings
+      #
+      # This method loads and displays the current configuration in a formatted way,
+      # showing each configuration section with its values. If no configuration is
+      # found, it informs the user and suggests running the setup command.
+      #
+      # @return [Boolean] true if the configuration was displayed successfully, false otherwise
+      #
+      # @example Show current configuration
+      #   command = ConfigCommand.new({})
+      #   command.send(:handle_show)
       def handle_show
         puts "📋 Current Configuration".colorize(:blue)
         puts "=" * 25
@@ -87,6 +146,18 @@ module ComputerTools
         end
       end
 
+      ##
+      # Provides an interactive editor for modifying configuration sections
+      #
+      # This method allows users to select and edit specific configuration sections
+      # through an interactive menu. Users can choose to edit individual sections or
+      # run through the full setup process again.
+      #
+      # @return [Boolean] true if the configuration was edited successfully, false otherwise
+      #
+      # @example Edit configuration
+      #   command = ConfigCommand.new({})
+      #   command.send(:handle_edit)
       def handle_edit
         puts "✏️  Interactive Configuration Editor".colorize(:blue)
         puts "=" * 35
@@ -131,6 +202,17 @@ module ComputerTools
         end
       end
 
+      ##
+      # Resets the configuration by deleting the configuration file
+      #
+      # This method prompts the user for confirmation before deleting the configuration
+      # file. If the file doesn't exist, it informs the user.
+      #
+      # @return [Boolean] true if the configuration was reset successfully or didn't exist, false otherwise
+      #
+      # @example Reset configuration
+      #   command = ConfigCommand.new({})
+      #   command.send(:handle_reset)
       def handle_reset
         puts "🔄 Reset Configuration".colorize(:blue)
         puts "=" * 22
@@ -156,6 +238,17 @@ module ComputerTools
         end
       end
 
+      ##
+      # Validates the current configuration
+      #
+      # This method checks the validity of the current configuration, particularly
+      # focusing on verifying that required external tools and settings are available.
+      #
+      # @return [Boolean] true if the configuration is valid, false otherwise
+      #
+      # @example Validate configuration
+      #   command = ConfigCommand.new({})
+      #   command.send(:handle_validate)
       def handle_validate
         puts "🔍 Validating Configuration".colorize(:blue)
         puts "=" * 26
@@ -184,6 +277,18 @@ module ComputerTools
         end
       end
 
+      ##
+      # Displays a configuration section with proper formatting
+      #
+      # This helper method formats and displays a configuration section with
+      # appropriate coloring and indentation based on the data type.
+      #
+      # @param [String] title The title of the section to display
+      # @param [Hash, Array, Object] data The configuration data to display
+      #
+      # @example Display a configuration section
+      #   command = ConfigCommand.new({})
+      #   command.send(:display_config_section, "Paths", { home: "/home/user" })
       def display_config_section(title, data)
         puts "\n#{title}:".colorize(:cyan)
         case data
@@ -200,6 +305,22 @@ module ComputerTools
         end
       end
 
+      ##
+      # Formats a configuration value for display
+      #
+      # This helper method applies appropriate formatting and coloring to configuration
+      # values based on their type. Special handling is provided for command/args hashes.
+      #
+      # @param [Object] value The value to format
+      # @return [String] The formatted value with appropriate coloring
+      #
+      # @example Format a simple value
+      #   command = ConfigCommand.new({})
+      #   command.send(:format_value, "/home/user")
+      #
+      # @example Format a command hash
+      #   command = ConfigCommand.new({})
+      #   command.send(:format_value, { command: "ls", args: "-la" })
       def format_value(value)
         case value
         when Hash
@@ -215,6 +336,15 @@ module ComputerTools
         end
       end
 
+      ##
+      # Displays help information for the configuration command
+      #
+      # This method outputs detailed help information including available subcommands,
+      # configuration sections, file information, examples, and tips.
+      #
+      # @example Show help
+      #   command = ConfigCommand.new({})
+      #   command.send(:show_help)
       def show_help
         puts <<~HELP
           Configuration Management Commands:
