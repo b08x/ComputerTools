@@ -1,5 +1,5 @@
 filename,path,content,is_binary
-ComputerTools.csv,/,"filename,path,content,is_binary",false
+computertools.csv,/,"filename,path,content,is_binary",false
 ComputerTools,/exe/,"#!/usr/bin/env ruby
 
 lib_dir = File.expand_path(File.join(__dir__, "".."", ""lib""))
@@ -8,10 +8,7 @@ $:.unshift lib_dir unless $:.include?(lib_dir)
 require ""ComputerTools""
 
 ComputerTools::CLI.start(ARGV)",false
-blueprint_config_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'yaml'
-require 'fileutils'
+blueprint_config_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -28,7 +25,7 @@ module ComputerTools
     class BlueprintConfigAction < Sublayer::Actions::Base
       # The path to the YAML file where configuration is stored.
       CONFIG_PATH = File.join(__dir__, '..', 'config', 'blueprints.yml')
-      
+
       ##
       # Initializes the configuration action.
       #
@@ -59,13 +56,13 @@ module ComputerTools
         when 'reset'
           reset_configuration
         else
-          puts ""❌ Unknown config subcommand: #{@subcommand}"".colorize(:red)
+          ComputerTools.logger.failure(""Unknown config subcommand: '#{@subcommand}'"")
           show_config_help
           false
         end
-      rescue => e
-        puts ""❌ Error managing configuration: #{e.message}"".colorize(:red)
-        puts e.backtrace.first(3).join(""\n"") if ENV['DEBUG']
+      rescue StandardError => e
+        ComputerTools.logger.failure(""Error managing configuration: #{e.message}"")
+        ComputerTools.logger.debug(e) # tty-logger will format the exception and backtrace
         false
       end
 
@@ -81,44 +78,44 @@ module ComputerTools
       # @return [Boolean] Returns `true`.
       def show_configuration
         config = load_configuration
-        
-        puts ""\n📋 Blueprint Configuration"".colorize(:blue)
+
+        ComputerTools.logger.step(""Blueprint Configuration"")
         puts ""="" * 60
         puts ""Config file: #{CONFIG_PATH}""
         puts ""File exists: #{File.exist?(CONFIG_PATH) ? 'Yes' : 'No'}""
         puts """"
-        
+
         if config
           puts ""Database Configuration:"".colorize(:cyan)
           puts ""  URL: #{mask_password(config.dig('database', 'url') || 'Not set')}""
           puts """"
-          
+
           puts ""AI Configuration:"".colorize(:cyan)
           puts ""  Provider: #{config.dig('ai', 'provider') || 'Not set'}""
           puts ""  Model: #{config.dig('ai', 'model') || 'Not set'}""
           puts ""  API Key: #{config.dig('ai', 'api_key') ? 'Set' : 'Not set'}""
           puts """"
-          
+
           puts ""Editor Configuration:"".colorize(:cyan)
           puts ""  Editor: #{config.dig('editor') || 'Not set'}""
           puts ""  Auto-save: #{config.dig('auto_save_edits') || 'Not set'}""
           puts """"
-          
+
           puts ""Feature Flags:"".colorize(:cyan)
           puts ""  Auto-description: #{config.dig('features', 'auto_description') || 'Not set'}""
           puts ""  Auto-categorization: #{config.dig('features', 'auto_categorize') || 'Not set'}""
           puts ""  Debug mode: #{config.dig('debug') || 'Not set'}""
         else
-          puts ""❌ No configuration found"".colorize(:red)
-          puts ""💡 Run 'blueprint config setup' to create configuration"".colorize(:yellow)
+          ComputerTools.logger.failure(""No configuration found"")
+          ComputerTools.logger.tip(""Run 'blueprint config setup' to create configuration"")
         end
-        
+
         puts ""="" * 60
         puts """"
-        
+
         # Show environment variables
         show_environment_variables
-        
+
         true
       end
 
@@ -132,77 +129,75 @@ module ComputerTools
       # @return [Boolean] Returns `true` if the configuration is saved
       #   successfully, `false` otherwise.
       def setup_configuration
-        puts ""🔧 Blueprint Configuration Setup"".colorize(:blue)
+        ComputerTools.logger.step(""Blueprint Configuration Setup"")
         puts ""="" * 50
         puts """"
-        
+
         config = load_configuration || {}
-        
+
         # Database configuration
         puts ""📊 Database Configuration"".colorize(:cyan)
         current_db = config.dig('database', 'url') || 'postgres://localhost/blueprints_development'
         db_url = prompt_for_input(""Database URL"", current_db)
-        
+
         config['database'] = { 'url' => db_url }
-        
+
         # AI configuration
         puts ""\n🤖 AI Configuration"".colorize(:cyan)
         current_provider = config.dig('ai', 'provider') || 'gemini'
         provider = prompt_for_choice(""AI Provider"", ['gemini', 'openai'], current_provider)
-        
+
         current_model = config.dig('ai', 'model') || (provider == 'gemini' ? 'text-embedding-004' : 'text-embedding-3-small')
         model = prompt_for_input(""AI Model"", current_model)
-        
+
         puts ""💡 Set API key via environment variable:"".colorize(:yellow)
         puts ""   export GEMINI_API_KEY=your_key_here"" if provider == 'gemini'
         puts ""   export OPENAI_API_KEY=your_key_here"" if provider == 'openai'
-        
+
         config['ai'] = {
           'provider' => provider,
           'model' => model
         }
-        
+
         # Editor configuration
         puts ""\n✏️  Editor Configuration"".colorize(:cyan)
         current_editor = config.dig('editor') || ENV['EDITOR'] || ENV['VISUAL'] || 'vim'
         editor = prompt_for_input(""Preferred editor"", current_editor)
-        
+
         current_auto_save = config.dig('auto_save_edits')
-        auto_save = prompt_for_boolean(""Auto-save edits"", current_auto_save.nil? ? true : current_auto_save)
-        
+        auto_save = prompt_for_boolean(""Auto-save edits"", current_auto_save.nil? || current_auto_save)
+
         config['editor'] = editor
         config['auto_save_edits'] = auto_save
-        
+
         # Feature flags
         puts ""\n🎛️  Feature Configuration"".colorize(:cyan)
         current_auto_desc = config.dig('features', 'auto_description')
-        auto_desc = prompt_for_boolean(""Auto-generate descriptions"", current_auto_desc.nil? ? true : current_auto_desc)
-        
+        auto_desc = prompt_for_boolean(""Auto-generate descriptions"", current_auto_desc.nil? || current_auto_desc)
+
         current_auto_cat = config.dig('features', 'auto_categorize')
-        auto_cat = prompt_for_boolean(""Auto-generate categories"", current_auto_cat.nil? ? true : current_auto_cat)
-        
+        auto_cat = prompt_for_boolean(""Auto-generate categories"", current_auto_cat.nil? || current_auto_cat)
+
         current_debug = config.dig('debug')
         debug = prompt_for_boolean(""Debug mode"", current_debug || false)
-        
+
         config['features'] = {
           'auto_description' => auto_desc,
           'auto_categorize' => auto_cat
         }
         config['debug'] = debug
-        
+
         # Save configuration
         puts ""\n💾 Saving Configuration"".colorize(:blue)
         save_success = save_configuration(config)
-        
+
         if save_success
-          puts ""✅ Configuration saved successfully!"".colorize(:green)
-          puts ""📁 Config file: #{CONFIG_PATH}"".colorize(:cyan)
-          puts """"
-          puts ""🧪 Run 'blueprint config test' to validate the configuration"".colorize(:yellow)
+          ComputerTools.logger.success(""Configuration saved successfully!"", file: CONFIG_PATH)
+          ComputerTools.logger.tip(""Run 'blueprint config test' to validate the configuration"")
         else
-          puts ""❌ Failed to save configuration"".colorize(:red)
+          ComputerTools.logger.failure(""Failed to save configuration"")
         end
-        
+
         save_success
       end
 
@@ -214,40 +209,40 @@ module ComputerTools
       #
       # @return [Boolean] Returns `true` if all tests pass, `false` otherwise.
       def test_configuration
-        puts ""🧪 Testing Blueprint Configuration"".colorize(:blue)
+        ComputerTools.logger.step(""Testing Blueprint Configuration"")
         puts ""="" * 50
-        
+
         config = load_configuration
         unless config
-          puts ""❌ No configuration found"".colorize(:red)
+          ComputerTools.logger.failure(""No configuration found"")
           return false
         end
-        
+
         all_tests_passed = true
-        
+
         # Test database connection
         puts ""\n📊 Testing database connection..."".colorize(:cyan)
         db_success = test_database_connection(config)
         all_tests_passed &&= db_success
-        
+
         # Test AI API
         puts ""\n🤖 Testing AI API connection..."".colorize(:cyan)
         ai_success = test_ai_connection(config)
         all_tests_passed &&= ai_success
-        
+
         # Test editor
         puts ""\n✏️  Testing editor availability..."".colorize(:cyan)
         editor_success = test_editor(config)
         all_tests_passed &&= editor_success
-        
-        puts ""\n"" + ""="" * 50
+
+        puts ""\n"" + (""="" * 50)
         if all_tests_passed
-          puts ""✅ All configuration tests passed!"".colorize(:green)
+          ComputerTools.logger.success(""All configuration tests passed!"")
         else
-          puts ""❌ Some configuration tests failed"".colorize(:red)
-          puts ""💡 Run 'blueprint config setup' to fix issues"".colorize(:yellow)
+          ComputerTools.logger.failure(""Some configuration tests failed"")
+          ComputerTools.logger.tip(""Run 'blueprint config setup' to fix issues"")
         end
-        
+
         all_tests_passed
       end
 
@@ -262,18 +257,18 @@ module ComputerTools
         if File.exist?(CONFIG_PATH)
           print ""⚠️  This will delete the existing configuration. Continue? (y/N): ""
           response = STDIN.gets.chomp.downcase
-          
-          if response == 'y' || response == 'yes'
+
+          if ['y', 'yes'].include?(response)
             File.delete(CONFIG_PATH)
-            puts ""✅ Configuration reset successfully"".colorize(:green)
-            puts ""💡 Run 'blueprint config setup' to create new configuration"".colorize(:yellow)
+            ComputerTools.logger.success(""Configuration reset successfully"")
+            ComputerTools.logger.tip(""Run 'blueprint config setup' to create new configuration"")
             true
           else
-            puts ""❌ Reset cancelled"".colorize(:yellow)
+            ComputerTools.logger.warn(""Reset cancelled"")
             false
           end
         else
-          puts ""ℹ️  No configuration file found to reset"".colorize(:blue)
+          ComputerTools.logger.info(""No configuration file found to reset"")
           true
         end
       end
@@ -301,9 +296,10 @@ module ComputerTools
       #   file does not exist or an error occurs during loading.
       def load_configuration
         return nil unless File.exist?(CONFIG_PATH)
+
         YAML.load_file(CONFIG_PATH)
-      rescue => e
-        puts ""⚠️  Error loading configuration: #{e.message}"".colorize(:yellow)
+      rescue StandardError => e
+        ComputerTools.logger.warn(""Error loading configuration: #{e.message}"")
         nil
       end
 
@@ -318,11 +314,11 @@ module ComputerTools
         # Ensure directory exists
         config_dir = File.dirname(CONFIG_PATH)
         FileUtils.mkdir_p(config_dir) unless Dir.exist?(config_dir)
-        
+
         File.write(CONFIG_PATH, config.to_yaml)
         true
-      rescue => e
-        puts ""❌ Error saving configuration: #{e.message}"".colorize(:red)
+      rescue StandardError => e
+        ComputerTools.logger.failure(""Error saving configuration: #{e.message}"")
         false
       end
 
@@ -331,16 +327,16 @@ module ComputerTools
       # @return [void]
       def show_environment_variables
         puts ""🌍 Environment Variables:"".colorize(:blue)
-        
+
         env_vars = {
-          'GEMINI_API_KEY' => ENV['GEMINI_API_KEY'],
-          'OPENAI_API_KEY' => ENV['OPENAI_API_KEY'],
-          'BLUEPRINT_DATABASE_URL' => ENV['BLUEPRINT_DATABASE_URL'],
-          'DATABASE_URL' => ENV['DATABASE_URL'],
-          'EDITOR' => ENV['EDITOR'],
-          'VISUAL' => ENV['VISUAL']
+          'GEMINI_API_KEY' => ENV.fetch('GEMINI_API_KEY', nil),
+          'OPENAI_API_KEY' => ENV.fetch('OPENAI_API_KEY', nil),
+          'BLUEPRINT_DATABASE_URL' => ENV.fetch('BLUEPRINT_DATABASE_URL', nil),
+          'DATABASE_URL' => ENV.fetch('DATABASE_URL', nil),
+          'EDITOR' => ENV.fetch('EDITOR', nil),
+          'VISUAL' => ENV.fetch('VISUAL', nil)
         }
-        
+
         env_vars.each do |key, value|
           status = value ? 'Set' : 'Not set'
           puts ""  #{key}: #{status}""
@@ -354,17 +350,15 @@ module ComputerTools
       # @param config [Hash] The loaded configuration hash.
       # @return [Boolean] `true` if the connection is successful, `false` otherwise.
       def test_database_connection(config)
-        begin
-          require 'sequel'
-          db_url = config.dig('database', 'url')
-          db = Sequel.connect(db_url)
-          db.test_connection
-          puts ""✅ Database connection successful"".colorize(:green)
-          true
-        rescue => e
-          puts ""❌ Database connection failed: #{e.message}"".colorize(:red)
-          false
-        end
+        require 'sequel'
+        db_url = config.dig('database', 'url')
+        db = Sequel.connect(db_url)
+        db.test_connection
+        ComputerTools.logger.success(""Database connection successful"")
+        true
+      rescue StandardError => e
+        ComputerTools.logger.failure(""Database connection failed: #{e.message}"")
+        false
       end
 
       ##
@@ -380,16 +374,16 @@ module ComputerTools
         provider = config.dig('ai', 'provider')
         api_key = case provider
                   when 'gemini'
-                    ENV['GEMINI_API_KEY']
+                    ENV.fetch('GEMINI_API_KEY', nil)
                   when 'openai'
-                    ENV['OPENAI_API_KEY']
+                    ENV.fetch('OPENAI_API_KEY', nil)
                   end
-        
+
         if api_key
-          puts ""✅ AI API key found for #{provider}"".colorize(:green)
+          ComputerTools.logger.success(""AI API key found for #{provider}"")
           true
         else
-          puts ""❌ AI API key not found for #{provider}"".colorize(:red)
+          ComputerTools.logger.failure(""AI API key not found for #{provider}"")
           false
         end
       end
@@ -402,10 +396,10 @@ module ComputerTools
       def test_editor(config)
         editor = config.dig('editor')
         if system(""which #{editor} > /dev/null 2>&1"")
-          puts ""✅ Editor '#{editor}' found"".colorize(:green)
+          ComputerTools.logger.success(""Editor '#{editor}' found"")
           true
         else
-          puts ""❌ Editor '#{editor}' not found"".colorize(:red)
+          ComputerTools.logger.failure(""Editor '#{editor}' not found"")
           false
         end
       end
@@ -416,11 +410,11 @@ module ComputerTools
       # @param prompt [String] The message to display to the user.
       # @param default [String, nil] The default value to use if the user enters nothing.
       # @return [String] The user's input or the default value.
-      def prompt_for_input(prompt, default = nil)
+      def prompt_for_input(prompt, default=nil)
         print ""#{prompt}""
         print "" [#{default}]"" if default
         print "": ""
-        
+
         input = STDIN.gets.chomp
         input.empty? ? default : input
       end
@@ -432,10 +426,10 @@ module ComputerTools
       # @param choices [Array<String>] A list of available options.
       # @param default [String, nil] The default choice if the user enters nothing.
       # @return [String] The user's selection or the default value.
-      def prompt_for_choice(prompt, choices, default = nil)
+      def prompt_for_choice(prompt, choices, default=nil)
         puts ""#{prompt} (#{choices.join('/')})""
         print default ? ""[#{default}]: "" : "": ""
-        
+
         input = STDIN.gets.chomp
         input.empty? ? default : input
       end
@@ -448,16 +442,16 @@ module ComputerTools
       #   to use if the user enters nothing.
       # @return [Boolean, nil] Returns `true` for 'y', `false` for 'n', or the
       #   default value for any other input.
-      def prompt_for_boolean(prompt, default = nil)
+      def prompt_for_boolean(prompt, default=nil)
         default_text = case default
-                      when true then ' [Y/n]'
-                      when false then ' [y/N]'
-                      else ' [y/n]'
-                      end
-        
+                       when true then ' [Y/n]'
+                       when false then ' [y/N]'
+                       else ' [y/n]'
+                       end
+
         print ""#{prompt}#{default_text}: ""
         input = STDIN.gets.chomp.downcase
-        
+
         case input
         when 'y', 'yes', 'true'
           true
@@ -475,12 +469,13 @@ module ComputerTools
       # @return [String] The URL with the password replaced by '***'.
       def mask_password(url)
         return url unless url.include?(':') && url.include?('@')
+
         url.gsub(/:[^:@]*@/, ':***@')
       end
     end
   end
 end",false
-blueprint_delete_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+blueprint_delete_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -608,9 +603,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_edit_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'tempfile'
+blueprint_edit_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -631,10 +624,10 @@ module ComputerTools
         puts ""✏️  Editing blueprint: #{blueprint[:name]}"".colorize(:blue)
         puts ""Original description: #{blueprint[:description]}""
         puts ""Categories: #{blueprint[:categories].map { |c| c[:title] }.join(', ')}"" if blueprint[:categories].any?
-        
+
         # Step 2: Open editor with current code
         temp_file = create_temp_file(blueprint)
-        
+
         begin
           # Step 3: Launch editor
           editor_success = launch_editor(temp_file)
@@ -645,7 +638,7 @@ module ComputerTools
 
           # Step 4: Read modified content
           modified_code = File.read(temp_file)
-          
+
           # Step 5: Check if content actually changed
           if modified_code.strip == blueprint[:code].strip
             puts ""ℹ️  No changes detected"".colorize(:blue)
@@ -653,7 +646,7 @@ module ComputerTools
           end
 
           puts ""✅ Changes detected"".colorize(:green)
-          
+
           # Step 6: Confirm the edit operation
           unless confirm_edit_operation(blueprint, modified_code)
             puts ""❌ Edit operation cancelled"".colorize(:yellow)
@@ -662,12 +655,11 @@ module ComputerTools
 
           # Step 7: Execute delete-and-resubmit workflow
           perform_delete_and_resubmit(blueprint, modified_code)
-          
         ensure
           # Clean up temporary file
           File.delete(temp_file) if File.exist?(temp_file)
         end
-      rescue => e
+      rescue StandardError => e
         puts ""❌ Error during edit operation: #{e.message}"".colorize(:red)
         puts e.backtrace.first(3).join(""\n"") if ENV['DEBUG']
         false
@@ -678,7 +670,7 @@ module ComputerTools
       def create_temp_file(blueprint)
         # Detect file extension based on code content
         extension = detect_file_extension(blueprint[:code])
-        
+
         # Create safe filename
         safe_name = blueprint[:name].gsub(/[^a-zA-Z0-9_-]/, '_').downcase
         temp_file = Tempfile.new([""blueprint_#{@id}_#{safe_name}"", extension])
@@ -711,10 +703,10 @@ module ComputerTools
       def launch_editor(temp_file)
         # Get editor preference from config or environment
         editor = get_editor_preference
-        
+
         puts ""🔧 Opening #{editor} with blueprint code..."".colorize(:cyan)
         puts ""💡 Save and exit when done editing"".colorize(:cyan)
-        
+
         # Launch editor and wait for it to complete
         system(""#{editor} #{temp_file}"")
       end
@@ -733,7 +725,7 @@ module ComputerTools
       end
 
       def confirm_edit_operation(original_blueprint, modified_code)
-        puts ""\n"" + ""="" * 60
+        puts ""\n"" + (""="" * 60)
         puts ""🔄 Edit Operation Confirmation"".colorize(:blue)
         puts ""="" * 60
         puts ""Original blueprint: #{original_blueprint[:name]} (ID: #{@id})""
@@ -745,63 +737,63 @@ module ComputerTools
         puts ""   2. CREATE a new blueprint with the modified code"".colorize(:yellow)
         puts ""   3. Generate NEW embeddings for better search"".colorize(:yellow)
         puts """"
-        
+
         # Show a preview of changes
         show_change_preview(original_blueprint[:code], modified_code)
-        
+
         print ""Continue with edit operation? (y/N): ""
         response = STDIN.gets.chomp.downcase
-        response == 'y' || response == 'yes'
+        ['y', 'yes'].include?(response)
       end
 
       def show_change_preview(original_code, modified_code)
         puts ""📋 Change Preview:"".colorize(:cyan)
-        
+
         # Show first and last few lines to give context
         original_lines = original_code.lines
         modified_lines = modified_code.lines
-        
+
         puts ""Original (first 3 lines):""
         original_lines.first(3).each_with_index do |line, i|
-          puts ""  #{i+1}: #{line.chomp}""
+          puts ""  #{i + 1}: #{line.chomp}""
         end
-        
+
         puts ""\nModified (first 3 lines):""
         modified_lines.first(3).each_with_index do |line, i|
-          puts ""  #{i+1}: #{line.chomp}""
+          puts ""  #{i + 1}: #{line.chomp}""
         end
-        
+
         if original_lines.length != modified_lines.length
           puts ""\nLine count changed: #{original_lines.length} → #{modified_lines.length}"".colorize(:yellow)
         end
-        
+
         puts """"
       end
 
       def perform_delete_and_resubmit(original_blueprint, modified_code)
         puts ""🔄 Starting delete-and-resubmit workflow..."".colorize(:blue)
-        
+
         # Store original metadata for rollback
         original_data = {
           name: original_blueprint[:name],
           description: original_blueprint[:description],
           categories: original_blueprint[:categories].map { |c| c[:title] }
         }
-        
+
         # Step 1: Delete the existing blueprint
         puts ""🗑️  Deleting original blueprint..."".colorize(:yellow)
         delete_success = @db.delete_blueprint(@id)
-        
+
         unless delete_success
           puts ""❌ Failed to delete original blueprint. Aborting edit."".colorize(:red)
           return false
         end
-        
+
         puts ""✅ Original blueprint deleted"".colorize(:green)
-        
+
         # Step 2: Submit the modified code as a new blueprint
         puts ""📝 Creating new blueprint with modified code..."".colorize(:yellow)
-        
+
         submit_action = ComputerTools::Actions::BlueprintSubmitAction.new(
           code: modified_code,
           name: original_data[:name], # Keep original name initially
@@ -810,9 +802,9 @@ module ComputerTools
           auto_describe: true,
           auto_categorize: false # Keep original categories unless user wants new ones
         )
-        
+
         new_blueprint_success = submit_action.call
-        
+
         if new_blueprint_success
           puts ""✅ Edit operation completed successfully!"".colorize(:green)
           puts ""💡 The blueprint now has fresh embeddings for improved search"".colorize(:cyan)
@@ -827,7 +819,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_export_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+blueprint_export_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -1026,7 +1018,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_list_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+blueprint_list_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -1320,7 +1312,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_search_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+blueprint_search_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -1489,7 +1481,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_submit_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+blueprint_submit_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -1624,7 +1616,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_view_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+blueprint_view_action.rb,/lib/ComputerTools/actions/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -1784,9 +1776,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_analyze_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'tty-prompt'
+deepgram_analyze_action.rb,/lib/ComputerTools/actions/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2043,10 +2033,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_config_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'yaml'
-require 'fileutils'
+deepgram_config_action.rb,/lib/ComputerTools/actions/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2203,7 +2190,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_convert_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+deepgram_convert_action.rb,/lib/ComputerTools/actions/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2309,7 +2296,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_parse_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
+deepgram_parse_action.rb,/lib/ComputerTools/actions/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2421,9 +2408,7 @@ module ComputerTools
     end
   end
 end",false
-file_discovery_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'tty-which'
+file_discovery_action.rb,/lib/ComputerTools/actions/file_activity/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2514,10 +2499,7 @@ module ComputerTools
     end
   end
 end",false
-git_analysis_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'git'
-require_relative '../wrappers/git_wrapper'
+git_analysis_action.rb,/lib/ComputerTools/actions/file_activity/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2617,15 +2599,7 @@ module ComputerTools
     end
   end
 end",false
-latest_changes_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'colorize'
-require_relative 'file_discovery_action'
-require_relative 'git_analysis_action'
-require_relative 'yadm_analysis_action'
-require_relative 'restic_analysis_action'
-require_relative '../generators/file_activity_report_generator'
-require_relative '../configuration'
+latest_changes_action.rb,/lib/ComputerTools/actions/file_activity/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2744,11 +2718,7 @@ module ComputerTools
     end
   end
 end",false
-restic_analysis_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'tty-which'
-require 'open3'
-require_relative '../wrappers/restic_wrapper'
+restic_analysis_action.rb,/lib/ComputerTools/actions/file_activity/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -2888,10 +2858,7 @@ module ComputerTools
     end
   end
 end",false
-run_shell_command.rb,/lib/ComputerTools/actions/,[Binary file - content not included],true
-yadm_analysis_action.rb,/lib/ComputerTools/actions/,"# frozen_string_literal: true
-
-require 'tty-which'
+yadm_analysis_action.rb,/lib/ComputerTools/actions/file_activity/,"# frozen_string_literal: true
 
 module ComputerTools
   module Actions
@@ -3013,6 +2980,7 @@ module ComputerTools
     end
   end
 end",false
+run_shell_command.rb,/lib/ComputerTools/actions/,[Binary file - content not included],true
 example_agent.rb,/lib/ComputerTools/agents/,"# frozen_string_literal: true
 
 module ComputerTools
@@ -3068,7 +3036,9 @@ module ComputerTools
     end
   end
 end",false
-base_command.rb,/lib/ComputerTools/commands/,"module ComputerTools
+base_command.rb,/lib/ComputerTools/commands/,"# frozen_string_literal: true
+
+module ComputerTools
   module Commands
     class BaseCommand
       def self.command_name
@@ -3085,6 +3055,45 @@ base_command.rb,/lib/ComputerTools/commands/,"module ComputerTools
 
       def execute(*args)
         raise NotImplementedError, ""#{self.class} must implement #execute""
+      end
+
+      protected
+
+      # Logger convenience methods for easy migration
+      def logger
+        ComputerTools.logger
+      end
+
+      def log_success(message, **data)
+        ComputerTools.logger.success(message, **data)
+      end
+
+      def log_failure(message, **data)
+        ComputerTools.logger.failure(message, **data)
+      end
+
+      def log_warning(message, **data)
+        ComputerTools.logger.warn(message, **data)
+      end
+
+      def log_tip(message, **data)
+        ComputerTools.logger.tip(message, **data)
+      end
+
+      def log_step(message, **data)
+        ComputerTools.logger.step(message, **data)
+      end
+
+      def log_info(message, **data)
+        ComputerTools.logger.info(message, **data)
+      end
+
+      def log_debug(message, **data)
+        ComputerTools.logger.debug(message, **data)
+      end
+
+      def log_error(message, **data)
+        ComputerTools.logger.error(message, **data)
       end
     end
   end
@@ -3311,10 +3320,6 @@ module ComputerTools
 end",false
 config_command.rb,/lib/ComputerTools/commands/,"# frozen_string_literal: true
 
-require 'colorize'
-require 'tty-prompt'
-require_relative 'base_command'
-
 module ComputerTools
   module Commands
     class ConfigCommand < BaseCommand
@@ -3393,6 +3398,7 @@ module ComputerTools
           display_config_section(""Display"", config_hash['display']) if config_hash['display']
           display_config_section(""Restic"", config_hash['restic']) if config_hash['restic']
           display_config_section(""Terminal"", config_hash['terminal']) if config_hash['terminal']
+          display_config_section(""Logger"", config_hash['logger']) if config_hash['logger']
 
           true
         rescue StandardError => e
@@ -3414,6 +3420,7 @@ module ComputerTools
             menu.choice ""🎨 Display settings"", :display
             menu.choice ""📦 Restic backup settings"", :restic
             menu.choice ""💻 Terminal settings"", :terminal
+            menu.choice ""📝 Logger settings"", :logger
             menu.choice ""🔄 Full setup (all sections)"", :all
             menu.choice ""❌ Cancel"", :cancel
           end
@@ -3429,6 +3436,8 @@ module ComputerTools
             config.send(:configure_restic)
           when :terminal
             config.send(:configure_terminals)
+          when :logger
+            config.send(:configure_logger)
           when :all
             config.interactive_setup
           end
@@ -3542,6 +3551,7 @@ module ComputerTools
             • Display: Time format and output preferences#{'  '}
             • Restic: Backup mounting timeout and settings
             • Terminal: Default terminal emulator command and arguments
+            • Logger: Log levels, file logging, and output preferences
 
           💾 Configuration File:
             Location: ~/.config/computertools/config.yml
@@ -3834,9 +3844,6 @@ module ComputerTools
   end
 end",false
 latest_changes_command.rb,/lib/ComputerTools/commands/,"# frozen_string_literal: true
-
-require 'colorize'
-require_relative 'base_command'
 
 module ComputerTools
   module Commands
@@ -4413,7 +4420,9 @@ module ComputerTools
     end
   end
 end",false
-overview_command.rb,/lib/ComputerTools/commands/,"module ComputerTools
+overview_command.rb,/lib/ComputerTools/commands/,"# frozen_string_literal: true
+
+module ComputerTools
   module Commands
     class OverviewCommand < BaseCommand
       def self.description
@@ -4523,7 +4532,9 @@ sublayer.yml,/lib/ComputerTools/config/,"---
 :project_template: CLI
 :ai_provider: Gemini
 :ai_model: gemini-2.0-flash",false
-config.rb,/lib/ComputerTools/,"module ComputerTools
+config.rb,/lib/ComputerTools/,"# frozen_string_literal: true
+
+module ComputerTools
   module Config
     def self.load
       config_path = File.join(File.dirname(__FILE__), ""config"", ""sublayer.yml"")
@@ -4543,12 +4554,6 @@ config.rb,/lib/ComputerTools/,"module ComputerTools
   end
 end",false
 configuration.rb,/lib/ComputerTools/,"# frozen_string_literal: true
-
-require 'tty-config'
-require 'tty-prompt'
-require 'terrapin'
-require 'tty-file'
-require 'colorize'
 
 module ComputerTools
   class Configuration
@@ -4577,6 +4582,7 @@ module ComputerTools
       configure_display
       configure_restic
       configure_terminals
+      configure_logger
 
       save_config
       puts ""\n✅ Configuration saved to #{@config_file}"".colorize(:green)
@@ -4698,6 +4704,12 @@ module ComputerTools
       @config.set(:terminal, :command, value: 'kitty')
       @config.set(:terminal, :args, value: '-e')
 
+      # Logger defaults
+      @config.set(:logger, :level, value: 'info')
+      @config.set(:logger, :file_logging, value: false)
+      @config.set(:logger, :file_path, value: default_log_path_for_config)
+      @config.set(:logger, :file_level, value: 'debug')
+
       setup_environment_variables
       setup_validators
 
@@ -4716,6 +4728,10 @@ module ComputerTools
       @config.set_from_env(:restic, :mount_timeout) { 'COMPUTERTOOLS_RESTIC_TIMEOUT' }
       @config.set_from_env(:terminal, :command) { 'COMPUTERTOOLS_TERMINAL_COMMAND' }
       @config.set_from_env(:terminal, :args) { 'COMPUTERTOOLS_TERMINAL_ARGS' }
+      @config.set_from_env(:logger, :level) { 'COMPUTERTOOLS_LOG_LEVEL' }
+      @config.set_from_env(:logger, :file_logging) { 'COMPUTERTOOLS_LOG_FILE_ENABLED' }
+      @config.set_from_env(:logger, :file_path) { 'COMPUTERTOOLS_LOG_FILE_PATH' }
+      @config.set_from_env(:logger, :file_level) { 'COMPUTERTOOLS_LOG_FILE_LEVEL' }
     end
 
     def setup_validators
@@ -4802,9 +4818,35 @@ module ComputerTools
       args = @prompt.ask(""Terminal arguments:"", default: current_args)
       @config.set(:terminal, :args, value: args)
     end
+
+    def configure_logger
+      puts ""\n📝 Logger Configuration"".colorize(:blue)
+
+      current_level = @config.fetch(:logger, :level) { 'info' }
+      level = @prompt.select(""Console log level:"", %w[debug info warn error], default: current_level)
+      @config.set(:logger, :level, value: level)
+
+      enable_file_logging = @prompt.yes?(""Enable logging to a file?"", default: @config.fetch(:logger, :file_logging))
+      @config.set(:logger, :file_logging, value: enable_file_logging)
+
+      return unless enable_file_logging
+
+      current_path = @config.fetch(:logger, :file_path) { default_log_path_for_config }
+      path = @prompt.ask(""Log file path:"", default: current_path)
+      @config.set(:logger, :file_path, value: path)
+
+      current_file_level = @config.fetch(:logger, :file_level) { 'debug' }
+      file_level = @prompt.select(""File log level:"", %w[debug info warn error], default: current_file_level)
+      @config.set(:logger, :file_level, value: file_level)
+    end
+
+    def default_log_path_for_config
+      state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
+      File.join(state_home, 'computertools', 'app.log')
+    end
   end
 end",false
-blueprint_category_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+blueprint_category_generator.rb,/lib/ComputerTools/generators/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -4865,7 +4907,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_description_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+blueprint_description_generator.rb,/lib/ComputerTools/generators/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -4927,7 +4969,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_improvement_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+blueprint_improvement_generator.rb,/lib/ComputerTools/generators/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -4999,7 +5041,7 @@ module ComputerTools
     end
   end
 end",false
-blueprint_name_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+blueprint_name_generator.rb,/lib/ComputerTools/generators/blueprint/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -5048,7 +5090,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_insights_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+deepgram_insights_generator.rb,/lib/ComputerTools/generators/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -5134,7 +5176,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_summary_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+deepgram_summary_generator.rb,/lib/ComputerTools/generators/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -5198,7 +5240,7 @@ module ComputerTools
     end
   end
 end",false
-deepgram_topics_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
+deepgram_topics_generator.rb,/lib/ComputerTools/generators/deepgram/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -5269,10 +5311,7 @@ module ComputerTools
     end
   end
 end",false
-file_activity_report_generator.rb,/lib/ComputerTools/generators/,"# frozen_string_literal: true
-
-require 'tty-table'
-require 'json'
+file_activity_report_generator.rb,/lib/ComputerTools/generators/file_activity/,"# frozen_string_literal: true
 
 module ComputerTools
   module Generators
@@ -5670,6 +5709,124 @@ module ComputerTools
     end
   end
 end",false
+logger.rb,/lib/ComputerTools/,"# frozen_string_literal: true
+
+module ComputerTools
+  # Centralized logger module for the ComputerTools application.
+  # Encapsulates TTY::Logger configuration and provides a singleton instance.
+  module Logger
+    # Class variable to hold the singleton logger instance.
+    @@instance = nil
+
+    # Retrieves the singleton logger instance.
+    # On first call, it initializes and configures the logger.
+    #
+    # @return [TTY::Logger] The configured logger instance.
+    def self.instance
+      return @@instance if @@instance
+
+      # Load user configuration for the logger
+      app_config = ComputerTools::Configuration.new
+      log_level = app_config.fetch(:logger, :level)&.to_sym || :info
+      file_logging_enabled = app_config.fetch(:logger, :file_logging) || false
+      log_file_path = app_config.fetch(:logger, :file_path) || default_log_path
+      file_log_level = app_config.fetch(:logger, :file_level)&.to_sym || :debug
+
+      @@instance = TTY::Logger.new do |config|
+        # Configure handlers (console and optional file)
+        handlers = []
+        handlers << configure_console_handler(log_level)
+        handlers << configure_file_handler(log_file_path, file_log_level) if file_logging_enabled
+
+        config.handlers = handlers
+      end
+
+      # Add custom log types after initialization with styling
+      # Use try-catch to handle any conflicts with built-in types
+      begin
+        @@instance.add_type(:success, { level: :info, symbol: '✅', color: :green })
+      rescue TTY::Logger::Error
+        # Type already exists, skip
+      end
+
+      begin
+        @@instance.add_type(:failure, { level: :error, symbol: '❌', color: :red })
+      rescue TTY::Logger::Error
+        # Type already exists, skip
+      end
+
+      begin
+        @@instance.add_type(:tip, { level: :info, symbol: '💡', color: :cyan })
+      rescue TTY::Logger::Error
+        # Type already exists, skip
+      end
+
+      begin
+        @@instance.add_type(:step, { level: :info, symbol: '🚀', color: :blue })
+      rescue TTY::Logger::Error
+        # Type already exists, skip
+      end
+
+      @@instance
+    end
+
+    # Reset the singleton instance (useful for testing)
+    def self.reset!
+      @@instance = nil
+    end
+
+    private
+
+    # Configures the console handler with custom styles.
+    #
+    # @param level [Symbol] The minimum log level for the console.
+    # @return [Array] The handler configuration array for TTY::Logger.
+    def self.configure_console_handler(level)
+      [
+        :console,
+        {
+          level: level,
+          output: $stderr, # Log to stderr to separate from program output
+          styles: {
+            info:  { symbol: 'ℹ️', color: :blue },
+            debug: { symbol: '🐞', color: :magenta },
+            error: { symbol: '❌', color: :red },
+            warn:  { symbol: '⚠️', color: :yellow },
+            fatal: { symbol: '💀', color: :red, bold: true }
+          }
+        }
+      ]
+    end
+
+    # Configures the file stream handler.
+    #
+    # @param path [String] The path to the log file.
+    # @param level [Symbol] The minimum log level for the file.
+    # @return [Array] The handler configuration array for TTY::Logger.
+    def self.configure_file_handler(path, level)
+      # Ensure the directory for the log file exists
+      FileUtils.mkdir_p(File.dirname(path))
+
+      [
+        :stream,
+        {
+          level: level,
+          output: File.open(path, 'a'),
+          formatter: :json # Use JSON format for structured logging
+        }
+      ]
+    end
+
+    # Determines the default path for the log file.
+    #
+    # @return [String] The absolute path for the log file.
+    def self.default_log_path
+      # Use XDG Base Directory Specification if available, otherwise fallback
+      state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
+      File.join(state_home, 'computertools', 'app.log')
+    end
+  end
+end",false
 ollama.rb,/lib/ComputerTools/providers/sublayer/,"# frozen_string_literal: true
 
 module Sublayer
@@ -5795,12 +5952,6 @@ module Sublayer
   end
 end",false
 blueprint_database.rb,/lib/ComputerTools/wrappers/,"# frozen_string_literal: true
-
-require 'sequel'
-require 'pg'
-require 'net/http'
-require 'json'
-require 'uri'
 
 module ComputerTools
   module Wrappers
@@ -6298,8 +6449,6 @@ module ComputerTools
 end",false
 deepgram_analyzer.rb,/lib/ComputerTools/wrappers/,"# frozen_string_literal: true
 
-require 'json'
-
 module ComputerTools
   module Wrappers
     class DeepgramAnalyzer
@@ -6553,8 +6702,6 @@ module ComputerTools
   end
 end",false
 deepgram_parser.rb,/lib/ComputerTools/wrappers/,"# frozen_string_literal: true
-
-require 'json'
 
 module ComputerTools
   module Wrappers
@@ -7267,8 +7414,6 @@ module ComputerTools
 end",false
 git_wrapper.rb,/lib/ComputerTools/wrappers/,"# frozen_string_literal: true
 
-require 'git'
-
 module ComputerTools
   module Wrappers
     class GitWrapper
@@ -7308,9 +7453,7 @@ module ComputerTools
 
       def get_file_diff(git, file_path)
         # For untracked files, we can't diff against HEAD
-        if git.status.untracked.include?(file_path)
-          return { additions: 0, deletions: 0, chunks: 0 }
-        end
+        return { additions: 0, deletions: 0, chunks: 0 } if git.status.untracked.include?(file_path)
 
         diff = git.diff('HEAD', file_path)
 
@@ -7392,10 +7535,6 @@ module ComputerTools
   end
 end",false
 restic_wrapper.rb,/lib/ComputerTools/wrappers/,"# frozen_string_literal: true
-
-require 'tty-which'
-require 'fileutils'
-require 'open3'
 
 module ComputerTools
   module Wrappers
@@ -7968,27 +8107,89 @@ module ComputerTools
 end",false
 ComputerTools.rb,/lib/,"#!/usr/bin/env ruby
 lib_dir = File.expand_path(File.join(__dir__, "".."", ""lib""))
-$:.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
+$:.unshift lib_dir unless $:.include?(lib_dir)
 
-require ""bundler/setup""
-require ""tty-config""
-require ""tty-prompt""
-require ""tty-which""
-require ""tty-command""
-require ""fileutils""
-require ""time""
-require ""yaml""
-require ""thor""
-require ""sublayer""
-require ""colorize""
-require_relative ""ComputerTools/version""
-require_relative ""ComputerTools/config""
+require 'colorize'
+require 'fileutils'
+require 'git'
+require 'json'
+require 'net/http'
+require 'open3'
+require 'pg'
+require 'sequel'
+require 'sublayer'
+require 'tempfile'
+require 'terrapin'
+require 'thor'
+require 'time'
+require 'tty-command'
+require 'tty-config'
+require 'tty-file'
+require 'tty-logger'
+require 'tty-prompt'
+require 'tty-table'
+require 'tty-which'
+require 'uri'
+require 'yaml'
 
-Dir[File.join(__dir__, 'ComputerTools', 'providers', '*.rb')].sort.each { |file| require file }
-Dir[File.join(__dir__, ""ComputerTools"", ""wrappers"", ""*.rb"")].each { |file| require file }
-Dir[File.join(__dir__, ""ComputerTools"", ""commands"", ""*.rb"")].each { |file| require file }
-Dir[File.join(__dir__, ""ComputerTools"", ""generators"", ""*.rb"")].each { |file| require file }
-Dir[File.join(__dir__, ""ComputerTools"", ""actions"", ""*.rb"")].each { |file| require file }
+require ""ComputerTools/version""
+require ""ComputerTools/config""
+require ""ComputerTools/logger""
+require ""ComputerTools/configuration""
+
+require ""ComputerTools/providers/sublayer/ollama""
+require ""ComputerTools/providers/sublayer/openrouter""
+
+require ""ComputerTools/actions/blueprint/blueprint_config_action""
+require ""ComputerTools/actions/blueprint/blueprint_edit_action""
+require ""ComputerTools/actions/blueprint/blueprint_list_action""
+require ""ComputerTools/actions/blueprint/blueprint_search_action""
+require ""ComputerTools/actions/blueprint/blueprint_delete_action""
+require ""ComputerTools/actions/blueprint/blueprint_export_action""
+require ""ComputerTools/actions/blueprint/blueprint_submit_action""
+require ""ComputerTools/actions/blueprint/blueprint_view_action""
+
+require ""ComputerTools/actions/deepgram/deepgram_analyze_action""
+require ""ComputerTools/actions/deepgram/deepgram_config_action""
+require ""ComputerTools/actions/deepgram/deepgram_convert_action""
+require ""ComputerTools/actions/deepgram/deepgram_parse_action""
+
+require ""ComputerTools/actions/file_activity/file_discovery_action""
+require ""ComputerTools/actions/file_activity/git_analysis_action""
+require ""ComputerTools/actions/file_activity/latest_changes_action""
+require ""ComputerTools/actions/file_activity/restic_analysis_action""
+require ""ComputerTools/actions/file_activity/yadm_analysis_action""
+
+require ""ComputerTools/wrappers/blueprint_database""
+require ""ComputerTools/wrappers/deepgram_analyzer""
+require ""ComputerTools/wrappers/deepgram_formatter""
+require ""ComputerTools/wrappers/deepgram_parser""
+require ""ComputerTools/wrappers/docling""
+require ""ComputerTools/wrappers/git_wrapper""
+require ""ComputerTools/wrappers/restic_wrapper""
+require ""ComputerTools/wrappers/trafilatura""
+
+require ""ComputerTools/commands/base_command""
+require ""ComputerTools/commands/menu_command""
+require ""ComputerTools/commands/blueprint_command""
+require ""ComputerTools/commands/config_command""
+require ""ComputerTools/commands/deepgram_command""
+require ""ComputerTools/commands/latest_changes_command""
+require ""ComputerTools/commands/overview_command""
+
+require 'ComputerTools/generators/blueprint/blueprint_category_generator'
+require 'ComputerTools/generators/blueprint/blueprint_description_generator'
+require 'ComputerTools/generators/blueprint/blueprint_improvement_generator'
+require 'ComputerTools/generators/blueprint/blueprint_name_generator'
+
+require ""ComputerTools/generators/deepgram/deepgram_insights_generator""
+require ""ComputerTools/generators/deepgram/deepgram_summary_generator""
+require ""ComputerTools/generators/deepgram/deepgram_topics_generator""
+
+require ""ComputerTools/generators/file_activity/file_activity_report_generator""
+
+require ""ComputerTools/generators/overview_generator""
+
 Dir[File.join(__dir__, ""ComputerTools"", ""agents"", ""*.rb"")].each { |file| require file }
 
 require_relative ""ComputerTools/cli""
@@ -7996,6 +8197,11 @@ require_relative ""ComputerTools/cli""
 module ComputerTools
   class Error < StandardError; end
   Config.load
+
+  # Provides global access to the logger instance
+  def self.logger
+    ComputerTools::Logger.instance
+  end
 
   def self.root
     File.dirname __dir__

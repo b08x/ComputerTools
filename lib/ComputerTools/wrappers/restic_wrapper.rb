@@ -8,6 +8,7 @@ module ComputerTools
     # This wrapper is particularly useful for backup analysis and file comparison tasks,
     # allowing developers to integrate Restic backup functionality into their applications.
     class ResticWrapper
+      include ComputerTools::Interfaces::BackupInterface
       # The configuration hash used to initialize the wrapper
       # @return [Hash] the configuration hash
       attr_reader :config

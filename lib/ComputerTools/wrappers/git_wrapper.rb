@@ -14,6 +14,7 @@ module ComputerTools
     #   git = wrapper.open_repository('/path/to/repo')
     #   status = wrapper.get_file_status(git, 'file.txt')
     class GitWrapper
+      include ComputerTools::Interfaces::GitInterface
       # Initializes a new GitWrapper instance with an empty repository cache.
       #
       # @return [GitWrapper] a new instance of GitWrapper

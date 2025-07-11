@@ -31,6 +31,16 @@ require "ComputerTools/logger"
 require "ComputerTools/configuration"
 require "ComputerTools/container"
 
+# Load interfaces
+require "ComputerTools/interfaces/git_interface"
+require "ComputerTools/interfaces/backup_interface"
+require "ComputerTools/interfaces/database_interface"
+require "ComputerTools/interfaces/processor_interface"
+require "ComputerTools/interfaces/configurable_interface"
+require "ComputerTools/interfaces/parser_interface"
+require "ComputerTools/interfaces/formatter_interface"
+require "ComputerTools/interfaces/validation"
+
 require "ComputerTools/providers/sublayer/ollama"
 require "ComputerTools/providers/sublayer/openrouter"
 

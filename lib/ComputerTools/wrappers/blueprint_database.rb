@@ -15,6 +15,8 @@ module ComputerTools
     # (`BLUEPRINT_DATABASE_URL`, `GEMINI_API_KEY`), or sensible defaults.
     #
     class BlueprintDatabase
+      include ComputerTools::Interfaces::DatabaseInterface
+      
       # The Google Gemini model used for generating text embeddings.
       EMBEDDING_MODEL = 'text-embedding-004'
       # The number of dimensions for the text embedding vectors.

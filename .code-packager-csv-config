@@ -1,6 +1,6 @@
 {
   "directory_path": ".",
-  "output_file": "ComputerTools.csv",
+  "output_file": "computertools.csv",
   "include_ext": [],
   "exclude_ext": [
     ".gemspec",
