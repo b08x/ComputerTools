@@ -49,7 +49,7 @@ This is a Ruby CLI application built with the Sublayer framework, following a mo
 
 ### Configuration
 
-- `config/sublayer.yml` - AI provider configuration (Gemini with gemini-1.5-flash-latest model)
+- `config/sublayer.yml` - AI provider configuration (Gemini with gemini-2.0-flash model)
 - Logging configured to `log/sublayer.log` with JSON format
 
 ### External Dependencies
