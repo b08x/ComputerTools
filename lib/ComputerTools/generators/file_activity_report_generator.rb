@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'table_tennis'
+require 'tty-table'
 require 'json'
 
 module ComputerTools
@@ -52,7 +52,7 @@ module ComputerTools
       def generate_summary_report
         stats = generate_summary_stats
 
-        puts "\n" + ("=" * 60)
+        puts "\n#{'=' * 60}"
         puts "📊 FILE ACTIVITY SUMMARY (#{@time_range})".colorize(:blue)
         puts "=" * 60
 
@@ -95,7 +95,7 @@ module ComputerTools
       def display_overall_summary
         stats = generate_summary_stats
 
-        puts "\n" + ("=" * 80)
+        puts "\n#{'=' * 80}"
         puts "📊 OVERALL SUMMARY - File Activity Analysis (#{@time_range})".colorize(:blue)
         puts "=" * 80
 
@@ -114,7 +114,7 @@ module ComputerTools
       def display_hourly_table(hour_key, hour_data)
         hour_label = format_hour_label(hour_key)
 
-        puts "\n" + ("=" * 80)
+        puts "\n#{'=' * 80}"
         puts "📅 Files Modified During: #{hour_label}".colorize(:blue)
         puts "=" * 80
 
@@ -124,31 +124,63 @@ module ComputerTools
       def display_data_table(data, _title)
         return puts "📭 No files found.".colorize(:cyan) if data.empty?
 
-        options = {
-          title: "#{data.length} files modified",
-          zebra: true,
-          row_numbers: true,
-          color_scales: { additions: :g, deletions: :r },
-          mark: ->(row) { row[:git_status] != '--' },
-          columns: %i[file modified size tracking git_status index worktree additions deletions chunks],
-          headers: {
-            file: "File Path",
-            modified: "Modified",
-            size: "Size",
-            tracking: "Tracking",
-            git_status: "Status",
-            index: "Index",
-            worktree: "Worktree",
-            additions: "+Lines",
-            deletions: "-Lines",
-            chunks: "Chunks"
-          },
-          theme: :ansi,
-          layout: false
-        }
+        # Define headers and columns
+        columns = %i[file modified size tracking git_status index worktree additions deletions chunks]
+        headers = [
+          "File Path",
+          "Modified",
+          "Size",
+          "Tracking",
+          "Status",
+          "Index",
+          "Worktree",
+          "+Lines",
+          "-Lines",
+          "Chunks"
+        ]
 
-        puts TableTennis.new(data, options)
+        # Convert hash data to row arrays with row numbers
+        rows = data.map.with_index(1) do |row_data, index|
+          row_values = columns.map { |col| format_cell_value(row_data[col], col) }
+          [index] + row_values # Add row number as first column
+        end
+
+        # Create table with row numbers header
+        table_headers = ["#"] + headers
+        table = TTY::Table.new(header: table_headers, rows: rows)
+
+        # Render table with styling
+        puts table.render(:ascii) do |renderer|
+          renderer.border.separator = :each_row
+          renderer.padding = [0, 1, 0, 1]
+          renderer.alignments = [:right] + ([:left] * headers.length)
+        end
+
         display_hour_summary(data)
+      end
+
+      def format_cell_value(value, column)
+        case column
+        when :additions
+          value.to_s.colorize(:green)
+        when :deletions
+          value.to_s.colorize(:red)
+        when :git_status
+          value == '--' ? value : value.colorize(:yellow)
+        when :tracking
+          case value
+          when 'Git'
+            value.colorize(:blue)
+          when 'YADM'
+            value.colorize(:magenta)
+          when 'Restic'
+            value.colorize(:cyan)
+          else
+            value.to_s
+          end
+        else
+          value.to_s
+        end
       end
 
       def display_hour_summary(data)
@@ -213,7 +245,7 @@ module ComputerTools
       end
 
       def display_file_details(file_data)
-        puts "\n" + ("=" * 60)
+        puts "\n#{'=' * 60}"
         puts "📄 FILE DETAILS".colorize(:blue)
         puts "=" * 60
 

@@ -5,13 +5,39 @@ require 'fileutils'
 
 module ComputerTools
   module Actions
+    # Manages the application's configuration through a command-line interface.
+    # This action allows users to show, set up, test, and reset the configuration,
+    # which is stored in a YAML file. It handles settings for the database,
+    # AI provider, editor, and various feature flags.
+    #
+    # @example Show the current configuration
+    #   ComputerTools::Actions::BlueprintConfigAction.new(subcommand: 'show').call
+    #
+    # @example Run the interactive setup
+    #   ComputerTools::Actions::BlueprintConfigAction.new(subcommand: 'setup').call
     class BlueprintConfigAction < Sublayer::Actions::Base
+      # The path to the YAML file where configuration is stored.
       CONFIG_PATH = File.join(__dir__, '..', 'config', 'blueprints.yml')
       
+      ##
+      # Initializes the configuration action.
+      #
+      # @param subcommand [String] The configuration command to execute.
+      #   Defaults to 'show'. Supported values: 'show', 'view', 'setup',
+      #   'init', 'edit', 'test', 'reset'.
       def initialize(subcommand: 'show')
         @subcommand = subcommand
       end
 
+      ##
+      # Executes the specified configuration subcommand.
+      #
+      # This is the main entry point for the action. It routes to the appropriate
+      # method based on the subcommand provided during initialization. It also
+      # includes error handling to catch and report issues during execution.
+      #
+      # @return [Boolean] Returns `true` on success and `false` on failure or
+      #   if an unknown subcommand is provided.
       def call
         case @subcommand
         when 'show', 'view'
@@ -35,6 +61,14 @@ module ComputerTools
 
       private
 
+      ##
+      # Displays the current configuration settings.
+      #
+      # Reads from the configuration file and prints a formatted summary of all
+      # settings, including database, AI, editor, and feature flags. Also shows
+      # the status of relevant environment variables.
+      #
+      # @return [Boolean] Returns `true`.
       def show_configuration
         config = load_configuration
         
@@ -78,6 +112,15 @@ module ComputerTools
         true
       end
 
+      ##
+      # Runs an interactive setup process for configuration.
+      #
+      # Prompts the user for all necessary configuration values, such as database
+      # URL, AI provider/model, and editor preferences. It then saves the
+      # resulting configuration to the YAML file.
+      #
+      # @return [Boolean] Returns `true` if the configuration is saved
+      #   successfully, `false` otherwise.
       def setup_configuration
         puts "🔧 Blueprint Configuration Setup".colorize(:blue)
         puts "=" * 50
@@ -153,6 +196,13 @@ module ComputerTools
         save_success
       end
 
+      ##
+      # Tests the validity and connectivity of the current configuration.
+      #
+      # Checks the database connection, AI provider API key, and editor
+      # availability based on the settings in the configuration file.
+      #
+      # @return [Boolean] Returns `true` if all tests pass, `false` otherwise.
       def test_configuration
         puts "🧪 Testing Blueprint Configuration".colorize(:blue)
         puts "=" * 50
@@ -191,6 +241,13 @@ module ComputerTools
         all_tests_passed
       end
 
+      ##
+      # Deletes the configuration file, resetting to defaults.
+      #
+      # Prompts the user for confirmation before deleting the `blueprints.yml` file.
+      #
+      # @return [Boolean] Returns `true` if the file is deleted or if it didn't
+      #   exist initially. Returns `false` if the user cancels the operation.
       def reset_configuration
         if File.exist?(CONFIG_PATH)
           print "⚠️  This will delete the existing configuration. Continue? (y/N): "
@@ -211,6 +268,9 @@ module ComputerTools
         end
       end
 
+      ##
+      # Displays help text for the configuration command.
+      # @return [nil]
       def show_config_help
         puts <<~HELP
           Blueprint Configuration Commands:
@@ -224,6 +284,11 @@ module ComputerTools
         HELP
       end
 
+      ##
+      # Loads the configuration from the YAML file.
+      #
+      # @return [Hash, nil] A hash containing the configuration, or `nil` if the
+      #   file does not exist or an error occurs during loading.
       def load_configuration
         return nil unless File.exist?(CONFIG_PATH)
         YAML.load_file(CONFIG_PATH)
@@ -232,6 +297,13 @@ module ComputerTools
         nil
       end
 
+      ##
+      # Saves the given configuration hash to the YAML file.
+      #
+      # Ensures the directory exists before writing the file.
+      #
+      # @param config [Hash] The configuration hash to save.
+      # @return [Boolean] `true` on successful save, `false` otherwise.
       def save_configuration(config)
         # Ensure directory exists
         config_dir = File.dirname(CONFIG_PATH)
@@ -244,6 +316,9 @@ module ComputerTools
         false
       end
 
+      ##
+      # Displays the status of relevant environment variables.
+      # @return [void]
       def show_environment_variables
         puts "🌍 Environment Variables:".colorize(:blue)
         
@@ -263,6 +338,11 @@ module ComputerTools
         puts ""
       end
 
+      ##
+      # Tests the database connection using the URL from the configuration.
+      #
+      # @param config [Hash] The loaded configuration hash.
+      # @return [Boolean] `true` if the connection is successful, `false` otherwise.
       def test_database_connection(config)
         begin
           require 'sequel'
@@ -277,6 +357,14 @@ module ComputerTools
         end
       end
 
+      ##
+      # Tests the AI provider connection by checking for an API key.
+      #
+      # This is a simplified test that only checks if the relevant environment
+      # variable for the configured provider is set.
+      #
+      # @param config [Hash] The loaded configuration hash.
+      # @return [Boolean] `true` if the API key is found, `false` otherwise.
       def test_ai_connection(config)
         # This is a simplified test - in reality you'd make an actual API call
         provider = config.dig('ai', 'provider')
@@ -296,6 +384,11 @@ module ComputerTools
         end
       end
 
+      ##
+      # Tests if the configured editor is available in the system's PATH.
+      #
+      # @param config [Hash] The loaded configuration hash.
+      # @return [Boolean] `true` if the editor command is found, `false` otherwise.
       def test_editor(config)
         editor = config.dig('editor')
         if system("which #{editor} > /dev/null 2>&1")
@@ -307,6 +400,12 @@ module ComputerTools
         end
       end
 
+      ##
+      # Prompts the user for text input via STDIN.
+      #
+      # @param prompt [String] The message to display to the user.
+      # @param default [String, nil] The default value to use if the user enters nothing.
+      # @return [String] The user's input or the default value.
       def prompt_for_input(prompt, default = nil)
         print "#{prompt}"
         print " [#{default}]" if default
@@ -316,6 +415,13 @@ module ComputerTools
         input.empty? ? default : input
       end
 
+      ##
+      # Prompts the user to select from a list of choices.
+      #
+      # @param prompt [String] The message to display to the user.
+      # @param choices [Array<String>] A list of available options.
+      # @param default [String, nil] The default choice if the user enters nothing.
+      # @return [String] The user's selection or the default value.
       def prompt_for_choice(prompt, choices, default = nil)
         puts "#{prompt} (#{choices.join('/')})"
         print default ? "[#{default}]: " : ": "
@@ -324,6 +430,14 @@ module ComputerTools
         input.empty? ? default : input
       end
 
+      ##
+      # Prompts the user for a boolean (yes/no) response.
+      #
+      # @param prompt [String] The message to display to the user.
+      # @param default [Boolean, nil] The default value (`true`, `false`, or `nil`)
+      #   to use if the user enters nothing.
+      # @return [Boolean, nil] Returns `true` for 'y', `false` for 'n', or the
+      #   default value for any other input.
       def prompt_for_boolean(prompt, default = nil)
         default_text = case default
                       when true then ' [Y/n]'
@@ -344,6 +458,11 @@ module ComputerTools
         end
       end
 
+      ##
+      # Masks the password portion of a database URL for safe display.
+      #
+      # @param url [String] The database URL to process.
+      # @return [String] The URL with the password replaced by '***'.
       def mask_password(url)
         return url unless url.include?(':') && url.include?('@')
         url.gsub(/:[^:@]*@/, ':***@')

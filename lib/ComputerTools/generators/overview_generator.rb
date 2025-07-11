@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# Sublayer.configuration.ai_provider = Sublayer::Providers::Ollama
+
 module ComputerTools
   module Generators
     class OverviewGenerator < Sublayer::Generators::Base

@@ -87,6 +87,8 @@ module ComputerTools
           handle_example_command
         when 'latestchanges'
           handle_latest_changes_command
+        when 'config'
+          handle_config_command
         else
           puts "❌ Unknown command: #{command_name}".colorize(:red)
           :continue
@@ -446,6 +448,31 @@ module ComputerTools
       def handle_latest_changes_help
         latest_changes_command = ComputerTools::Commands::LatestChangesCommand.new({})
         latest_changes_command.execute('help')
+      end
+
+      def handle_config_command
+        debug_log("Entering handle_config_command")
+        
+        subcommand = @prompt.select("⚙️  Configuration - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "🔧 Setup configuration", "setup"
+          menu.choice "📋 Show current config", "show"
+          menu.choice "✏️  Edit configuration", "edit"
+          menu.choice "🔍 Validate configuration", "validate"
+          menu.choice "🔄 Reset configuration", "reset"
+          menu.choice "❓ Help", "help"
+          menu.choice "Back to main menu", :back
+        end
+
+        return :continue if subcommand == :back
+
+        begin
+          config_command = ComputerTools::Commands::ConfigCommand.new({})
+          config_command.execute(subcommand)
+        rescue StandardError => e
+          puts "❌ Error executing config command: #{e.message}".colorize(:red)
+        end
+
+        :continue
       end
     end
   end

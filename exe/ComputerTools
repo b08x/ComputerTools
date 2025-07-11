@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
-require_relative "../lib/ComputerTools"
+lib_dir = File.expand_path(File.join(__dir__, "..", "lib"))
+$:.unshift lib_dir unless $:.include?(lib_dir)
+
+require "ComputerTools"
 
 ComputerTools::CLI.start(ARGV)

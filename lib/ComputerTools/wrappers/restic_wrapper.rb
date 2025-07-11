@@ -11,11 +11,11 @@ module ComputerTools
 
       def initialize(config)
         @config = config
-        @mount_point = config.fetch('paths', 'restic_mount_point')
-        @repository = config.fetch('paths', 'restic_repo')
+        @mount_point = config.fetch(:paths, :restic_mount_point) || File.expand_path('~/mnt/restic')
+        @repository = config.fetch(:paths, :restic_repo) || ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo'
         @mounted = false
         @mount_pid = nil
-        @home_dir = config.fetch('paths', 'home_dir')
+        @home_dir = config.fetch(:paths, :home_dir) || File.expand_path('~')
 
         setup_cleanup_handler
       end
@@ -41,35 +41,26 @@ module ComputerTools
           return false
         end
 
-        FileUtils.mkdir_p(@mount_point) unless File.directory?(@mount_point)
+        # FileUtils.mkdir_p(@mount_point) unless File.directory?(@mount_point)
 
         puts "🔐 Mounting restic repository...".colorize(:blue)
         puts "   Repository: #{@repository}".colorize(:cyan)
         puts "   Mount point: #{@mount_point}".colorize(:cyan)
         puts "   Note: You will be prompted for the repository passphrase".colorize(:yellow)
 
-        terminal_cmd = detect_terminal_emulator
-        unless terminal_cmd
-          puts "❌ No suitable terminal emulator found.".colorize(:red)
-          puts "   Please install: alacritty, kitty, gnome-terminal, konsole, or xterm".colorize(:red)
-          return false
+        fork do
+          `kitty -e restic mount -r #{@repository} #{@mount_point}`
         end
 
-        restic_cmd = "restic mount -r '#{@repository}' '#{@mount_point}'"
+        sleep 20
 
-        # Launch restic mount in a new terminal
-        pid = fork do
-          exec("#{terminal_cmd} '#{restic_cmd}'")
-        end
-
-        if pid
-          @mount_pid = pid
-          puts "🚀 Launched restic mount in new terminal (PID: #{pid})".colorize(:green)
-          puts "⏳ Waiting for mount to be available...".colorize(:blue)
-
-          wait_for_mount
+        if $?.success?
+          puts "✅ Restic repository mounted successfully.".colorize(:green)
+          @mounted = true
+          @mount_pid = $?.pid
         else
-          puts "❌ Failed to launch restic mount process.".colorize(:red)
+          puts "❌ Failed to mount restic repository: #{result.error}".colorize(:red)
+          puts "   Please check the repository path and passphrase.".colorize(:yellow)
           false
         end
       rescue StandardError => e
@@ -126,46 +117,35 @@ module ComputerTools
 
       private
 
-      def wait_for_mount
-        mount_timeout = @config.fetch('restic', 'mount_timeout', 60)
+      # def wait_for_mount
+      #   mount_timeout = @config.fetch(:restic, :mount_timeout) || 60
 
-        mount_timeout.times do |i|
-          sleep 1
+      #   mount_timeout.times do |i|
+      #     sleep 1
 
-          if mounted?
-            puts "\n✅ Mount point is ready!".colorize(:green)
-            @mounted = true
-            return true
-          end
+      #     if mounted?
+      #       puts "\n✅ Mount point is ready!".colorize(:green)
+      #       @mounted = true
+      #       return true
+      #     end
 
-          # Show progress every 5 seconds
-          puts "   Still waiting... (#{i}/#{mount_timeout}s)".colorize(:cyan) if i % 5 == 0
-        end
+      #     # Show progress every 5 seconds
+      #     puts "   Still waiting... (#{i}/#{mount_timeout}s)".colorize(:cyan) if i % 5 == 0
+      #   end
 
-        puts "\n❌ Timeout waiting for mount point.".colorize(:red)
-        puts "   Please ensure the restic repository is mounted successfully.".colorize(:red)
-        puts "   Check the terminal window for any error messages.".colorize(:yellow)
-        false
-      end
+      #   puts "\n❌ Timeout waiting for mount point.".colorize(:red)
+      #   puts "   Please ensure the restic repository is mounted successfully.".colorize(:red)
+      #   puts "   Check the terminal window for any error messages.".colorize(:yellow)
+      #   false
+      # end
 
       def detect_terminal_emulator
-        terminal_preferences = @config.fetch('terminals', 'preferred_order', default_terminals)
+        command = @config.fetch(:terminal, :command) || 'kitty'
+        args = @config.fetch(:terminal, :args) || '-e'
 
-        terminal_preferences.each do |terminal|
-          return "#{terminal['cmd']} #{terminal['args']}" if TTY::Which.exist?(terminal['cmd'])
-        end
+        return nil unless TTY::Which.exist?(command)
 
-        nil
-      end
-
-      def default_terminals
-        [
-          { 'cmd' => 'alacritty', 'args' => '-e' },
-          { 'cmd' => 'kitty', 'args' => '-e' },
-          { 'cmd' => 'gnome-terminal', 'args' => '--' },
-          { 'cmd' => 'konsole', 'args' => '-e' },
-          { 'cmd' => 'xterm', 'args' => '-e' }
-        ]
+        "#{command} #{args}"
       end
 
       def setup_cleanup_handler

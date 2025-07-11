@@ -1,20 +1,50 @@
 # frozen_string_literal: true
 
 require 'sequel'
+require 'pg'
 require 'net/http'
 require 'json'
 require 'uri'
 
 module ComputerTools
   module Wrappers
-    # Direct database interface for blueprint operations with embedding support
-    # Handles PostgreSQL operations and Google Gemini API for vector embeddings
+    #
+    # Provides a direct database interface for managing "blueprints" (code snippets).
+    #
+    # This class encapsulates all database operations for blueprints, including
+    # standard CRUD actions, category management, and advanced vector-based
+    # similarity searches. It uses the Sequel ORM to interact with a PostgreSQL
+    # database (requiring the `pgvector` extension for search) and leverages the
+    # Google Gemini API to generate text embeddings for semantic search capabilities.
+    #
+    # Configuration is loaded from `config/blueprints.yml`, environment variables
+    # (`BLUEPRINT_DATABASE_URL`, `GEMINI_API_KEY`), or sensible defaults.
+    #
     class BlueprintDatabase
+      # The Google Gemini model used for generating text embeddings.
       EMBEDDING_MODEL = 'text-embedding-004'
+      # The number of dimensions for the text embedding vectors.
       EMBEDDING_DIMENSIONS = 768
 
+      # @!attribute [r] db
+      #   @return [Sequel::Database] The active Sequel database connection instance.
       attr_reader :db
 
+      #
+      # Initializes the database connection and validates the schema.
+      #
+      # Connects to the PostgreSQL database using a URL determined by the provided
+      # parameter, a configuration file, or environment variables. It also ensures
+      # that the necessary tables (`blueprints`, `categories`, `blueprints_categories`)
+      # and the `pgvector` extension exist.
+      #
+      # @param database_url [String, nil] The PostgreSQL connection URL. If nil,
+      #   it falls back to `BLUEPRINT_DATABASE_URL` or `DATABASE_URL`
+      #   environment variables, or a default local URL.
+      #
+      # @raise [StandardError] If the database connection fails or a required
+      #   table is missing from the schema.
+      #
       def initialize(database_url: nil)
         @database_url = database_url || load_database_url
         @db = connect_to_database
@@ -23,7 +53,31 @@ module ComputerTools
         validate_database_schema
       end
 
-      # Create a new blueprint with AI-generated metadata and embeddings
+      #
+      # Creates a new blueprint, generates its embedding, and associates categories.
+      #
+      # This method inserts a new blueprint into the database within a transaction.
+      # It automatically generates a vector embedding from the blueprint's name and
+      # description using the Gemini API. If categories are provided, they are
+      # created if they don't exist and linked to the new blueprint.
+      #
+      # @param code [String] The code content for the blueprint.
+      # @param name [String, nil] A name for the blueprint.
+      # @param description [String, nil] A description of the blueprint's purpose.
+      # @param categories [Array<String>] A list of category names to associate.
+      #
+      # @return [Hash, nil] A hash representing the complete blueprint record
+      #   (including its new ID and categories), or `nil` if an error occurs.
+      #
+      # @example
+      #   db.create_blueprint(
+      #     code: "puts 'Hello, World!'",
+      #     name: "Hello World Snippet",
+      #     description: "A simple Ruby script to print a greeting.",
+      #     categories: ["Ruby", "Examples"]
+      #   )
+      #   # => {id: 1, code: "...", name: "...", ..., categories: [{id: 1, title: "Ruby"}, ...]}
+      #
       def create_blueprint(code:, name: nil, description: nil, categories: [])
         @db.transaction do
           # Insert blueprint record
@@ -47,7 +101,18 @@ module ComputerTools
         nil
       end
 
-      # Get a specific blueprint by ID
+      #
+      # Retrieves a specific blueprint and its associated categories by ID.
+      #
+      # @param id [Integer] The unique identifier of the blueprint.
+      #
+      # @return [Hash, nil] A hash containing the blueprint's data and a nested
+      #   `:categories` array, or `nil` if no blueprint with that ID is found.
+      #
+      # @example
+      #   blueprint = db.get_blueprint(42)
+      #   # => {id: 42, name: "My Blueprint", ..., categories: [...]}
+      #
       def get_blueprint(id)
         blueprint = @db[:blueprints].where(id: id).first
         return nil unless blueprint
@@ -57,7 +122,25 @@ module ComputerTools
         blueprint
       end
 
-      # List all blueprints with optional pagination
+      #
+      # Lists all blueprints with pagination, ordered by creation date.
+      #
+      # Retrieves a collection of blueprints, with the most recently created ones
+      # appearing first. Each blueprint in the returned array includes its
+      # associated categories.
+      #
+      # @param limit [Integer] The maximum number of blueprints to return.
+      # @param offset [Integer] The number of blueprints to skip, for pagination.
+      #
+      # @return [Array<Hash>] An array of blueprint hashes.
+      #
+      # @example
+      #   # Get the 10 most recent blueprints
+      #   recent_blueprints = db.list_blueprints(limit: 10)
+      #
+      #   # Get the next page of 10 blueprints
+      #   next_page = db.list_blueprints(limit: 10, offset: 10)
+      #
       def list_blueprints(limit: 100, offset: 0)
         blueprints = @db[:blueprints]
           .order(Sequel.desc(:created_at))
@@ -73,7 +156,24 @@ module ComputerTools
         blueprints
       end
 
-      # Search blueprints by vector similarity
+      #
+      # Searches for blueprints by semantic similarity to a query string.
+      #
+      # This method generates a vector embedding for the `query` text and uses
+      # `pgvector`'s cosine distance operator (`<->`) to find the most semantically
+      # similar blueprints in the database. Results are ordered by similarity.
+      #
+      # @param query [String] The search query text.
+      # @param limit [Integer] The maximum number of search results to return.
+      #
+      # @return [Array<Hash>] An array of blueprint hashes, sorted by relevance.
+      #   Each hash includes a `:distance` key indicating similarity (lower is better).
+      #   Returns an empty array if query embedding fails.
+      #
+      # @example
+      #   results = db.search_blueprints(query: "http server in ruby", limit: 5)
+      #   # => [{id: 12, ..., distance: 0.18}, {id: 34, ..., distance: 0.21}]
+      #
       def search_blueprints(query:, limit: 10)
         # Generate embedding for the search query
         query_embedding = generate_embedding_for_text(query)
@@ -96,7 +196,18 @@ module ComputerTools
         results
       end
 
-      # Delete a blueprint and all associated records
+      #
+      # Deletes a blueprint and its category associations from the database.
+      #
+      # The deletion is performed in a transaction to ensure atomicity. It first
+      # removes links in the `blueprints_categories` join table before deleting
+      # the main blueprint record.
+      #
+      # @param id [Integer] The ID of the blueprint to delete.
+      #
+      # @return [Boolean] `true` if a record was successfully deleted, `false`
+      #   otherwise (e.g., if the ID did not exist or an error occurred).
+      #
       def delete_blueprint(id)
         @db.transaction do
           # Delete category associations
@@ -111,7 +222,23 @@ module ComputerTools
         false
       end
 
-      # Update a blueprint (used for edit operations)
+      #
+      # Updates the attributes of an existing blueprint.
+      #
+      # This method updates a blueprint's data in a transaction. If `name` or
+      # `description` are changed, the embedding vector is automatically
+      # regenerated. If a `categories` array is provided, it will **replace**
+      # all existing category associations for the blueprint.
+      #
+      # @param id [Integer] The ID of the blueprint to update.
+      # @param code [String, nil] The new code content.
+      # @param name [String, nil] The new name.
+      # @param description [String, nil] The new description.
+      # @param categories [Array<String>, nil] An array of category names to
+      #   set for the blueprint, replacing any existing ones.
+      #
+      # @return [Hash, nil] The updated blueprint hash, or `nil` on failure.
+      #
       def update_blueprint(id:, code: nil, name: nil, description: nil, categories: nil)
         updates = { updated_at: Time.now }
         updates[:code] = code if code
@@ -144,12 +271,27 @@ module ComputerTools
         nil
       end
 
-      # Get all available categories
+      #
+      # Retrieves all available categories from the database.
+      #
+      # @return [Array<Hash>] An array of hashes, where each hash represents a category.
+      #
       def get_categories
         @db[:categories].all
       end
 
-      # Create a new category
+      #
+      # Creates a new category or finds an existing one by title.
+      #
+      # If a category with the given title already exists, this method will not
+      # create a duplicate. Instead, it will find and return the ID of the
+      # existing category.
+      #
+      # @param title [String] The unique title for the category.
+      # @param description [String, nil] An optional description for the category.
+      #
+      # @return [Integer] The ID of the created or existing category.
+      #
       def create_category(title:, description: nil)
         @db[:categories].insert(
           title: title,
@@ -161,7 +303,15 @@ module ComputerTools
         @db[:categories].where(title: title).first[:id]
       end
 
-      # Database statistics
+      #
+      # Gathers basic statistics about the blueprints database.
+      #
+      # Provides a quick summary, including total counts of blueprints and
+      # categories, and the database URL (with the password redacted).
+      #
+      # @return [Hash{Symbol => Object}] A hash with `:total_blueprints`,
+      #   `:total_categories`, and `:database_url` keys.
+      #
       def stats
         {
           total_blueprints: @db[:blueprints].count,
@@ -172,6 +322,12 @@ module ComputerTools
 
       private
 
+      #
+      # Loads the database URL from a config file or environment variables.
+      #
+      # @!visibility private
+      # @return [String] The database connection URL.
+      #
       def load_database_url
         # Check configuration file first
         config_file = File.join(__dir__, '..', 'config', 'blueprints.yml')
@@ -186,10 +342,23 @@ module ComputerTools
           'postgres://localhost/blueprints_development'
       end
 
+      #
+      # Loads the Gemini API key from environment variables.
+      #
+      # @!visibility private
+      # @return [String, nil] The API key.
+      #
       def load_gemini_api_key
         ENV['GEMINI_API_KEY'] || ENV.fetch('GOOGLE_API_KEY', nil)
       end
 
+      #
+      # Establishes a connection to the database using Sequel.
+      #
+      # @!visibility private
+      # @return [Sequel::Database] The database connection object.
+      # @raise [StandardError] If the connection fails.
+      #
       def connect_to_database
         Sequel.connect(@database_url)
       rescue StandardError => e
@@ -198,6 +367,12 @@ module ComputerTools
         raise e
       end
 
+      #
+      # Validates that the required database tables and extensions exist.
+      #
+      # @!visibility private
+      # @raise [StandardError] If a required table is not found.
+      #
       def validate_database_schema
         required_tables = %i[blueprints categories blueprints_categories]
 
@@ -213,13 +388,27 @@ module ComputerTools
         puts "⚠️  Warning: pgvector extension not found. Vector search may not work.".colorize(:yellow)
       end
 
-      # Generate embedding vector for name + description combination
+      #
+      # Generates an embedding vector for a name and description combination.
+      #
+      # @!visibility private
+      # @param name [String] The name of the blueprint.
+      # @param description [String] The description of the blueprint.
+      # @return [String, nil] A string representation of the vector `"[d1,d2,...]"`.
+      #
       def generate_embedding(name:, description:)
         content = { name: name, description: description }.to_json
         generate_embedding_for_text(content)
       end
 
-      # Generate embedding vector for arbitrary text using Google Gemini API
+      #
+      # Generates an embedding vector for arbitrary text using the Google Gemini API.
+      #
+      # @!visibility private
+      # @param text [String] The text to embed.
+      # @return [String, nil] A string representation of the vector `"[d1,d2,...]"`,
+      #   or `nil` if the API call fails or a key is missing.
+      #
       def generate_embedding_for_text(text)
         unless @gemini_api_key
           puts "⚠️  Warning: No Gemini API key found. Skipping embedding generation.".colorize(:yellow)
@@ -262,6 +451,13 @@ module ComputerTools
         nil
       end
 
+      #
+      # Fetches all categories associated with a given blueprint ID.
+      #
+      # @!visibility private
+      # @param blueprint_id [Integer] The blueprint's ID.
+      # @return [Array<Hash>] An array of category hashes.
+      #
       def get_blueprint_categories(blueprint_id)
         @db.fetch(
           "SELECT c.* FROM categories c
@@ -271,6 +467,16 @@ module ComputerTools
         ).all
       end
 
+      #
+      # Associates a list of categories with a blueprint.
+      #
+      # For each category name, it finds or creates the category record and then
+      # creates a link in the `blueprints_categories` join table.
+      #
+      # @!visibility private
+      # @param blueprint_id [Integer] The ID of the blueprint to link.
+      # @param category_names [Array<String>] The names of the categories to link.
+      #
       def insert_blueprint_categories(blueprint_id, category_names)
         category_names.each do |category_name|
           category_name = category_name.strip
