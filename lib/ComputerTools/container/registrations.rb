@@ -1,0 +1,269 @@
+# frozen_string_literal: true
+
+module ComputerTools
+  module Container
+    ##
+    # This module contains all dependency registrations for the ComputerTools application.
+    #
+    # Registrations are organized by category to maintain clarity and separation of concerns.
+    # Each registration should be documented with its purpose and dependencies.
+    module Registrations
+      ##
+      # Register all dependencies for the application
+      #
+      # This method is called during application initialization to set up
+      # all the required dependencies in the container.
+      #
+      # @return [void]
+      def self.register_all
+        register_core_dependencies
+        register_wrappers
+        register_actions
+        register_generators
+        register_configurations
+      end
+
+      ##
+      # Register core application dependencies
+      #
+      # These are fundamental dependencies that are used throughout the application.
+      #
+      # @return [void]
+      def self.register_core_dependencies
+        # Logger is already registered in the main container file
+        # Configuration is already registered in the main container file
+        
+        # Register other core dependencies here as needed
+        # Example:
+        # ComputerTools::Container.register('event_bus') do
+        #   EventBus.new
+        # end
+      end
+
+      ##
+      # Register wrapper dependencies
+      #
+      # Wrapper classes provide interfaces to external tools and services.
+      #
+      # @return [void]
+      def self.register_wrappers
+        # Git wrapper for version control operations
+        ComputerTools::Container.register('git_wrapper') do
+          ComputerTools::Wrappers::GitWrapper.new
+        end
+
+        # Restic wrapper for backup operations
+        ComputerTools::Container.register('restic_wrapper') do
+          ComputerTools::Wrappers::ResticWrapper.new(
+            ComputerTools::Container['configuration']
+          )
+        end
+
+        # Docling wrapper for document processing
+        ComputerTools::Container.register('docling_wrapper') do
+          ComputerTools::Wrappers::Docling.new
+        end
+
+        # Trafilatura wrapper for web content extraction
+        ComputerTools::Container.register('trafilatura_wrapper') do
+          ComputerTools::Wrappers::Trafilatura.new
+        end
+
+        # Blueprint database wrapper
+        ComputerTools::Container.register('blueprint_database') do
+          ComputerTools::Wrappers::BlueprintDatabase.new
+        end
+
+        # Deepgram-related wrappers
+        ComputerTools::Container.register('deepgram_parser') do
+          ComputerTools::Wrappers::DeepgramParser.new
+        end
+
+        ComputerTools::Container.register('deepgram_analyzer') do
+          ComputerTools::Wrappers::DeepgramAnalyzer.new
+        end
+
+        ComputerTools::Container.register('deepgram_formatter') do
+          ComputerTools::Wrappers::DeepgramFormatter.new
+        end
+      end
+
+      ##
+      # Register action dependencies
+      #
+      # Action classes encapsulate business logic and coordinate between components.
+      #
+      # @return [void]
+      def self.register_actions
+        # Blueprint actions
+        ComputerTools::Container.register('blueprint_submit_action') do
+          ComputerTools::Actions::Blueprint::BlueprintSubmitAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_search_action') do
+          ComputerTools::Actions::Blueprint::BlueprintSearchAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_view_action') do
+          ComputerTools::Actions::Blueprint::BlueprintViewAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_edit_action') do
+          ComputerTools::Actions::Blueprint::BlueprintEditAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_delete_action') do
+          ComputerTools::Actions::Blueprint::BlueprintDeleteAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_list_action') do
+          ComputerTools::Actions::Blueprint::BlueprintListAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_export_action') do
+          ComputerTools::Actions::Blueprint::BlueprintExportAction.new(
+            database: ComputerTools::Container['blueprint_database']
+          )
+        end
+
+        ComputerTools::Container.register('blueprint_config_action') do
+          ComputerTools::Actions::Blueprint::BlueprintConfigAction.new
+        end
+
+        # Deepgram actions
+        ComputerTools::Container.register('deepgram_parse_action') do
+          ComputerTools::Actions::Deepgram::DeepgramParseAction.new(
+            parser: ComputerTools::Container['deepgram_parser']
+          )
+        end
+
+        ComputerTools::Container.register('deepgram_analyze_action') do
+          ComputerTools::Actions::Deepgram::DeepgramAnalyzeAction.new(
+            analyzer: ComputerTools::Container['deepgram_analyzer']
+          )
+        end
+
+        ComputerTools::Container.register('deepgram_convert_action') do
+          ComputerTools::Actions::Deepgram::DeepgramConvertAction.new(
+            formatter: ComputerTools::Container['deepgram_formatter']
+          )
+        end
+
+        ComputerTools::Container.register('deepgram_config_action') do
+          ComputerTools::Actions::Deepgram::DeepgramConfigAction.new
+        end
+
+        # File activity actions
+        ComputerTools::Container.register('git_analysis_action') do
+          ComputerTools::Actions::FileActivity::GitAnalysisAction.new(
+            git_wrapper: ComputerTools::Container['git_wrapper']
+          )
+        end
+
+        ComputerTools::Container.register('restic_analysis_action') do
+          ComputerTools::Actions::FileActivity::ResticAnalysisAction.new(
+            restic_wrapper: ComputerTools::Container['restic_wrapper']
+          )
+        end
+
+        ComputerTools::Container.register('yadm_analysis_action') do
+          ComputerTools::Actions::FileActivity::YadmAnalysisAction.new
+        end
+
+        ComputerTools::Container.register('file_discovery_action') do
+          ComputerTools::Actions::FileActivity::FileDiscoveryAction.new
+        end
+
+        ComputerTools::Container.register('latest_changes_action') do
+          ComputerTools::Actions::FileActivity::LatestChangesAction.new
+        end
+
+        # Example action
+        ComputerTools::Container.register('example_action') do
+          ComputerTools::Actions::ExampleAction.new
+        end
+
+        # Shell command action
+        ComputerTools::Container.register('run_shell_command') do
+          ComputerTools::Actions::RunShellCommand.new
+        end
+      end
+
+      ##
+      # Register generator dependencies
+      #
+      # Generator classes create AI-powered content using the Sublayer framework.
+      #
+      # @return [void]
+      def self.register_generators
+        # Blueprint generators
+        ComputerTools::Container.register('blueprint_description_generator') do
+          ComputerTools::Generators::Blueprint::BlueprintDescriptionGenerator.new
+        end
+
+        ComputerTools::Container.register('blueprint_name_generator') do
+          ComputerTools::Generators::Blueprint::BlueprintNameGenerator.new
+        end
+
+        ComputerTools::Container.register('blueprint_category_generator') do
+          ComputerTools::Generators::Blueprint::BlueprintCategoryGenerator.new
+        end
+
+        ComputerTools::Container.register('blueprint_improvement_generator') do
+          ComputerTools::Generators::Blueprint::BlueprintImprovementGenerator.new
+        end
+
+        # Deepgram generators
+        ComputerTools::Container.register('deepgram_summary_generator') do
+          ComputerTools::Generators::Deepgram::DeepgramSummaryGenerator.new
+        end
+
+        ComputerTools::Container.register('deepgram_topics_generator') do
+          ComputerTools::Generators::Deepgram::DeepgramTopicsGenerator.new
+        end
+
+        ComputerTools::Container.register('deepgram_insights_generator') do
+          ComputerTools::Generators::Deepgram::DeepgramInsightsGenerator.new
+        end
+
+        # File activity generators
+        ComputerTools::Container.register('file_activity_report_generator') do
+          ComputerTools::Generators::FileActivity::FileActivityReportGenerator.new
+        end
+
+        # Overview generator
+        ComputerTools::Container.register('overview_generator') do
+          ComputerTools::Generators::OverviewGenerator.new
+        end
+      end
+
+      ##
+      # Register configuration dependencies
+      #
+      # Configuration objects provide typed access to application settings.
+      #
+      # @return [void]
+      def self.register_configurations
+        # Main configuration is already registered in the main container file
+        # Role-specific configurations will be added here once they're implemented
+        
+        # Example of what will be added in future tasks:
+        # ComputerTools::Container.register('api_configuration') do
+        #   ComputerTools::Configuration::ApiConfiguration.new
+        # end
+      end
+    end
+  end
+end

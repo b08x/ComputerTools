@@ -29,6 +29,7 @@ require "ComputerTools/version"
 require "ComputerTools/config"
 require "ComputerTools/logger"
 require "ComputerTools/configuration"
+require "ComputerTools/container"
 
 require "ComputerTools/providers/sublayer/ollama"
 require "ComputerTools/providers/sublayer/openrouter"
@@ -94,6 +95,18 @@ module ComputerTools
   # Provides global access to the logger instance
   def self.logger
     ComputerTools::Logger.instance
+  end
+
+  # Provides global access to the dependency injection container
+  def self.container
+    @container ||= ComputerTools::Container
+  end
+
+  # Initialize the container with all registrations
+  def self.initialize_container
+    ComputerTools::Container.load_registrations
+    ComputerTools::Container::Registrations.register_all
+    container
   end
 
   def self.root

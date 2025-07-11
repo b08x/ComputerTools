@@ -5,4 +5,7 @@ $:.unshift lib_dir unless $:.include?(lib_dir)
 
 require "ComputerTools"
 
+# Initialize the dependency injection container
+ComputerTools.initialize_container
+
 ComputerTools::CLI.start(ARGV)

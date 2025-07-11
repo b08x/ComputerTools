@@ -1,0 +1,632 @@
+{
+  "phase_1_backlog": {
+    "phase_name": "Foundation - Dependency Injection & Configuration Refactoring",
+    "duration_estimate": "2 weeks",
+    "total_story_points": 34,
+    "tasks": [
+      {
+        "task_id": "P1-T001",
+        "title": "Set up dry-container gem and basic container configuration",
+        "category": "Infrastructure",
+        "story_points": 3,
+        "priority": "Critical",
+        "status": "COMPLETED",
+        "completed_date": "2025-01-11",
+        "completion_notes": "✅ All acceptance criteria met: dry-container gem added, container configuration created, dependency registration working, 21 tests passing, application starts correctly with container initialized",
+        "dependencies": [],
+        "acceptance_criteria": [
+          "dry-container gem added to Gemfile",
+          "Basic container configuration file created",
+          "Container can register and resolve simple dependencies",
+          "Integration test verifies container functionality"
+        ],
+        "llm_prompt": {
+          "role": "Ruby Developer",
+          "task": "Set up dependency injection infrastructure using dry-container",
+          "context": "You are refactoring the ComputerTools Ruby application to use dependency injection. Currently, Action classes directly instantiate their dependencies (like GitWrapper.new), which makes testing difficult.",
+          "instructions": [
+            "1. Add 'dry-container' gem to the Gemfile (use version ~> 0.11.0)",
+            "2. Create a new file 'lib/computer_tools/container.rb' with the following structure:",
+            "   - Require 'dry-container'",
+            "   - Create a module ComputerTools::Container that extends Dry::Container::Mixin", 
+            "   - Add basic registrations for configuration and logger",
+            "3. Create 'lib/computer_tools/container/registrations.rb' to organize dependency registrations",
+            "4. In the main ComputerTools module, add a method to access the container",
+            "5. Write a simple integration test in 'spec/container_spec.rb' that:",
+            "   - Registers a test dependency",
+            "   - Resolves it successfully", 
+            "   - Verifies it's the expected object",
+            "6. Update the main application entry point to initialize the container"
+          ],
+          "expected_output": [
+            "Modified Gemfile with dry-container dependency",
+            "New container.rb file with basic setup",
+            "New registrations.rb file ready for dependency definitions", 
+            "Passing test that validates container functionality",
+            "Updated main module to expose container access"
+          ],
+          "validation_steps": [
+            "Run 'bundle install' successfully",
+            "Run the container test and verify it passes",
+            "Start the application and verify no errors",
+            "Call ComputerTools.container and verify it returns a Dry::Container"
+          ],
+          "code_examples": {
+            "container_structure": "# lib/computer_tools/container.rb\nrequire 'dry-container'\n\nmodule ComputerTools\n  module Container\n    extend Dry::Container::Mixin\n    \n    # Register basic dependencies\n    register 'configuration' do\n      ComputerTools::Configuration.new\n    end\n  end\nend",
+            "test_structure": "# spec/container_spec.rb\nRSpec.describe ComputerTools::Container do\n  it 'can register and resolve dependencies' do\n    container = ComputerTools::Container\n    expect(container['configuration']).to be_a(ComputerTools::Configuration)\n  end\nend"
+          }
+        }
+      },
+      {
+        "task_id": "P1-T002", 
+        "title": "Analyze current Configuration class and identify role-specific groupings",
+        "category": "Analysis",
+        "story_points": 2,
+        "priority": "High",
+        "dependencies": [],
+        "acceptance_criteria": [
+          "Complete analysis document of current Configuration class structure",
+          "Identified logical groupings for configuration separation",
+          "Mapping of which components use which configuration sections",
+          "Proposed new configuration class structure"
+        ],
+        "llm_prompt": {
+          "role": "Software Architect",
+          "task": "Analyze the monolithic Configuration class and design role-specific configuration objects",
+          "context": "The ComputerTools application currently has a monolithic Configuration class that loads all settings from YAML files and exposes everything to every component. This violates the Interface Segregation Principle. You need to analyze the current structure and propose a better design.",
+          "instructions": [
+            "1. Examine 'lib/computer_tools/configuration.rb' thoroughly:",
+            "   - List all configuration keys/sections currently loaded",
+            "   - Note which YAML files are being loaded",
+            "   - Identify any nested configuration structures",
+            "2. Search the codebase for Configuration usage:",
+            "   - Find all places where Configuration is instantiated or accessed",
+            "   - Document which specific config keys each component uses",
+            "   - Look for patterns in how different components group config usage",
+            "3. Analyze the YAML configuration files to understand logical groupings:",
+            "   - Look for natural boundaries (api settings, database settings, logging, etc.)",
+            "   - Identify cross-cutting configuration that multiple components need",
+            "4. Design new configuration structure:",
+            "   - Propose 4-6 role-specific configuration classes",
+            "   - Define which components should use which configuration objects",
+            "   - Ensure each config class has a single, clear responsibility",
+            "5. Create a migration plan that shows how to move from current to new structure"
+          ],
+          "expected_output": [
+            "Analysis document with current configuration inventory",
+            "Component-to-config usage mapping",
+            "Proposed new configuration class hierarchy",
+            "Migration plan with specific steps",
+            "Risk assessment for the configuration refactoring"
+          ],
+          "analysis_template": {
+            "current_structure": {
+              "config_keys": "List all top-level configuration keys",
+              "yaml_files": "List all YAML files being loaded",
+              "access_patterns": "How components currently access config"
+            },
+            "proposed_structure": {
+              "api_config": "Settings for external API integrations",
+              "database_config": "Database connection and query settings", 
+              "logging_config": "Logging levels, formatters, outputs",
+              "wrapper_config": "Settings for external tool wrappers",
+              "core_config": "Application-wide settings needed by multiple components"
+            },
+            "migration_strategy": "Step-by-step plan to move to new structure"
+          },
+          "validation_steps": [
+            "Verify all current config keys are accounted for in new design",
+            "Ensure no component needs more than 2-3 config objects",
+            "Confirm each config class has a clear, single responsibility",
+            "Validate that common settings are properly shared"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T003",
+        "title": "Create interfaces/contracts for Wrapper classes", 
+        "category": "Architecture",
+        "story_points": 5,
+        "priority": "High",
+        "dependencies": ["P1-T001"],
+        "acceptance_criteria": [
+          "Abstract interfaces defined for all Wrapper classes",
+          "Interfaces follow Ruby duck typing conventions",
+          "Existing Wrapper classes implement the interfaces",
+          "Documentation explains the interface contracts"
+        ],
+        "llm_prompt": {
+          "role": "Ruby Developer",
+          "task": "Create abstract interfaces for Wrapper classes to enable dependency injection",
+          "context": "The ComputerTools application has several Wrapper classes (GitWrapper, ResticWrapper, etc.) that are directly instantiated by Action classes. To enable dependency injection, we need to create abstract interfaces that define the contracts these wrappers must fulfill.",
+          "instructions": [
+            "1. Examine all existing Wrapper classes in 'lib/computer_tools/wrappers/':",
+            "   - Document the public methods of each wrapper",
+            "   - Identify common patterns across wrappers",
+            "   - Note any wrapper-specific behaviors that need special interfaces",
+            "2. Create abstract interface modules using Ruby's duck typing approach:",
+            "   - Create 'lib/computer_tools/interfaces/' directory",
+            "   - Define interface modules that specify required methods",
+            "   - Use module documentation to specify method contracts",
+            "   - Consider using dry-types for parameter validation if complex",
+            "3. For each wrapper type, create specific interfaces:",
+            "   - GitInterface - for version control operations",
+            "   - BackupInterface - for backup/restore operations", 
+            "   - DatabaseInterface - for database operations",
+            "   - FileSystemInterface - for file operations",
+            "4. Update existing Wrapper classes to include their interfaces:",
+            "   - Add 'include InterfaceName' to each wrapper",
+            "   - Ensure all interface methods are implemented",
+            "   - Add method documentation that references the interface",
+            "5. Create interface validation utilities:",
+            "   - Helper methods to verify objects implement required interfaces",
+            "   - Runtime validation for dependency injection"
+          ],
+          "expected_output": [
+            "Interface modules for each wrapper type in lib/computer_tools/interfaces/",
+            "Updated wrapper classes that include their interfaces",
+            "Documentation explaining each interface contract",
+            "Validation utilities for interface compliance",
+            "Tests that verify interface implementations"
+          ],
+          "interface_template": {
+            "structure": "# lib/computer_tools/interfaces/git_interface.rb\nmodule ComputerTools\n  module Interfaces\n    module GitInterface\n      # @abstract\n      # Initialize a git repository\n      # @param path [String] Repository path\n      # @return [Boolean] Success status\n      def init_repository(path)\n        raise NotImplementedError\n      end\n    end\n  end\nend",
+            "implementation": "# lib/computer_tools/wrappers/git_wrapper.rb\nclass GitWrapper\n  include ComputerTools::Interfaces::GitInterface\n  \n  def init_repository(path)\n    # Implementation here\n  end\nend"
+          },
+          "validation_steps": [
+            "All existing wrapper methods are covered by interfaces",
+            "Interface methods have clear documentation",
+            "Wrapper classes successfully include their interfaces",
+            "Interface validation utilities work correctly",
+            "No breaking changes to existing wrapper functionality"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T004",
+        "title": "Implement role-specific configuration classes",
+        "category": "Refactoring", 
+        "story_points": 5,
+        "priority": "High",
+        "dependencies": ["P1-T002"],
+        "acceptance_criteria": [
+          "New configuration classes created based on analysis",
+          "Each config class has single responsibility",
+          "Configuration loading logic updated",
+          "Backward compatibility maintained during transition"
+        ],
+        "llm_prompt": {
+          "role": "Ruby Developer",
+          "task": "Implement role-specific configuration classes based on the analysis from P1-T002",
+          "context": "Based on the configuration analysis, you need to create smaller, focused configuration classes that replace the monolithic Configuration object. Each class should handle a specific area of configuration responsibility.",
+          "instructions": [
+            "1. Create the new configuration class structure in 'lib/computer_tools/configuration/':",
+            "   - ApiConfiguration - for external API settings",
+            "   - DatabaseConfiguration - for database connection settings",
+            "   - LoggingConfiguration - for logging setup",
+            "   - WrapperConfiguration - for external tool wrapper settings",
+            "   - CoreConfiguration - for application-wide shared settings",
+            "2. For each configuration class:",
+            "   - Use dry-configurable or similar pattern for type safety",
+            "   - Load only the YAML sections relevant to that configuration",
+            "   - Provide sensible defaults for optional settings",
+            "   - Include validation for required settings",
+            "   - Add clear documentation for each setting",
+            "3. Create a ConfigurationFactory that manages the creation of all config objects:",
+            "   - Centralized loading from YAML files",
+            "   - Dependency injection registration", 
+            "   - Environment-specific overrides",
+            "4. Update the original Configuration class to delegate to new classes:",
+            "   - Maintain backward compatibility during transition",
+            "   - Deprecation warnings for direct access",
+            "   - Migration path documentation",
+            "5. Register all configuration objects in the DI container"
+          ],
+          "expected_output": [
+            "New configuration classes in lib/computer_tools/configuration/",
+            "ConfigurationFactory for centralized config management",
+            "Updated main Configuration class with delegation",
+            "Container registrations for all config objects",
+            "Tests for each configuration class",
+            "Migration documentation"
+          ],
+          "code_template": {
+            "config_class": "# lib/computer_tools/configuration/api_configuration.rb\nmodule ComputerTools\n  module Configuration\n    class ApiConfiguration\n      include Dry::Configurable\n      \n      setting :timeout, default: 30\n      setting :base_url, constructor: ->(v) { URI(v) }\n      setting :api_key\n      \n      def self.from_yaml(yaml_data)\n        config = new\n        config.configure do |c|\n          c.timeout = yaml_data['api']['timeout'] if yaml_data.dig('api', 'timeout')\n          c.base_url = yaml_data['api']['base_url']\n          c.api_key = yaml_data['api']['api_key']\n        end\n        config\n      end\n    end\n  end\nend"
+          },
+          "validation_steps": [
+            "Each config class loads only its relevant YAML sections",
+            "All required settings have validation",
+            "Factory can create all config objects successfully",
+            "Container can resolve all config dependencies",
+            "Backward compatibility maintained for existing code",
+            "No configuration data is lost in transition"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T005",
+        "title": "Set up comprehensive testing framework for DI components",
+        "category": "Testing",
+        "story_points": 4,
+        "priority": "High", 
+        "dependencies": ["P1-T001", "P1-T003"],
+        "acceptance_criteria": [
+          "RSpec configured with proper DI testing utilities",
+          "Test helpers for mocking dependencies",
+          "Test containers for isolated testing",
+          "Example tests demonstrating DI testing patterns"
+        ],
+        "llm_prompt": {
+          "role": "Test Engineer",
+          "task": "Set up comprehensive testing infrastructure for dependency injection components",
+          "context": "With dependency injection being introduced, the testing strategy needs to support mocking dependencies, testing in isolation, and validating container configurations. You need to create a robust testing framework that makes DI testing straightforward.",
+          "instructions": [
+            "1. Configure RSpec for DI testing in 'spec/spec_helper.rb':",
+            "   - Add require statements for dry-container testing utilities",
+            "   - Configure RSpec to use test containers",
+            "   - Set up before/after hooks for container cleanup",
+            "2. Create test utilities in 'spec/support/':",
+            "   - DI test helpers for mocking dependencies",
+            "   - Factory methods for creating test objects with dependencies",
+            "   - Shared examples for testing interface compliance",
+            "   - Matchers for validating dependency injection",
+            "3. Set up test containers in 'spec/support/test_container.rb':",
+            "   - Isolated container for testing",
+            "   - Easy registration of test doubles",
+            "   - Methods to reset container state between tests",
+            "4. Create comprehensive test examples:",
+            "   - Unit tests that mock all dependencies",
+            "   - Integration tests that use real dependencies",
+            "   - Container configuration tests",
+            "   - Interface compliance tests for wrappers",
+            "5. Document testing patterns and best practices:",
+            "   - How to write tests for classes using DI",
+            "   - When to use mocks vs real dependencies",
+            "   - Testing guidelines for the team"
+          ],
+          "expected_output": [
+            "Enhanced spec_helper.rb with DI testing configuration",
+            "Test utilities in spec/support/ for DI patterns",
+            "Test container setup for isolated testing",
+            "Example tests demonstrating all DI testing patterns",
+            "Testing documentation and guidelines",
+            "Shared examples for interface testing"
+          ],
+          "testing_template": {
+            "test_helper": "# spec/support/di_test_helpers.rb\nmodule DITestHelpers\n  def with_test_container(&block)\n    original_container = ComputerTools.container\n    test_container = ComputerTools::TestContainer.new\n    ComputerTools.container = test_container\n    yield(test_container)\n  ensure\n    ComputerTools.container = original_container\n  end\n  \n  def mock_dependency(name, mock_object)\n    ComputerTools.container.register(name) { mock_object }\n  end\nend",
+            "example_test": "# spec/actions/example_action_spec.rb\nRSpec.describe ExampleAction do\n  include DITestHelpers\n  \n  it 'processes data using injected dependencies' do\n    with_test_container do |container|\n      mock_wrapper = double('wrapper')\n      container.register('git_wrapper') { mock_wrapper }\n      \n      expect(mock_wrapper).to receive(:commit).with('test message')\n      \n      action = described_class.new(container)\n      action.execute('test message')\n    end\n  end\nend"
+          },
+          "validation_steps": [
+            "All existing tests continue to pass",
+            "Test helpers successfully mock dependencies",
+            "Test container provides proper isolation",
+            "Example tests demonstrate clear DI testing patterns", 
+            "Team can easily write new tests using DI patterns",
+            "Test suite runs efficiently with container setup/teardown"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T006",
+        "title": "Migrate GitWrapper and one Action class as proof of concept",
+        "category": "Implementation",
+        "story_points": 6,
+        "priority": "Critical",
+        "dependencies": ["P1-T003", "P1-T004", "P1-T005"],
+        "acceptance_criteria": [
+          "GitWrapper registered in DI container",
+          "One Action class refactored to use dependency injection",
+          "All existing functionality preserved",
+          "Comprehensive tests validate the migration",
+          "Performance impact assessed"
+        ],
+        "llm_prompt": {
+          "role": "Ruby Developer",
+          "task": "Migrate GitWrapper and one Action class to use dependency injection as a proof of concept",
+          "context": "This is the critical proof-of-concept migration that validates the entire DI approach. You need to refactor GitWrapper to be injectable and update one Action class to receive it as a dependency instead of instantiating it directly.",
+          "instructions": [
+            "1. Refactor GitWrapper for dependency injection:",
+            "   - Remove direct instantiation of dependencies within GitWrapper",
+            "   - Add constructor parameters for any GitWrapper dependencies",
+            "   - Ensure GitWrapper implements its interface correctly",
+            "   - Update GitWrapper to be stateless where possible",
+            "2. Choose the simplest Action class that uses GitWrapper:",
+            "   - Identify an Action with minimal complexity for first migration",
+            "   - Refactor constructor to accept GitWrapper as parameter",
+            "   - Update action logic to use injected GitWrapper",
+            "   - Ensure no direct instantiation remains",
+            "3. Register dependencies in the container:",
+            "   - Add GitWrapper registration to container/registrations.rb",
+            "   - Configure any dependencies GitWrapper needs",
+            "   - Register the refactored Action class",
+            "   - Ensure proper lifecycle management",
+            "4. Create comprehensive tests:",
+            "   - Unit tests for GitWrapper with mocked dependencies",
+            "   - Unit tests for Action with mocked GitWrapper",
+            "   - Integration tests with real GitWrapper",
+            "   - Performance comparison tests",
+            "5. Update calling code:",
+            "   - Find all places that instantiate the Action directly",
+            "   - Update to resolve from container instead",
+            "   - Ensure backward compatibility during transition",
+            "6. Validate and document the migration:",
+            "   - Verify all existing functionality works",
+            "   - Document performance impact",
+            "   - Create migration template for other Actions"
+          ],
+          "expected_output": [
+            "Refactored GitWrapper with dependency injection",
+            "Migrated Action class using injected GitWrapper",
+            "Container registrations for both components", 
+            "Comprehensive test suite for migrated components",
+            "Updated calling code to use container resolution",
+            "Migration documentation and template",
+            "Performance analysis report"
+          ],
+          "migration_template": {
+            "before": "class ExampleAction\n  def execute\n    git_wrapper = GitWrapper.new\n    git_wrapper.commit('message')\n  end\nend",
+            "after": "class ExampleAction\n  def initialize(git_wrapper:)\n    @git_wrapper = git_wrapper\n  end\n  \n  def execute\n    @git_wrapper.commit('message')\n  end\nend"
+          },
+          "validation_steps": [
+            "GitWrapper can be resolved from container",
+            "Action class can be resolved with injected GitWrapper",
+            "All existing GitWrapper functionality works through DI",
+            "Action behavior identical to before migration",
+            "Tests pass for both unit and integration scenarios",
+            "Performance impact is within acceptable limits (<5% overhead)",
+            "Migration pattern is clear and repeatable"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T007",
+        "title": "Write baseline tests for existing Action functionality",
+        "category": "Testing",
+        "story_points": 5,
+        "priority": "Medium",
+        "dependencies": ["P1-T005"],
+        "acceptance_criteria": [
+          "Comprehensive test coverage for all existing Action classes",
+          "Tests validate current behavior before refactoring",
+          "Test suite runs reliably and quickly",
+          "Clear documentation of expected behaviors"
+        ],
+        "llm_prompt": {
+          "role": "Test Engineer", 
+          "task": "Create comprehensive baseline tests for all existing Action classes before DI migration",
+          "context": "Before migrating Action classes to dependency injection, we need comprehensive tests that capture their current behavior. These tests will serve as a safety net during refactoring and ensure no functionality is lost.",
+          "instructions": [
+            "1. Inventory all Action classes in 'lib/computer_tools/actions/':",
+            "   - List all Action classes and their public methods",
+            "   - Identify the primary execute/call methods for each",
+            "   - Document input parameters and expected outputs",
+            "   - Note any side effects (file operations, API calls, etc.)",
+            "2. Create comprehensive test coverage for each Action:",
+            "   - Happy path tests for normal operation",
+            "   - Error handling tests for common failure scenarios",
+            "   - Edge case tests for boundary conditions",
+            "   - Integration tests that verify end-to-end behavior",
+            "3. Use test doubles strategically:",
+            "   - Mock external dependencies (APIs, file system) where appropriate",
+            "   - Use real objects for core business logic",
+            "   - Ensure tests are deterministic and fast",
+            "4. Document expected behaviors:",
+            "   - Clear test descriptions that specify expected behavior",
+            "   - Comments explaining complex test scenarios",
+            "   - Examples of valid inputs and outputs",
+            "5. Set up test data and fixtures:",
+            "   - Create reusable test data for common scenarios",
+            "   - Set up file fixtures for Actions that process files",
+            "   - Mock API responses for external service interactions",
+            "6. Ensure test suite performance:",
+            "   - Tests should run in under 30 seconds total",
+            "   - Parallel test execution where possible",
+            "   - Efficient setup and teardown"
+          ],
+          "expected_output": [
+            "Test files for all Action classes in spec/actions/",
+            "Test fixtures and test data in spec/fixtures/",
+            "Helper methods for common test scenarios",
+            "Documentation of covered behaviors and edge cases",
+            "Fast, reliable test suite with good coverage",
+            "CI configuration for automated test running"
+          ],
+          "test_structure": {
+            "example": "# spec/actions/blueprint_submit_action_spec.rb\nRSpec.describe BlueprintSubmitAction do\n  describe '#execute' do\n    context 'with valid blueprint data' do\n      it 'submits blueprint successfully' do\n        # Test implementation\n      end\n    end\n    \n    context 'with invalid data' do\n      it 'raises appropriate error' do\n        # Test implementation\n      end\n    end\n    \n    context 'when external service is unavailable' do\n      it 'handles service errors gracefully' do\n        # Test implementation\n      end\n    end\n  end\nend"
+          },
+          "validation_steps": [
+            "All Action classes have corresponding test files",
+            "Test coverage is above 90% for Action classes",
+            "Tests run successfully and consistently",
+            "Test suite completes in under 30 seconds",
+            "All major code paths and error scenarios are covered",
+            "Tests provide clear failure messages when they fail"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T008",
+        "title": "Create documentation and team guidelines for DI patterns",
+        "category": "Documentation",
+        "story_points": 3,
+        "priority": "Medium", 
+        "dependencies": ["P1-T006"],
+        "acceptance_criteria": [
+          "Comprehensive documentation of DI patterns used",
+          "Guidelines for writing DI-compatible code",
+          "Examples and templates for common scenarios",
+          "Team training materials prepared"
+        ],
+        "llm_prompt": {
+          "role": "Technical Writer",
+          "task": "Create comprehensive documentation and guidelines for the dependency injection patterns implemented",
+          "context": "The team needs clear documentation and guidelines to understand and consistently apply the dependency injection patterns introduced in Phase 1. This documentation will ensure the patterns are followed correctly as more code is migrated.",
+          "instructions": [
+            "1. Create architecture documentation in 'docs/architecture/':",
+            "   - Overview of dependency injection approach",
+            "   - Explanation of container usage and registration patterns",
+            "   - Interface-based design principles",
+            "   - Configuration separation rationale and structure",
+            "2. Write developer guidelines in 'docs/development/':",
+            "   - How to write new Action classes with DI",
+            "   - How to create and register new dependencies",
+            "   - Testing patterns for DI components",
+            "   - Common pitfalls and how to avoid them",
+            "3. Create code templates and examples:",
+            "   - Template for new Action classes",
+            "   - Template for new Wrapper classes with interfaces",
+            "   - Example test files showing DI testing patterns",
+            "   - Configuration class template",
+            "4. Document migration patterns:",
+            "   - Step-by-step guide for migrating existing Actions",
+            "   - Checklist for DI migration validation",
+            "   - Troubleshooting guide for common migration issues",
+            "5. Create team training materials:",
+            "   - Presentation explaining DI benefits and patterns",
+            "   - Hands-on exercises for writing DI code",
+            "   - Code review checklist for DI compliance",
+            "6. Set up documentation maintenance:",
+            "   - Documentation review process",
+            "   - Regular updates as patterns evolve",
+            "   - Feedback collection from team"
+          ],
+          "expected_output": [
+            "Architecture documentation in docs/architecture/",
+            "Developer guidelines in docs/development/",
+            "Code templates and examples",
+            "Migration guide and checklists",
+            "Team training presentation and exercises",
+            "Documentation maintenance process"
+          ],
+          "documentation_structure": {
+            "architecture_doc": "# Dependency Injection Architecture\n\n## Overview\nExplain the DI container approach and benefits\n\n## Container Structure\nDescribe how dependencies are organized and registered\n\n## Interface Design\nExplain interface patterns and contracts\n\n## Configuration Architecture\nDescribe role-specific configuration approach",
+            "developer_guide": "# Developer Guide: Dependency Injection\n\n## Writing New Actions\nStep-by-step guide with examples\n\n## Testing with DI\nTesting patterns and utilities\n\n## Common Patterns\nFrequently used DI patterns\n\n## Troubleshooting\nCommon issues and solutions"
+          },
+          "validation_steps": [
+            "Documentation covers all implemented DI patterns",
+            "Examples compile and run successfully",
+            "Guidelines are clear and actionable",
+            "Team can follow migration guide successfully",
+            "Training materials effectively explain concepts",
+            "Documentation stays current with code changes"
+          ]
+        }
+      },
+      {
+        "task_id": "P1-T009",
+        "title": "Performance benchmarking and optimization analysis",
+        "category": "Performance",
+        "story_points": 2,
+        "priority": "Low",
+        "dependencies": ["P1-T006"],
+        "acceptance_criteria": [
+          "Performance benchmarks for DI vs direct instantiation",
+          "Memory usage analysis of container overhead",
+          "Startup time impact assessment",
+          "Recommendations for performance optimization"
+        ],
+        "llm_prompt": {
+          "role": "Performance Engineer",
+          "task": "Analyze performance impact of dependency injection implementation and provide optimization recommendations",
+          "context": "The dependency injection implementation introduces abstraction layers and container overhead. You need to measure the performance impact and ensure it's within acceptable limits, providing optimization guidance where needed.",
+          "instructions": [
+            "1. Create performance benchmarks in 'spec/performance/':",
+            "   - Benchmark Action execution with and without DI",
+            "   - Measure container resolution time vs direct instantiation",
+            "   - Test memory usage of container vs direct object creation",
+            "   - Benchmark application startup time impact",
+            "2. Use appropriate benchmarking tools:",
+            "   - benchmark-ips gem for execution speed tests",
+            "   - memory_profiler gem for memory usage analysis",
+            "   - Ruby's built-in profiler for detailed analysis",
+            "   - Custom timing for application-specific metrics",
+            "3. Test various scenarios:",
+            "   - Single Action execution (cold start)",
+            "   - Repeated Action execution (warm performance)",
+            "   - Concurrent Action execution",
+            "   - Large batch processing scenarios",
+            "4. Analyze container overhead:",
+            "   - Container registration time",
+            "   - Dependency resolution time",
+            "   - Memory footprint of registered dependencies",
+            "   - GC impact of container and dependency objects",
+            "5. Create performance reports:",
+            "   - Comparison charts of before/after performance",
+            "   - Memory usage profiles",
+            "   - Identification of performance bottlenecks",
+            "   - Recommendations for optimization",
+            "6. Document performance guidelines:",
+            "   - Best practices for container usage",
+            "   - When to cache vs resolve dependencies",
+            "   - Guidelines for dependency lifecycle management"
+          ],
+          "expected_output": [
+            "Performance benchmark suite in spec/performance/",
+            "Detailed performance analysis report",
+            "Memory usage analysis and recommendations",
+            "Performance optimization guidelines",
+            "Continuous performance monitoring setup",
+            "Performance regression detection"
+          ],
+          "benchmark_template": {
+            "execution_speed": "# spec/performance/action_execution_benchmark.rb\nrequire 'benchmark/ips'\n\nBenchmark.ips do |x|\n  x.report('direct instantiation') do\n    action = ExampleAction.new\n    action.execute\n  end\n  \n  x.report('DI container') do\n    action = container.resolve('example_action')\n    action.execute\n  end\n  \n  x.compare!\nend",
+            "memory_usage": "require 'memory_profiler'\n\nreport = MemoryProfiler.report do\n  1000.times do\n    container.resolve('example_action').execute\n  end\nend\n\nreport.pretty_print"
+          },
+          "validation_steps": [
+            "DI overhead is less than 5% for typical operations",
+            "Memory usage increase is within acceptable limits",
+            "Startup time impact is minimal (<100ms)",
+            "No significant performance regressions identified", 
+            "Performance monitoring is set up for ongoing tracking",
+            "Optimization recommendations are actionable and tested"
+          ]
+        }
+      }
+    ],
+    "phase_summary": {
+      "objectives": [
+        "Establish dependency injection infrastructure using dry-container",
+        "Refactor monolithic configuration into role-specific objects", 
+        "Create interfaces for all wrapper classes",
+        "Set up comprehensive testing framework for DI",
+        "Migrate one Action class as proof of concept",
+        "Create documentation and guidelines for DI patterns"
+      ],
+      "deliverables": [
+        "Working dependency injection container",
+        "Role-specific configuration classes",
+        "Interface definitions for all wrappers",
+        "Comprehensive test suite with DI support",
+        "Successfully migrated GitWrapper and one Action",
+        "Complete documentation and team guidelines",
+        "Performance analysis and optimization recommendations"
+      ],
+      "success_criteria": [
+        "All phase 1 tasks completed successfully",
+        "No regressions in existing functionality",
+        "Test coverage maintained or improved",
+        "Team can effectively use DI patterns",
+        "Performance impact within acceptable limits",
+        "Foundation ready for Phase 2 migration"
+      ],
+      "risks_and_mitigation": [
+        {
+          "risk": "Team unfamiliarity with DI patterns",
+          "mitigation": "Comprehensive documentation and training materials"
+        },
+        {
+          "risk": "Performance overhead from abstraction",
+          "mitigation": "Thorough benchmarking and optimization analysis"
+        },
+        {
+          "risk": "Complexity increase in codebase",
+          "mitigation": "Clear interfaces and well-documented patterns"
+        },
+        {
+          "risk": "Integration issues with existing code",
+          "mitigation": "Comprehensive testing and gradual migration approach"
+        }
+      ]
+    }
+  }
+}
