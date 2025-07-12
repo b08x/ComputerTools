@@ -51,3 +51,4 @@ gem "solargraph", "~> 0.56.0"
 
 gem "rbs", "~> 3.9"
 gem "dry-container", "~> 0.11.0"
+gem "dry-configurable", "~> 1.0"

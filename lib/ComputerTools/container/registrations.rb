@@ -256,13 +256,40 @@ module ComputerTools
       #
       # @return [void]
       def self.register_configurations
-        # Main configuration is already registered in the main container file
-        # Role-specific configurations will be added here once they're implemented
+        # Load YAML data for configurations
+        yaml_data = ComputerTools::Configurations::ConfigurationFactory.load_yaml_data
+
+        # Register individual configuration objects
+        ComputerTools::Container.register('logging_configuration') do
+          ComputerTools::Configurations::ConfigurationFactory.create_logging_config(yaml_data)
+        end
         
-        # Example of what will be added in future tasks:
-        # ComputerTools::Container.register('api_configuration') do
-        #   ComputerTools::Configuration::ApiConfiguration.new
-        # end
+        ComputerTools::Container.register('path_configuration') do
+          ComputerTools::Configurations::ConfigurationFactory.create_path_config(yaml_data)
+        end
+        
+        ComputerTools::Container.register('terminal_configuration') do
+          ComputerTools::Configurations::ConfigurationFactory.create_terminal_config(yaml_data)
+        end
+        
+        ComputerTools::Container.register('display_configuration') do
+          ComputerTools::Configurations::ConfigurationFactory.create_display_config(yaml_data)
+        end
+        
+        ComputerTools::Container.register('backup_configuration') do
+          ComputerTools::Configurations::ConfigurationFactory.create_backup_config(yaml_data)
+        end
+        
+        ComputerTools::Container.register('application_configuration') do
+          ComputerTools::Configurations::ConfigurationFactory.create_application_config
+        end
+        
+        # Backward compatibility - maintain existing registration
+        unless ComputerTools::Container.registered?('configuration')
+          ComputerTools::Container.register('configuration') do
+            ComputerTools::Container['application_configuration']
+          end
+        end
       end
     end
   end

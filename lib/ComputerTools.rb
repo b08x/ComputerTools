@@ -31,6 +31,15 @@ require "ComputerTools/logger"
 require "ComputerTools/configuration"
 require "ComputerTools/container"
 
+# Load role-specific configuration classes
+require "ComputerTools/configuration/logging_configuration"
+require "ComputerTools/configuration/path_configuration"
+require "ComputerTools/configuration/terminal_configuration"
+require "ComputerTools/configuration/display_configuration"
+require "ComputerTools/configuration/backup_configuration"
+require "ComputerTools/configuration/configuration_factory"
+require "ComputerTools/configuration/application_configuration"
+
 # Load interfaces
 require "ComputerTools/interfaces/git_interface"
 require "ComputerTools/interfaces/backup_interface"
