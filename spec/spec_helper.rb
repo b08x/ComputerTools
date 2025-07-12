@@ -13,8 +13,26 @@ $:.unshift lib_dir unless $:.include?(lib_dir)
 # Require the main application file
 require "ComputerTools"
 
+# Load dependency injection testing utilities
+Dir[File.join(__dir__, "support", "**", "*.rb")].each { |f| require f }
+
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
+  # Include DI test helpers in all examples
+  config.include DITestHelpers
+
+  # Initialize container before running tests that need it
+  config.before(:suite) do
+    ComputerTools.initialize_container unless ComputerTools.container.registered?('configuration')
+  end
+
+  # Clean up any test container state between examples
+  config.after(:each) do
+    # Reset any modified container state if needed
+    if defined?(ComputerTools::TestContainer)
+      ComputerTools::TestContainer.reset! rescue nil
+    end
+  end
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
