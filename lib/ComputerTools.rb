@@ -2,6 +2,16 @@
 lib_dir = File.expand_path(File.join(__dir__, "..", "lib"))
 $:.unshift lib_dir unless $:.include?(lib_dir)
 
+require 'dotenv/load'
+
+# Attempts to load the .env file, overwriting existing environment variables.
+# If an error occurs, it displays an error message.
+begin
+  Dotenv.load('.env', overwrite: true)
+rescue StandardError => e
+  puts "Error loading .env file: #{e.message}"
+end
+
 require 'colorize'
 require 'fileutils'
 require 'git'
@@ -53,15 +63,6 @@ require "ComputerTools/interfaces/validation"
 require "ComputerTools/providers/sublayer/ollama"
 require "ComputerTools/providers/sublayer/openrouter"
 
-require "ComputerTools/actions/blueprint/blueprint_config_action"
-require "ComputerTools/actions/blueprint/blueprint_edit_action"
-require "ComputerTools/actions/blueprint/blueprint_list_action"
-require "ComputerTools/actions/blueprint/blueprint_search_action"
-require "ComputerTools/actions/blueprint/blueprint_delete_action"
-require "ComputerTools/actions/blueprint/blueprint_export_action"
-require "ComputerTools/actions/blueprint/blueprint_submit_action"
-require "ComputerTools/actions/blueprint/blueprint_view_action"
-
 require "ComputerTools/actions/deepgram/deepgram_analyze_action"
 require "ComputerTools/actions/deepgram/deepgram_config_action"
 require "ComputerTools/actions/deepgram/deepgram_convert_action"
@@ -73,7 +74,8 @@ require "ComputerTools/actions/file_activity/latest_changes_action"
 require "ComputerTools/actions/file_activity/restic_analysis_action"
 require "ComputerTools/actions/file_activity/yadm_analysis_action"
 
-require "ComputerTools/wrappers/blueprint_database"
+require "ComputerTools/actions/display_available_models_action"
+
 require "ComputerTools/wrappers/deepgram_analyzer"
 require "ComputerTools/wrappers/deepgram_formatter"
 require "ComputerTools/wrappers/deepgram_parser"
@@ -84,16 +86,11 @@ require "ComputerTools/wrappers/trafilatura"
 
 require "ComputerTools/commands/base_command"
 require "ComputerTools/commands/menu_command"
-require "ComputerTools/commands/blueprint_command"
 require "ComputerTools/commands/config_command"
 require "ComputerTools/commands/deepgram_command"
 require "ComputerTools/commands/latest_changes_command"
+require "ComputerTools/commands/list_models_command"
 require "ComputerTools/commands/overview_command"
-
-require 'ComputerTools/generators/blueprint/blueprint_category_generator'
-require 'ComputerTools/generators/blueprint/blueprint_description_generator'
-require 'ComputerTools/generators/blueprint/blueprint_improvement_generator'
-require 'ComputerTools/generators/blueprint/blueprint_name_generator'
 
 require "ComputerTools/generators/deepgram/deepgram_insights_generator"
 require "ComputerTools/generators/deepgram/deepgram_summary_generator"

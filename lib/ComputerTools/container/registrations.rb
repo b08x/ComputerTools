@@ -53,7 +53,7 @@ module ComputerTools
       # Register wrapper dependencies
       #
       # Wrapper classes provide interfaces to external tools and services.  This method registers
-      # wrappers for Git, Restic, Docling, Trafilatura, BlueprintDatabase, DeepgramParser,
+      # wrappers for Git, Restic, Docling, Trafilatura, DeepgramParser,
       # DeepgramAnalyzer, and DeepgramFormatter.
       #
       # @return [void]
@@ -80,11 +80,6 @@ module ComputerTools
           ComputerTools::Wrappers::Trafilatura.new
         end
 
-        # Blueprint database wrapper
-        ComputerTools::Container.register('blueprint_database') do
-          ComputerTools::Wrappers::BlueprintDatabase.new
-        end
-
         # Deepgram-related wrappers
         ComputerTools::Container.register('deepgram_parser') do
           ComputerTools::Wrappers::DeepgramParser.new
@@ -103,57 +98,10 @@ module ComputerTools
       # Register action dependencies
       #
       # Action classes encapsulate business logic and coordinate between components. This method
-      # registers various actions related to blueprints, deepgram, and file activity.
+      # registers various actions related to, deepgram, and file activity.
       #
       # @return [void]
       def self.register_actions
-        # Blueprint actions
-        ComputerTools::Container.register('blueprint_submit_action') do
-          ComputerTools::Actions::Blueprint::BlueprintSubmitAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_search_action') do
-          ComputerTools::Actions::Blueprint::BlueprintSearchAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_view_action') do
-          ComputerTools::Actions::Blueprint::BlueprintViewAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_edit_action') do
-          ComputerTools::Actions::Blueprint::BlueprintEditAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_delete_action') do
-          ComputerTools::Actions::Blueprint::BlueprintDeleteAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_list_action') do
-          ComputerTools::Actions::Blueprint::BlueprintListAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_export_action') do
-          ComputerTools::Actions::Blueprint::BlueprintExportAction.new(
-            database: ComputerTools::Container['blueprint_database']
-          )
-        end
-
-        ComputerTools::Container.register('blueprint_config_action') do
-          ComputerTools::Actions::Blueprint::BlueprintConfigAction.new
-        end
-
         # Deepgram actions
         ComputerTools::Container.register('deepgram_parse_action') do
           ComputerTools::Actions::Deepgram::DeepgramParseAction.new(
@@ -211,33 +159,14 @@ module ComputerTools
         ComputerTools::Container.register('run_shell_command') do
           ComputerTools::Actions::RunShellCommand.new
         end
+
+        # Mount restic repository action
+        ComputerTools::Container.register('mount_restic_repo_action') do
+          ComputerTools::Actions::MountResticRepoAction.new
+        end
       end
 
-      ##
-      # Register generator dependencies
-      #
-      # Generator classes create AI-powered content using the Sublayer framework. This method
-      # registers various generators related to blueprints, deepgram, and file activity.
-      #
-      # @return [void]
       def self.register_generators
-        # Blueprint generators
-        ComputerTools::Container.register('blueprint_description_generator') do
-          ComputerTools::Generators::Blueprint::BlueprintDescriptionGenerator.new
-        end
-
-        ComputerTools::Container.register('blueprint_name_generator') do
-          ComputerTools::Generators::Blueprint::BlueprintNameGenerator.new
-        end
-
-        ComputerTools::Container.register('blueprint_category_generator') do
-          ComputerTools::Generators::Blueprint::BlueprintCategoryGenerator.new
-        end
-
-        ComputerTools::Container.register('blueprint_improvement_generator') do
-          ComputerTools::Generators::Blueprint::BlueprintImprovementGenerator.new
-        end
-
         # Deepgram generators
         ComputerTools::Container.register('deepgram_summary_generator') do
           ComputerTools::Generators::Deepgram::DeepgramSummaryGenerator.new
