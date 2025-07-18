@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../actions/mount_restic_repo_action'
+
 module ComputerTools
   module Wrappers
     # ResticWrapper provides an interface to interact with Restic backup repositories.
@@ -21,6 +23,10 @@ module ComputerTools
       # @return [String] the repository path
       attr_reader :repository
 
+      # The mount action instance
+      # @return [ComputerTools::Actions::MountResticRepoAction] the mount action
+      attr_reader :mount_action
+
       # Initializes a new ResticWrapper instance.
       #
       # @param config [Hash] Configuration hash containing paths and settings
@@ -38,9 +44,12 @@ module ComputerTools
         @config = config
         @mount_point = config.fetch(:paths, :restic_mount_point) || File.expand_path('~/mnt/restic')
         @repository = config.fetch(:paths, :restic_repo) || ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo'
-        @mounted = false
-        @mount_pid = nil
         @home_dir = config.fetch(:paths, :home_dir) || File.expand_path('~')
+
+        @mount_action = ComputerTools::Actions::MountResticRepoAction.new(
+          repository: @repository,
+          mount_point: @mount_point
+        )
 
         setup_cleanup_handler
       end
@@ -67,7 +76,7 @@ module ComputerTools
       #     puts "Backup is not mounted."
       #   end
       def mounted?
-        File.directory?(@mount_point) && !Dir.empty?(@mount_point)
+        @mount_action.mounted?
       end
 
       # Returns the path to the latest snapshot.
@@ -90,64 +99,7 @@ module ComputerTools
       #     puts "Failed to mount repository."
       #   end
       def mount_backup
-        unless TTY::Which.exist?('restic')
-          puts "❌ 'restic' command not found. Please install restic.".colorize(:red)
-          return false
-        end
-
-        puts "🔐 Mounting restic repository...".colorize(:blue)
-        puts "   Repository: #{@repository}".colorize(:cyan)
-        puts "   Mount point: #{@mount_point}".colorize(:cyan)
-        puts "   Note: You will be prompted for the repository passphrase".colorize(:yellow)
-
-        prompt = TTY::Prompt.new
-
-        ENV["RESTIC_PASSWORD"] = prompt.mask("enter the restic repository passphrase:") do |q|
-          q.validate(/\S/, "Passphrase cannot be empty")
-        end
-
-        Open3.popen3("restic mount -r #{@repository} #{@mount_point}") do |stdin, stdout, stderr, wait_thr|
-          stdout_thread = Thread.new do
-            stdout.each_line do |line|
-              puts "Restic Output: #{line.chomp}"
-
-              if line.include?("Now serving") && line.include?(@mount_point)
-                puts "Restic mount successful! Proceeding..."
-                break
-              end
-            end
-          end
-
-          stdout_thread.join
-
-          puts "You can now browse your restic repository at #{@mount_point}"
-
-          # When you're ready to unmount:
-          # Process.kill("TERM", wait_thr.pid)
-          # Process.wait(wait_thr.pid)
-
-          puts "Parent process continuing after restic mount."
-        end
-
-        # fork do
-        #   `kitty -e restic mount -r #{@repository} #{@mount_point}`
-        # end
-
-        # sleep 20
-
-        # if $?.success?
-        #   puts "✅ Restic repository mounted successfully.".colorize(:green)
-        #   @mounted = true
-        #   @mount_pid = $?.pid
-        # else
-        #   puts "❌ Failed to mount restic repository: #{result.error}".colorize(:red)
-        #   puts "   Please check the repository path and passphrase.".colorize(:yellow)
-        #   false
-        # end
-      rescue StandardError => e
-        puts "❌ Error mounting restic backup: #{e.message}".colorize(:red)
-        # false
-        exit! 1
+        @mount_action.call
       end
 
       # Compares a current file with its snapshot version.
@@ -191,24 +143,7 @@ module ComputerTools
       # @example Unmounting the repository
       #   wrapper.unmount
       def unmount
-        return unless mounted?
-
-        puts "🔒 Unmounting restic repository...".colorize(:blue)
-
-        if TTY::Which.exist?('umount')
-          if system("umount '#{@mount_point}' 2>/dev/null")
-            puts "✅ Restic repository unmounted successfully.".colorize(:green)
-            @mounted = false
-            ENV.delete("RESTIC_PASSWORD")
-          else
-            puts "⚠️  Warning: Could not unmount #{@mount_point}".colorize(:yellow)
-            puts "   Please manually unmount or terminate the restic process with Ctrl+C".colorize(:yellow)
-          end
-        else
-          puts "⚠️  Warning: 'umount' command not available.".colorize(:yellow)
-          puts "   Please manually unmount #{@mount_point}".colorize(:yellow)
-          puts "   Or terminate the restic process in the terminal with Ctrl+C".colorize(:yellow)
-        end
+        @mount_action.unmount
       end
 
       # Cleans up by unmounting the repository if it is mounted.
@@ -221,18 +156,6 @@ module ComputerTools
       end
 
       private
-
-      # Detects the terminal emulator to use.
-      #
-      # @return [String, nil] the terminal command with arguments or nil if the command does not exist
-      def detect_terminal_emulator
-        command = @config.fetch(:terminal, :command) || 'kitty'
-        args = @config.fetch(:terminal, :args) || '-e'
-
-        return nil unless TTY::Which.exist?(command)
-
-        "#{command} #{args}"
-      end
 
       # Sets up a cleanup handler to ensure the repository is unmounted when the program exits.
       #

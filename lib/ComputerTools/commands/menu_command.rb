@@ -112,8 +112,6 @@ module ComputerTools
 
         debug_log("Executing command handler for: #{command_name}")
         case command_name
-        when 'blueprint'
-          handle_blueprint_command
         when 'deepgram'
           handle_deepgram_command
         when 'example'
@@ -122,58 +120,12 @@ module ComputerTools
           handle_latest_changes_command
         when 'config'
           handle_config_command
+        when 'listmodels'
+          handle_list_models_command
         else
           puts "❌ Unknown command: #{command_name}".colorize(:red)
           :continue
         end
-      end
-
-      # Handles the blueprint command submenu and operations.
-      #
-      # @return [Symbol] :continue to keep the menu running
-      def handle_blueprint_command
-        debug_log("Entering handle_blueprint_command")
-        subcommand = @prompt.select("📋 Blueprint - Choose operation:".colorize(:blue)) do |menu|
-          menu.choice "Submit new blueprint", "submit"
-          menu.choice "List all blueprints", "list"
-          menu.choice "Browse blueprints interactively", "browse"
-          menu.choice "View specific blueprint", "view"
-          menu.choice "Edit blueprint", "edit"
-          menu.choice "Delete blueprint", "delete"
-          menu.choice "Search blueprints", "search"
-          menu.choice "Export blueprint", "export"
-          menu.choice "Configuration", "config"
-          menu.choice "Back to main menu", :back
-        end
-
-        return :continue if subcommand == :back
-
-        begin
-          case subcommand
-          when "submit"
-            handle_blueprint_submit
-          when "list"
-            handle_blueprint_list
-          when "browse"
-            execute_blueprint_command("browse")
-          when "view"
-            handle_blueprint_view
-          when "edit"
-            handle_blueprint_edit
-          when "delete"
-            handle_blueprint_delete
-          when "search"
-            handle_blueprint_search
-          when "export"
-            handle_blueprint_export
-          when "config"
-            handle_blueprint_config
-          end
-        rescue StandardError => e
-          puts "❌ Error executing blueprint command: #{e.message}".colorize(:red)
-        end
-
-        :continue
       end
 
       # Handles the Deepgram command submenu and operations.
@@ -252,15 +204,6 @@ module ComputerTools
         :continue
       end
 
-      # Executes a blueprint command with the given subcommand and arguments.
-      #
-      # @param subcommand [String] the blueprint subcommand to execute
-      # @param args [Array] additional arguments for the command
-      # @return [void]
-      def execute_blueprint_command(subcommand, *)
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
-        blueprint_command.execute(subcommand, *)
-      end
 
       # Executes a Deepgram command with the given subcommand and arguments.
       #
@@ -270,148 +213,6 @@ module ComputerTools
       def execute_deepgram_command(subcommand, *)
         deepgram_command = ComputerTools::Commands::DeepgramCommand.new({})
         deepgram_command.execute(subcommand, *)
-      end
-
-      # Handles the blueprint submission process.
-      # Prompts the user for input and options, then executes the submit command.
-      #
-      # @return [void]
-      def handle_blueprint_submit
-        input = @prompt.ask("📁 Enter file path or code string:")
-        return if input.nil? || input.empty?
-
-        auto_describe = @prompt.yes?("🤖 Auto-generate description?")
-        auto_categorize = @prompt.yes?("🏷️ Auto-categorize?")
-
-        args = [input]
-        options = {}
-        options['auto_describe'] = false unless auto_describe
-        options['auto_categorize'] = false unless auto_categorize
-
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('submit', *args)
-      end
-
-      # Handles listing blueprints with various format options.
-      #
-      # @return [void]
-      def handle_blueprint_list
-        format = @prompt.select("📊 Choose format:") do |menu|
-          menu.choice "Table", "table"
-          menu.choice "Summary", "summary"
-          menu.choice "JSON", "json"
-        end
-
-        interactive = @prompt.yes?("🔄 Interactive mode?")
-
-        options = { 'format' => format }
-        options['interactive'] = true if interactive
-
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('list')
-      end
-
-      # Handles viewing a specific blueprint with various format options.
-      #
-      # @return [void]
-      def handle_blueprint_view
-        id = @prompt.ask("🔍 Enter blueprint ID:")
-        return if id.nil? || id.empty?
-
-        format = @prompt.select("📊 Choose format:") do |menu|
-          menu.choice "Detailed", "detailed"
-          menu.choice "Summary", "summary"
-          menu.choice "JSON", "json"
-        end
-
-        analyze = @prompt.yes?("🧠 Include AI analysis?")
-
-        options = { 'format' => format }
-        options['analyze'] = true if analyze
-
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('view', id)
-      end
-
-      # Handles editing a blueprint.
-      #
-      # @return [void]
-      def handle_blueprint_edit
-        id = @prompt.ask("✏️ Enter blueprint ID to edit:")
-        return if id.nil? || id.empty?
-
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
-        blueprint_command.execute('edit', id)
-      end
-
-      # Handles deleting a blueprint with options for ID input or interactive selection.
-      #
-      # @return [void]
-      def handle_blueprint_delete
-        choice = @prompt.select("🗑️ How would you like to select the blueprint to delete?") do |menu|
-          menu.choice "Enter blueprint ID", "id"
-          menu.choice "Select from list", "interactive"
-        end
-
-        case choice
-        when "id"
-          id = @prompt.ask("🗑️ Enter blueprint ID to delete:")
-          return if id.nil? || id.empty?
-
-          force = @prompt.yes?("⚠️ Skip confirmation? (Use with caution)")
-
-          args = [id]
-          args << "--force" if force
-
-          blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
-          blueprint_command.execute('delete', *args)
-        when "interactive"
-          blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
-          blueprint_command.execute('delete')
-        end
-      end
-
-      # Handles searching blueprints with query and limit options.
-      #
-      # @return [void]
-      def handle_blueprint_search
-        query = @prompt.ask("🔍 Enter search query:")
-        return if query.nil? || query.empty?
-
-        limit = @prompt.ask("📊 Number of results (default 10):", default: "10")
-
-        options = { 'limit' => limit.to_i }
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('search', query)
-      end
-
-      # Handles exporting a blueprint with optional output path.
-      #
-      # @return [void]
-      def handle_blueprint_export
-        id = @prompt.ask("📤 Enter blueprint ID to export:")
-        return if id.nil? || id.empty?
-
-        output_path = @prompt.ask("💾 Output file path (optional):")
-
-        args = [id]
-        args << output_path unless output_path.nil? || output_path.empty?
-
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
-        blueprint_command.execute('export', *args)
-      end
-
-      # Handles blueprint configuration options.
-      #
-      # @return [void]
-      def handle_blueprint_config
-        subcommand = @prompt.select("⚙️ Configuration:") do |menu|
-          menu.choice "Show current config", "show"
-          menu.choice "Setup configuration", "setup"
-        end
-
-        blueprint_command = ComputerTools::Commands::BlueprintCommand.new({})
-        blueprint_command.execute('config', subcommand)
       end
 
       # Handles parsing Deepgram JSON output with various format options.
@@ -561,6 +362,26 @@ module ComputerTools
           config_command.execute(subcommand)
         rescue StandardError => e
           puts "❌ Error executing config command: #{e.message}".colorize(:red)
+        end
+
+        :continue
+      end
+
+      # Handles the list models command with optional provider filtering.
+      #
+      # @return [Symbol] :continue to keep the menu running
+      def handle_list_models_command
+        debug_log("Entering handle_list_models_command")
+
+        provider = @prompt.ask("🤖 Provider filter (optional - press Enter for default 'gemini'):")
+        provider = nil if provider.nil? || provider.empty?
+
+        begin
+          list_models_command = ComputerTools::Commands::ListModelsCommand.new({})
+          list_models_command.execute(provider)
+          @prompt.keypress("Press any key to continue...")
+        rescue StandardError => e
+          puts "❌ Error executing list models command: #{e.message}".colorize(:red)
         end
 
         :continue

@@ -17,12 +17,19 @@ module ComputerTools
       #   git_wrapper = GitWrapper.new
       #   Validation.implements_git_interface?(git_wrapper) # => true
       def self.implements_git_interface?(object)
-        required_methods = [
-          :open_repository, :get_file_status, :get_file_diff, :repository_exists?,
-          :find_repository_root, :file_tracked?, :get_recent_commits, :get_branch_name,
-          :is_dirty?, :get_uncommitted_changes_count
+        required_methods = %i[
+          open_repository
+          get_file_status
+          get_file_diff
+          repository_exists?
+          find_repository_root
+          file_tracked?
+          get_recent_commits
+          get_branch_name
+          is_dirty?
+          get_uncommitted_changes_count
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -35,11 +42,18 @@ module ComputerTools
       #   restic_wrapper = ResticWrapper.new(config)
       #   Validation.implements_backup_interface?(restic_wrapper) # => true
       def self.implements_backup_interface?(object)
-        required_methods = [
-          :ensure_mounted, :mounted?, :mount_backup, :unmount, :snapshot_path,
-          :compare_with_snapshot, :cleanup, :mount_point, :repository
+        required_methods = %i[
+          ensure_mounted
+          mounted?
+          mount_backup
+          unmount
+          snapshot_path
+          compare_with_snapshot
+          cleanup
+          mount_point
+          repository
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -52,11 +66,17 @@ module ComputerTools
       #   database = BlueprintDatabase.new
       #   Validation.implements_database_interface?(database) # => true
       def self.implements_database_interface?(object)
-        required_methods = [
-          :create_record, :get_record, :update_record, :delete_record,
-          :list_records, :search_records, :stats, :connection
+        required_methods = %i[
+          create_record
+          get_record
+          update_record
+          delete_record
+          list_records
+          search_records
+          stats
+          connection
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -69,10 +89,10 @@ module ComputerTools
       #   processor = DocumentProcessor.new
       #   Validation.implements_processor_interface?(processor) # => true
       def self.implements_processor_interface?(object)
-        required_methods = [
-          :process, :can_process?, :supported_input_formats, :supported_output_formats
+        required_methods = %i[
+          process can_process? supported_input_formats supported_output_formats
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -85,10 +105,10 @@ module ComputerTools
       #   configurable = DoclingWrapper.new
       #   Validation.implements_configurable_interface?(configurable) # => true
       def self.implements_configurable_interface?(object)
-        required_methods = [
-          :configure, :run, :reset, :valid?, :to_hash
+        required_methods = %i[
+          configure run reset valid? to_hash
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -101,11 +121,15 @@ module ComputerTools
       #   parser = DeepgramParser.new('file.json')
       #   Validation.implements_parser_interface?(parser) # => true
       def self.implements_parser_interface?(object)
-        required_methods = [
-          :parse_data, :extract_fields, :available_fields, :valid_format?,
-          :summary_stats, :raw_data
+        required_methods = %i[
+          parse_data
+          extract_fields
+          available_fields
+          valid_format?
+          summary_stats
+          raw_data
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -118,11 +142,15 @@ module ComputerTools
       #   formatter = DeepgramFormatter.new(parser)
       #   Validation.implements_formatter_interface?(formatter) # => true
       def self.implements_formatter_interface?(object)
-        required_methods = [
-          :format_data, :to_json, :to_markdown, :supported_formats,
-          :supports_format?, :default_format
+        required_methods = %i[
+          format_data
+          to_json
+          to_markdown
+          supported_formats
+          supports_format?
+          default_format
         ]
-        
+
         implements_interface?(object, required_methods)
       end
 
@@ -156,36 +184,34 @@ module ComputerTools
       def self.validate_di_compatibility(object, expected_interface)
         errors = []
         warnings = []
-        
+
         # Check interface implementation
         interface_valid = case expected_interface
-        when :git
-          implements_git_interface?(object)
-        when :backup
-          implements_backup_interface?(object)
-        when :database
-          implements_database_interface?(object)
-        when :processor
-          implements_processor_interface?(object)
-        when :configurable
-          implements_configurable_interface?(object)
-        when :parser
-          implements_parser_interface?(object)
-        when :formatter
-          implements_formatter_interface?(object)
-        else
-          errors << "Unknown interface type: #{expected_interface}"
-          false
-        end
-        
+                          when :git
+                            implements_git_interface?(object)
+                          when :backup
+                            implements_backup_interface?(object)
+                          when :database
+                            implements_database_interface?(object)
+                          when :processor
+                            implements_processor_interface?(object)
+                          when :configurable
+                            implements_configurable_interface?(object)
+                          when :parser
+                            implements_parser_interface?(object)
+                          when :formatter
+                            implements_formatter_interface?(object)
+                          else
+                            errors << "Unknown interface type: #{expected_interface}"
+                            false
+                          end
+
         errors << "Object does not implement #{expected_interface} interface" unless interface_valid
-        
+
         # Check for dependency injection friendly constructor
         constructor_params = object.class.instance_method(:initialize).parameters
-        if constructor_params.any? { |type, _| type == :req }
-          warnings << "Constructor has required parameters, may need container configuration"
-        end
-        
+        warnings << "Constructor has required parameters, may need container configuration" if constructor_params.any? { |type, _| type == :req }
+
         {
           valid: errors.empty?,
           errors: errors,
