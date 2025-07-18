@@ -122,3 +122,8 @@ end
 - `lib/ComputerTools/logger.rb` - Singleton logger with custom types and emoji output
 - `lib/ComputerTools/configuration.rb` - TTY::Config-based configuration management
 - `lib/ComputerTools/config/` - Default configuration files for different components
+
+## Development Workflow
+
+### Command Creation Guidelines
+- For every command created, also add it the TUI menu

@@ -15,34 +15,12 @@ For easy discovery and usage, ComputerTools provides an interactive menu system:
 ./exe/ComputerTools
 
 # Traditional CLI usage still works
-./exe/ComputerTools blueprint submit my_file.rb
+./exe/ComputerTools deepgram parse transcript.json
 ```
 
 The interactive menu guides you through all available commands with parameter prompts and format selections. **📖 For complete details, see [Interactive Menu Documentation](docs/interactive-menu.md)**
 
 ## 🛠️ Available Tools
-
-### 📋 Blueprint Manager
-
-AI-enhanced code blueprint management with semantic search and automatic metadata generation.
-
-**Quick Start:**
-
-```bash
-# Submit a code blueprint
-exe/ComputerTools blueprint submit my_script.rb
-
-# Search semantically
-exe/ComputerTools blueprint search "authentication helper"
-
-# Interactive browser
-exe/ComputerTools blueprint browse
-
-# View with AI analysis
-exe/ComputerTools blueprint view 123 --analyze
-```
-
-**📖 For complete setup instructions, features, and Rails server integration, see [Blueprint Manager Documentation](docs/blueprint-manager.md)**
 
 ### 🎙️ Deepgram Parser
 
@@ -97,7 +75,6 @@ exe/ComputerTools latestchanges config
 ### Prerequisites
 
 - Ruby 3.4+
-- PostgreSQL with pgvector extension (for blueprint management)
 - Google Gemini API key (for AI features)
 - Additional tools for latest changes analysis:
   - `fd` command (file discovery)
@@ -111,15 +88,11 @@ exe/ComputerTools latestchanges config
 # Install dependencies
 bundle install
 
-# Configure the blueprint database (if using blueprint tools)
-exe/ComputerTools blueprint config setup
-
 # Configure latest changes analyzer (if using tracking tools)
 exe/ComputerTools latestchanges config
 
 # Set required environment variables
 export GEMINI_API_KEY="your_gemini_api_key"
-export BLUEPRINT_DATABASE_URL="postgresql://user:pass@host:port/database"
 ```
 
 ## 💻 Usage
@@ -142,13 +115,11 @@ Navigate through menus to discover and execute commands with guided parameter co
 
 ```bash
 # Direct command execution
-./exe/ComputerTools blueprint submit my_script.rb
 ./exe/ComputerTools deepgram parse transcript.json markdown --console
 ./exe/ComputerTools latestchanges --time-range 7d --format summary
 ./exe/ComputerTools help
 
 # Get help for specific commands
-./exe/ComputerTools blueprint help
 ./exe/ComputerTools deepgram help
 ./exe/ComputerTools latestchanges help
 ```
@@ -161,27 +132,26 @@ graph TB
     Thor --> Commands[Command Classes]
     
     Commands --> Actions[Action Classes]
-    Actions --> Wrappers[Database/API Wrappers]
+    Actions --> Wrappers[External Tool Wrappers]
     Actions --> Generators[AI Generators]
     
     Generators --> Sublayer[Sublayer Framework]
     Sublayer --> Gemini[Google Gemini API]
     
-    Wrappers --> DB[(PostgreSQL + pgvector)]
     Wrappers --> External[External Tools]
     
-    subgraph "Blueprint Tool Architecture"
-        BCmd[BlueprintCommand] --> BActions[Blueprint Actions]
-        BActions --> BDB[BlueprintDatabase]
-        BActions --> BGen[Blueprint Generators]
-        
-        BDB --> Postgres[(PostgreSQL)]
-        BGen --> AI[AI Providers]
-        
-        BGen --> DescGen[Description Generator]
-        BGen --> CatGen[Category Generator] 
-        BGen --> NameGen[Name Generator]
-        BGen --> ImpGen[Improvement Generator]
+    subgraph "Restic Integration"
+        ResticWrapper[ResticWrapper] --> MountAction[MountResticRepoAction]
+        MountAction --> Open3[Open3 Process Management]
+        MountAction --> ResticCLI[Restic CLI Tool]
+    end
+    
+    subgraph "Latest Changes Architecture"
+        LCCmd[LatestChangesCommand] --> LCActions[File Activity Actions]
+        LCActions --> GitWrapper[GitWrapper]
+        LCActions --> ResticWrapper
+        LCActions --> YadmWrapper[YADM Analysis]
+        LCActions --> FileDiscovery[File Discovery]
     end
 ```
 
@@ -189,7 +159,7 @@ graph TB
 
 1. **Modular Architecture**: Each tool follows the same pattern with Commands, Actions, Generators, and Wrappers
 2. **AI Integration**: Sublayer framework provides consistent AI capabilities across all tools
-3. **Database Direct**: Efficient operations through direct database connections
+3. **Process Management**: Open3 for robust external process handling (especially for restic mounting)
 4. **Framework Consistency**: Thor CLI integration with automatic command registration
 5. **Configuration Management**: YAML-based configuration with environment variable support
 
@@ -200,18 +170,19 @@ graph TB
 Configuration is managed through YAML files in `lib/ComputerTools/config/`:
 
 ```yaml
-# Example: blueprints.yml
-database:
-  url: "postgresql://localhost/blueprints_development"
+# Example: deepgram.yml
+api:
+  key: "your_deepgram_api_key"
+  base_url: "https://api.deepgram.com"
 
-ai:
-  provider: "gemini"
-  model: "text-embedding-004"
-
+output:
+  default_format: "markdown"
+  console_output: true
+  
 features:
-  auto_description: true
-  auto_categorize: true
-  improvement_analysis: true
+  auto_analysis: true
+  topic_extraction: true
+  summary_generation: true
 ```
 
 ### User Configuration
@@ -246,8 +217,12 @@ logger:
 GEMINI_API_KEY=your_gemini_key
 OPENAI_API_KEY=your_openai_key
 
-# Database Connections
-BLUEPRINT_DATABASE_URL=postgresql://...
+# Deepgram API
+DEEPGRAM_API_KEY=your_deepgram_key
+
+# Restic Configuration
+RESTIC_REPOSITORY=/path/to/restic/repo
+RESTIC_PASSWORD=your_restic_password
 
 # Editor Preferences  
 EDITOR=vim
@@ -302,7 +277,7 @@ exe/ComputerTools config edit
 exe/ComputerTools config show
 
 # Set console logging to debug level
-COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools blueprint submit file.rb
+COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools deepgram parse transcript.json
 
 # Enable file logging for troubleshooting
 COMPUTERTOOLS_LOG_FILE_ENABLED=true exe/ComputerTools latestchanges --time-range 7d
@@ -323,45 +298,45 @@ All log messages support structured data for better analysis:
 
 ```ruby
 # Example: Internal API calls include context
-ComputerTools.logger.success("Blueprint created", id: 123, file: "script.rb")
-ComputerTools.logger.failure("Database connection failed", error: "timeout", retry_count: 3)
+ComputerTools.logger.success("Transcript processed", file: "audio.json", format: "markdown")
+ComputerTools.logger.failure("Restic mount failed", error: "timeout", retry_count: 3)
 ```
 
 This produces JSON output in log files:
 ```json
-{"level":"info","message":"Blueprint created","id":123,"file":"script.rb","timestamp":"2024-01-01T10:30:00Z"}
-{"level":"error","message":"Database connection failed","error":"timeout","retry_count":3,"timestamp":"2024-01-01T10:30:05Z"}
+{"level":"info","message":"Transcript processed","file":"audio.json","format":"markdown","timestamp":"2024-01-01T10:30:00Z"}
+{"level":"error","message":"Restic mount failed","error":"timeout","retry_count":3,"timestamp":"2024-01-01T10:30:05Z"}
 ```
 
 ## 📚 Usage Examples
 
-### Blueprint Management Workflow
+### Deepgram Processing Workflow
 
 ```bash
-# 1. Submit a new blueprint with auto-generated metadata
-exe/ComputerTools blueprint submit app/models/user.rb
+# 1. Parse Deepgram JSON output
+exe/ComputerTools deepgram parse transcript.json
 
-# 2. Search for similar blueprints
-exe/ComputerTools blueprint search "user authentication model"
+# 2. Convert to different formats
+exe/ComputerTools deepgram convert transcript.json srt --console
 
-# 3. View with AI improvement suggestions
-exe/ComputerTools blueprint view 42 --analyze
+# 3. Analyze segments with AI
+exe/ComputerTools deepgram analyze segments.json --interactive
 
-# 4. Edit with automatic re-embedding
-exe/ComputerTools blueprint edit 42
-
-# 5. Export for sharing
-exe/ComputerTools blueprint export 42 user_model.rb
+# 4. Generate summaries and insights
+exe/ComputerTools deepgram parse transcript.json --format summary
 ```
 
-### Interactive Mode
+### Latest Changes Analysis Workflow
 
 ```bash
-# Launch interactive blueprint browser
-exe/ComputerTools blueprint browse
+# 1. Analyze recent changes across all sources
+exe/ComputerTools latestchanges --time-range 24h
 
-# Interactive configuration setup
-exe/ComputerTools blueprint config setup
+# 2. Focus on specific file types
+exe/ComputerTools latestchanges --format summary --interactive
+
+# 3. Compare with backup snapshots (if restic configured)
+exe/ComputerTools latestchanges --include-backups
 ```
 
 ## 🧪 Development
@@ -400,10 +375,10 @@ bundle exec yard server
 
 ### AI-Powered Intelligence
 
-- **Automatic Metadata Generation**: Smart names, descriptions, and categories
-- **Semantic Search**: Find code by meaning, not just keywords
-- **Improvement Suggestions**: AI analysis for code quality enhancement
-- **Language Detection**: Automatic programming language identification
+- **Transcript Analysis**: Smart parsing of Deepgram JSON output
+- **Content Summarization**: AI-generated summaries and insights
+- **Topic Extraction**: Automatic identification of key themes
+- **Format Conversion**: Multiple output formats (markdown, SRT, plain text)
 
 ### Developer Experience
 
@@ -414,27 +389,28 @@ bundle exec yard server
 
 ### Performance & Reliability
 
-- **Direct Database Access**: No HTTP overhead for local operations
-- **Vector Embeddings**: Efficient semantic search with pgvector
-- **Connection Pooling**: Optimized database connections
+- **Process Management**: Robust Open3-based external process handling
+- **Restic Integration**: Secure backup repository mounting with proper cleanup
+- **Multi-source Analysis**: Efficient tracking across Git, YADM, and Restic
 - **Error Handling**: Graceful degradation and helpful error messages
 
 ## 🚦 Roadmap
 
 ### Phase 1: Foundation ✅
 
-- [x] Blueprint management system
-- [x] AI-powered metadata generation
-- [x] Semantic search with vector embeddings
-- [x] Interactive CLI interface
+- [x] Interactive CLI interface with Thor framework
+- [x] Modular architecture with Commands, Actions, Generators, and Wrappers
+- [x] AI integration through Sublayer framework
+- [x] Comprehensive logging system
 
-### Phase 2: Expansion ✅
+### Phase 2: Core Tools ✅
 
 - [x] Latest changes analyzer with multi-platform tracking
 - [x] Deepgram audio transcription processing
+- [x] Restic backup integration with Open3 process management
+- [x] Configuration management system
 - [ ] Code analysis and refactoring tools
 - [ ] Documentation generation utilities
-- [ ] Test automation helpers
 
 ### Phase 3: Intelligence 📋
 
@@ -462,7 +438,8 @@ lib/ComputerTools/
 ├── actions/your_tool_*.rb            # Business logic
 ├── generators/your_tool_*.rb         # AI integration
 ├── wrappers/your_tool_*.rb           # External integrations
-└── config/your_tool.yml              # Configuration
+├── config/your_tool.yml              # Configuration
+└── container/registrations.rb        # Dependency injection
 ```
 
 ## 📄 License
@@ -473,9 +450,10 @@ MIT License - see LICENSE file for details.
 
 - **Sublayer Framework**: For providing the AI integration foundation
 - **Thor**: For robust CLI framework capabilities  
-- **pgvector**: For efficient vector operations in PostgreSQL
 - **TTY Toolkit**: For rich terminal user interfaces
 - **Google Gemini**: For powerful AI language model capabilities
+- **Open3**: For reliable external process management
+- **Restic**: For secure backup repository integration
 
 ---
 
