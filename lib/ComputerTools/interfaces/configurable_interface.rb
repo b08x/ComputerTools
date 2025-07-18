@@ -12,16 +12,16 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyConfigurableWrapper
     #     include ComputerTools::Interfaces::ConfigurableInterface
-    #     
+    #
     #     def configure
     #       # Implementation here
     #       self
     #     end
-    #     
+    #
     #     def run(input)
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module ConfigurableInterface
@@ -32,7 +32,7 @@ module ComputerTools
       # @yield [self] Yields self to the block for configuration
       # @return [self] Returns self for method chaining
       # @raise [NotImplementedError] if not implemented
-      def configure(&block)
+      def configure(&)
         raise NotImplementedError, "#{self.class} must implement #configure"
       end
 

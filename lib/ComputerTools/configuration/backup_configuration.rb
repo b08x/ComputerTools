@@ -14,7 +14,7 @@ module ComputerTools
         return instance unless yaml_data&.dig('restic')
 
         restic_config = yaml_data['restic']
-        
+
         instance.configure do |config|
           config.mount_timeout = restic_config['mount_timeout'] if restic_config.key?('mount_timeout')
         end
@@ -23,9 +23,9 @@ module ComputerTools
       end
 
       def validate_timeout
-        unless config.mount_timeout.is_a?(Integer) && config.mount_timeout > 0
-          raise ArgumentError, "Mount timeout must be a positive integer, got: #{config.mount_timeout}"
-        end
+        return if config.mount_timeout.is_a?(Integer) && config.mount_timeout > 0
+
+        raise ArgumentError, "Mount timeout must be a positive integer, got: #{config.mount_timeout}"
       end
 
       def validate!

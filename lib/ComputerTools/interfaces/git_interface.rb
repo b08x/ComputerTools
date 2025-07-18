@@ -11,11 +11,11 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyGitWrapper
     #     include ComputerTools::Interfaces::GitInterface
-    #     
+    #
     #     def open_repository(path)
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module GitInterface

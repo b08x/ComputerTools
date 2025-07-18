@@ -11,11 +11,11 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyBackupWrapper
     #     include ComputerTools::Interfaces::BackupInterface
-    #     
+    #
     #     def mount_backup
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module BackupInterface

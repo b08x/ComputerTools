@@ -16,7 +16,7 @@ module ComputerTools
         return instance unless yaml_data&.dig('terminal')
 
         terminal_config = yaml_data['terminal']
-        
+
         instance.configure do |config|
           config.command = terminal_config['command'] if terminal_config.key?('command')
           config.args = terminal_config['args'] if terminal_config.key?('args')
@@ -26,9 +26,9 @@ module ComputerTools
       end
 
       def validate_terminal_command
-        unless TTY::Which.which(config.command)
-          raise ArgumentError, "Terminal command '#{config.command}' not found in PATH"
-        end
+        return if TTY::Which.which(config.command)
+
+        raise ArgumentError, "Terminal command '#{config.command}' not found in PATH"
       end
 
       def validate!

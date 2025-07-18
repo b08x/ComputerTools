@@ -11,11 +11,11 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyDatabaseWrapper
     #     include ComputerTools::Interfaces::DatabaseInterface
-    #     
+    #
     #     def create_record(data)
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module DatabaseInterface

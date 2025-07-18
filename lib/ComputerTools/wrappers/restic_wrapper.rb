@@ -100,24 +100,54 @@ module ComputerTools
         puts "   Mount point: #{@mount_point}".colorize(:cyan)
         puts "   Note: You will be prompted for the repository passphrase".colorize(:yellow)
 
-        fork do
-          `kitty -e restic mount -r #{@repository} #{@mount_point}`
+        prompt = TTY::Prompt.new
+
+        ENV["RESTIC_PASSWORD"] = prompt.mask("enter the restic repository passphrase:") do |q|
+          q.validate(/\S/, "Passphrase cannot be empty")
         end
 
-        sleep 20
+        Open3.popen3("restic mount -r #{@repository} #{@mount_point}") do |stdin, stdout, stderr, wait_thr|
+          stdout_thread = Thread.new do
+            stdout.each_line do |line|
+              puts "Restic Output: #{line.chomp}"
 
-        if $?.success?
-          puts "✅ Restic repository mounted successfully.".colorize(:green)
-          @mounted = true
-          @mount_pid = $?.pid
-        else
-          puts "❌ Failed to mount restic repository: #{result.error}".colorize(:red)
-          puts "   Please check the repository path and passphrase.".colorize(:yellow)
-          false
+              if line.include?("Now serving") && line.include?(@mount_point)
+                puts "Restic mount successful! Proceeding..."
+                break
+              end
+            end
+          end
+
+          stdout_thread.join
+
+          puts "You can now browse your restic repository at #{@mount_point}"
+
+          # When you're ready to unmount:
+          # Process.kill("TERM", wait_thr.pid)
+          # Process.wait(wait_thr.pid)
+
+          puts "Parent process continuing after restic mount."
         end
+
+        # fork do
+        #   `kitty -e restic mount -r #{@repository} #{@mount_point}`
+        # end
+
+        # sleep 20
+
+        # if $?.success?
+        #   puts "✅ Restic repository mounted successfully.".colorize(:green)
+        #   @mounted = true
+        #   @mount_pid = $?.pid
+        # else
+        #   puts "❌ Failed to mount restic repository: #{result.error}".colorize(:red)
+        #   puts "   Please check the repository path and passphrase.".colorize(:yellow)
+        #   false
+        # end
       rescue StandardError => e
         puts "❌ Error mounting restic backup: #{e.message}".colorize(:red)
-        false
+        # false
+        exit! 1
       end
 
       # Compares a current file with its snapshot version.
@@ -169,6 +199,7 @@ module ComputerTools
           if system("umount '#{@mount_point}' 2>/dev/null")
             puts "✅ Restic repository unmounted successfully.".colorize(:green)
             @mounted = false
+            ENV.delete("RESTIC_PASSWORD")
           else
             puts "⚠️  Warning: Could not unmount #{@mount_point}".colorize(:yellow)
             puts "   Please manually unmount or terminate the restic process with Ctrl+C".colorize(:yellow)

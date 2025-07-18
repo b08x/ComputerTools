@@ -48,7 +48,8 @@ gem "sequel", "~> 5.94"
 gem "tty-cursor", "~> 0.7.1"
 gem "pg", "~> 1.5"
 gem "solargraph", "~> 0.56.0"
-
 gem "rbs", "~> 3.9"
 gem "dry-container", "~> 0.11.0"
 gem "dry-configurable", "~> 1.0"
+
+gem "erb", "~> 5.0"

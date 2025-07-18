@@ -12,7 +12,8 @@ module ComputerTools
       # Register all dependencies for the application
       #
       # This method is called during application initialization to set up
-      # all the required dependencies in the container.
+      # all the required dependencies in the container. It registers core dependencies,
+      # wrappers, actions, generators, and configurations.
       #
       # @return [void]
       def self.register_all
@@ -27,12 +28,20 @@ module ComputerTools
       # Register core application dependencies
       #
       # These are fundamental dependencies that are used throughout the application.
+      # Currently, it's assumed that the logger and configuration are already registered
+      # in the main container file.  This method provides a placeholder for registering
+      # other core dependencies as needed.
       #
       # @return [void]
+      # @example
+      #   # Example registration of an event bus
+      #   ComputerTools::Container.register('event_bus') do
+      #     EventBus.new
+      #   end
       def self.register_core_dependencies
         # Logger is already registered in the main container file
         # Configuration is already registered in the main container file
-        
+
         # Register other core dependencies here as needed
         # Example:
         # ComputerTools::Container.register('event_bus') do
@@ -43,7 +52,9 @@ module ComputerTools
       ##
       # Register wrapper dependencies
       #
-      # Wrapper classes provide interfaces to external tools and services.
+      # Wrapper classes provide interfaces to external tools and services.  This method registers
+      # wrappers for Git, Restic, Docling, Trafilatura, BlueprintDatabase, DeepgramParser,
+      # DeepgramAnalyzer, and DeepgramFormatter.
       #
       # @return [void]
       def self.register_wrappers
@@ -91,7 +102,8 @@ module ComputerTools
       ##
       # Register action dependencies
       #
-      # Action classes encapsulate business logic and coordinate between components.
+      # Action classes encapsulate business logic and coordinate between components. This method
+      # registers various actions related to blueprints, deepgram, and file activity.
       #
       # @return [void]
       def self.register_actions
@@ -204,7 +216,8 @@ module ComputerTools
       ##
       # Register generator dependencies
       #
-      # Generator classes create AI-powered content using the Sublayer framework.
+      # Generator classes create AI-powered content using the Sublayer framework. This method
+      # registers various generators related to blueprints, deepgram, and file activity.
       #
       # @return [void]
       def self.register_generators
@@ -252,7 +265,10 @@ module ComputerTools
       ##
       # Register configuration dependencies
       #
-      # Configuration objects provide typed access to application settings.
+      # Configuration objects provide typed access to application settings. This method registers
+      # configurations for logging, paths, terminal, display, backup, and application settings.
+      # It also ensures backward compatibility by registering the 'configuration' key if it's not
+      # already registered.
       #
       # @return [void]
       def self.register_configurations
@@ -263,32 +279,32 @@ module ComputerTools
         ComputerTools::Container.register('logging_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_logging_config(yaml_data)
         end
-        
+
         ComputerTools::Container.register('path_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_path_config(yaml_data)
         end
-        
+
         ComputerTools::Container.register('terminal_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_terminal_config(yaml_data)
         end
-        
+
         ComputerTools::Container.register('display_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_display_config(yaml_data)
         end
-        
+
         ComputerTools::Container.register('backup_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_backup_config(yaml_data)
         end
-        
+
         ComputerTools::Container.register('application_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_application_config
         end
-        
+
         # Backward compatibility - maintain existing registration
-        unless ComputerTools::Container.registered?('configuration')
-          ComputerTools::Container.register('configuration') do
-            ComputerTools::Container['application_configuration']
-          end
+        return if ComputerTools::Container.registered?('configuration')
+
+        ComputerTools::Container.register('configuration') do
+          ComputerTools::Container['application_configuration']
         end
       end
     end

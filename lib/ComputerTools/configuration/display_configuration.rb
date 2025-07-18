@@ -14,7 +14,7 @@ module ComputerTools
         return instance unless yaml_data&.dig('display')
 
         display_config = yaml_data['display']
-        
+
         instance.configure do |config|
           config.time_format = display_config['time_format'] if display_config.key?('time_format')
         end
@@ -28,11 +28,10 @@ module ComputerTools
 
       def validate_time_format
         # Test the format string with a sample time
-        begin
-          Time.now.strftime(config.time_format)
-        rescue => e
-          raise ArgumentError, "Invalid time format '#{config.time_format}': #{e.message}"
-        end
+
+        Time.now.strftime(config.time_format)
+      rescue StandardError => e
+        raise ArgumentError, "Invalid time format '#{config.time_format}': #{e.message}"
       end
 
       def validate!

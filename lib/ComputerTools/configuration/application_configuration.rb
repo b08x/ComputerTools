@@ -11,33 +11,33 @@ require_relative 'backup_configuration'
 module ComputerTools
   module Configurations
     class ApplicationConfiguration
-      attr_reader :logging_config, :path_config, :terminal_config, 
+      attr_reader :logging_config, :path_config, :terminal_config,
                   :display_config, :backup_config
 
-      def initialize(yaml_data = nil)
+      def initialize(yaml_data=nil)
         @logging_config = ConfigurationFactory.create_logging_config(yaml_data)
         @path_config = ConfigurationFactory.create_path_config(yaml_data)
         @terminal_config = ConfigurationFactory.create_terminal_config(yaml_data)
         @display_config = ConfigurationFactory.create_display_config(yaml_data)
         @backup_config = ConfigurationFactory.create_backup_config(yaml_data)
       end
-      
-      def self.from_yaml_files(file_paths = nil)
+
+      def self.from_yaml_files(file_paths=nil)
         yaml_data = ConfigurationFactory.load_yaml_data(file_paths)
         new(yaml_data)
       end
-      
+
       def interactive_setup
         # Coordinate interactive setup across all configs
         puts "Setting up ComputerTools configuration..."
-        
+
         # Could coordinate setup across all config objects
         # For now, just validate all configurations
         validate_all!
-        
+
         puts "Configuration setup completed successfully!"
       end
-      
+
       def validate_all!
         @logging_config.validate!
         @path_config.validate!
@@ -45,7 +45,7 @@ module ComputerTools
         @display_config.validate!
         @backup_config.validate!
       end
-      
+
       # Backward compatibility methods
       def fetch(*keys)
         case keys.first
