@@ -36,13 +36,33 @@ module ComputerTools
       #
       # @return [String] The complete prompt text to be processed by the LLM.
       def prompt
-        <<-PROMPT
-          Generate a comprehensive overview of ComputerTools based on the following documentation.
-          Format the output as #{@format} format.
+        [
+          prompt_header,
+          context_information,
+          available_tools_section,
+          key_features_section,
+          architecture_section,
+          usage_modes_section,
+          format_instructions
+        ].join("\n\n")
+      end
 
-          CONTEXT INFORMATION:
-          ComputerTools is a comprehensive Ruby CLI toolkit built on the Sublayer framework, providing AI-enhanced tools for software development and automation. It's a modular collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework.
+      private
 
+      def prompt_header
+        "Generate a comprehensive overview of ComputerTools based on the following documentation.\n" \
+        "Format the output as #{@format} format."
+      end
+
+      def context_information
+        "CONTEXT INFORMATION:\n" \
+        "ComputerTools is a comprehensive Ruby CLI toolkit built on the Sublayer framework, " \
+        "providing AI-enhanced tools for software development and automation. It's a modular " \
+        "collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework."
+      end
+
+      def available_tools_section
+        <<~TOOLS
           AVAILABLE TOOLS:
 
           1. DEEPGRAM PARSER:
@@ -62,31 +82,49 @@ module ComputerTools
           - User-friendly interactive menu system for command discovery and execution
           - Features: guided parameter collection, seamless navigation, error handling, debug mode
           - Provides alternative to traditional CLI usage
+        TOOLS
+      end
 
+      def key_features_section
+        <<~FEATURES
           KEY FEATURES:
           - AI-Powered Intelligence: Automatic metadata generation, semantic search, improvement suggestions
           - Developer Experience: Interactive CLI, multiple output formats, flexible configuration
           - Performance & Reliability: Direct database access, vector embeddings, connection pooling
           - Modular Architecture: Commands, Actions, Generators, Wrappers pattern
           - Framework Integration: Built on Thor CLI framework with Sublayer AI integration
+        FEATURES
+      end
 
+      def architecture_section
+        <<~ARCHITECTURE
           ARCHITECTURE:
           - Command Pattern: CLI commands with clear interfaces
           - Action Pattern: Encapsulated business logic
           - Generator Pattern: AI-powered content generation
           - Wrapper Pattern: External tool integration
           - Configuration: YAML-based with environment variables
+        ARCHITECTURE
+      end
 
+      def usage_modes_section
+        <<~USAGE
           USAGE MODES:
           - Interactive Mode: ./exe/ComputerTools (launches menu)
           - Command Line Mode: ./exe/ComputerTools <command> <subcommand> [options]
+        USAGE
+      end
 
-          Generate an engaging overview that highlights the comprehensive nature of ComputerTools, its AI-powered capabilities, and practical applications for developers. Include key benefits, primary tools, and usage examples.
+      def format_instructions
+        <<~INSTRUCTIONS
+          Generate an engaging overview that highlights the comprehensive nature of ComputerTools, 
+          its AI-powered capabilities, and practical applications for developers. Include key benefits, 
+          primary tools, and usage examples.
 
           For console format: Use colorized output with emojis and clear sections
           For markdown format: Use proper markdown structure with headers, lists, and code blocks
           For JSON format: Provide structured data with nested objects for each tool
-        PROMPT
+        INSTRUCTIONS
       end
     end
   end

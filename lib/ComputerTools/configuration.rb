@@ -311,17 +311,9 @@ module ComputerTools
     def configure_paths
       puts "\n📁 Path Configuration".colorize(:blue)
 
-      current_home = @config.fetch(:paths) { File.expand_path('~') }
-      home_dir = @prompt.ask("Home directory:", default: current_home)
-      @config.set(:paths, :home_dir, value: home_dir)
-
-      current_mount = @config.fetch(:paths) { File.expand_path('/mnt/snapshots') }
-      mount_point = @prompt.ask("Restic mount point:", default: current_mount)
-      @config.set(:paths, :restic_mount_point, value: mount_point)
-
-      current_repo = @config.fetch(:paths) { ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo' }
-      repo = @prompt.ask("Restic repository:", default: current_repo)
-      @config.set(:paths, :restic_repo, value: repo)
+      configure_path_setting(:paths, :home_dir, "Home directory:", File.expand_path('~'))
+      configure_path_setting(:paths, :restic_mount_point, "Restic mount point:", File.expand_path('/mnt/snapshots'))
+      configure_path_setting(:paths, :restic_repo, "Restic repository:", ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo')
     end
 
     # Interactively configures display settings.
@@ -332,9 +324,7 @@ module ComputerTools
     def configure_display
       puts "\n🎨 Display Configuration".colorize(:blue)
 
-      current_format = @config.fetch(:display, '%Y-%m-%d %H:%M:%S')
-      time_format = @prompt.ask("Time format:", default: current_format)
-      @config.set(:display, :time_format, value: time_format)
+      configure_simple_setting(:display, :time_format, "Time format:", '%Y-%m-%d %H:%M:%S')
     end
 
     # Interactively configures restic settings.
@@ -409,6 +399,32 @@ module ComputerTools
     def default_log_path_for_config
       state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
       File.join(state_home, 'computertools', 'app.log')
+    end
+
+    # Helper method for configuring path settings with validation.
+    #
+    # @param section [Symbol] the configuration section
+    # @param key [Symbol] the configuration key
+    # @param prompt_text [String] the text to display to the user
+    # @param default_value [String] the default value to use
+    # @return [void]
+    def configure_path_setting(section, key, prompt_text, default_value)
+      current_value = @config.fetch(section, key) { default_value }
+      new_value = @prompt.ask(prompt_text, default: current_value)
+      @config.set(section, key, value: new_value)
+    end
+
+    # Helper method for configuring simple string settings.
+    #
+    # @param section [Symbol] the configuration section
+    # @param key [Symbol] the configuration key
+    # @param prompt_text [String] the text to display to the user
+    # @param default_value [String] the default value to use
+    # @return [void]
+    def configure_simple_setting(section, key, prompt_text, default_value)
+      current_value = @config.fetch(section, key) { default_value }
+      new_value = @prompt.ask(prompt_text, default: current_value)
+      @config.set(section, key, value: new_value)
     end
   end
 end
