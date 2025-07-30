@@ -68,19 +68,46 @@ exe/ComputerTools latestchanges config
 
 ### 🔧 Additional Tools
 
+#### 🤖 AI Model Management
+List and manage available AI models across different providers:
+
+```bash
+# List all available models
+exe/ComputerTools listmodels
+
+# Interactive model browser
+exe/ComputerTools listmodels --interactive
+```
+
+#### 🗂️ Restic Repository Management
+Mount and explore Restic backup repositories:
+
+```bash
+# Mount restic repository for browsing
+exe/ComputerTools mount-restic
+
+# Interactive repository explorer
+exe/ComputerTools mount-restic --interactive
+```
+
+#### 🎬 Media Processing (FFmpeg Integration)
+*FFmpeg wrapper functionality for media processing tasks*
+
 *More AI-powered development tools coming soon*
 
 ## 📦 Installation
 
 ### Prerequisites
 
-- Ruby 3.4+
+- Ruby 2.6+ (Ruby 3.0+ recommended)
 - Google Gemini API key (for AI features)
-- Additional tools for latest changes analysis:
-  - `fd` command (file discovery)
+- Additional tools for enhanced functionality:
+  - `fd` command (file discovery for latest changes analysis)
   - `git` (repository analysis)
   - `yadm` (optional, for dotfile tracking)
-  - `restic` (optional, for backup comparison)
+  - `restic` (optional, for backup repository mounting and analysis)
+  - `ffmpeg` (optional, for media processing features)
+- PostgreSQL with pgvector extension (optional, for semantic search features)
 
 ### Setup
 
@@ -220,9 +247,12 @@ OPENAI_API_KEY=your_openai_key
 # Deepgram API
 DEEPGRAM_API_KEY=your_deepgram_key
 
-# Restic Configuration
+# Restic Configuration (for backup integration)
 RESTIC_REPOSITORY=/path/to/restic/repo
 RESTIC_PASSWORD=your_restic_password
+
+# Database Configuration (for blueprint/semantic search features)
+DATABASE_URL=postgresql://user:pass@localhost/computertools
 
 # Editor Preferences  
 EDITOR=vim
@@ -284,6 +314,12 @@ COMPUTERTOOLS_LOG_FILE_ENABLED=true exe/ComputerTools latestchanges --time-range
 
 # Configure persistent logging settings
 exe/ComputerTools config edit
+
+# List available AI models with debug logging
+COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools listmodels
+
+# Mount restic repository with verbose output
+exe/ComputerTools mount-restic --debug
 ```
 
 ### Log File Location
@@ -337,6 +373,12 @@ exe/ComputerTools latestchanges --format summary --interactive
 
 # 3. Compare with backup snapshots (if restic configured)
 exe/ComputerTools latestchanges --include-backups
+
+# 4. Mount and explore restic repository
+exe/ComputerTools mount-restic
+
+# 5. List available AI models and providers
+exe/ComputerTools listmodels --format table
 ```
 
 ## 🧪 Development
@@ -409,6 +451,9 @@ bundle exec yard server
 - [x] Deepgram audio transcription processing
 - [x] Restic backup integration with Open3 process management
 - [x] Configuration management system
+- [x] AI model management and listing
+- [x] Restic repository mounting and exploration
+- [ ] FFmpeg media processing wrapper (in development)
 - [ ] Code analysis and refactoring tools
 - [ ] Documentation generation utilities
 

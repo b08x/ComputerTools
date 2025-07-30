@@ -215,7 +215,7 @@ module ComputerTools
     # @raise [StandardError] if default configuration cannot be set up
     def setup_defaults
       @config.set(:paths, :home_dir, value: File.expand_path('~'))
-      @config.set(:paths, :restic_mount_point, value: File.expand_path('~/mnt/restic'))
+      @config.set(:paths, :restic_mount_point, value: File.expand_path('/mnt/snapshots'))
       @config.set(:paths, :restic_repo, value: ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo')
 
       @config.set(:display, :time_format, value: '%Y-%m-%d %H:%M:%S')
@@ -315,7 +315,7 @@ module ComputerTools
       home_dir = @prompt.ask("Home directory:", default: current_home)
       @config.set(:paths, :home_dir, value: home_dir)
 
-      current_mount = @config.fetch(:paths) { File.expand_path('~/mnt/restic') }
+      current_mount = @config.fetch(:paths) { File.expand_path('/mnt/snapshots') }
       mount_point = @prompt.ask("Restic mount point:", default: current_mount)
       @config.set(:paths, :restic_mount_point, value: mount_point)
 
