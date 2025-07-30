@@ -45,27 +45,20 @@ module ComputerTools
 
           AVAILABLE TOOLS:
 
-          1. BLUEPRINT MANAGER:
-          - AI-enhanced code blueprint management with semantic search and automatic metadata generation
-          - Features: AI-generated metadata, semantic search, direct database access, smart editing, export/import, safe deletion, interactive UI
-          - Uses PostgreSQL with pgvector extension for vector embeddings
-          - Integrates with Rails server for web interface
-          - Commands: submit, list, browse, view, edit, search, export, delete, config
-
-          2. DEEPGRAM PARSER:
+          1. DEEPGRAM PARSER:
           - Parse, analyze, and convert Deepgram JSON output with AI-enhanced insights
           - Features: Multi-format output (markdown, SRT, JSON, summary), interactive analysis, AI integration, statistics & metrics
           - Commands: parse, convert, analyze, config
           - Output formats: markdown (rich analysis), SRT (subtitles), JSON (structured data), summary (concise overview)
 
-          3. LATEST CHANGES ANALYZER:
+          2. LATEST CHANGES ANALYZER:
           - Comprehensive file activity tracking across Git, YADM, and Restic with intelligent analysis
           - Features: Multi-platform file tracking, intelligent analysis, multiple output formats, advanced configuration
           - Tracks: Git repositories, YADM dotfiles, Restic backups, untracked files
           - Commands: analyze, config
           - Output formats: table view, summary view, JSON export, interactive mode
 
-          4. INTERACTIVE MENU SYSTEM:
+          3. INTERACTIVE MENU SYSTEM:
           - User-friendly interactive menu system for command discovery and execution
           - Features: guided parameter collection, seamless navigation, error handling, debug mode
           - Provides alternative to traditional CLI usage
