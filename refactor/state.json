@@ -1,0 +1,145 @@
+{
+  "session_id": "deepgram_speaker_diarization_2025_08_29",
+  "started_at": "2025-08-29T00:00:00Z",
+  "last_updated": "2025-08-29T00:00:00Z",
+  "status": "planning_complete",
+  "current_phase": "planning",
+  "total_phases": 7,
+  "completed_phases": 0,
+  "project": {
+    "name": "Deepgram Speaker Diarization Refactor",
+    "description": "Enhance Deepgram transcription system with speaker diarization support for SRT format",
+    "target_files": [
+      "lib/ComputerTools/config/deepgram.yml",
+      "lib/ComputerTools/wrappers/deepgram_parser.rb", 
+      "lib/ComputerTools/wrappers/deepgram_formatter.rb",
+      "lib/ComputerTools/actions/deepgram/deepgram_convert_action.rb"
+    ],
+    "test_files": [
+      "spec/wrappers/deepgram_parser_spec.rb",
+      "spec/wrappers/deepgram_formatter_spec.rb", 
+      "spec/actions/deepgram/deepgram_convert_action_spec.rb"
+    ]
+  },
+  "phases": {
+    "1": {
+      "name": "Configuration Enhancement",
+      "agent": "configuration-expert",
+      "status": "pending",
+      "priority": "HIGH",
+      "tasks": [
+        "Extend deepgram.yml with speaker diarization configuration",
+        "Add configuration schema validation",
+        "Implement configuration loading logic"
+      ],
+      "files": ["lib/ComputerTools/config/deepgram.yml"],
+      "estimated_duration": "30 minutes"
+    },
+    "2": {
+      "name": "Parser Extensions",
+      "agent": "ruby-pro", 
+      "status": "pending",
+      "priority": "HIGH",
+      "tasks": [
+        "Add words_with_speaker_info method",
+        "Implement speaker_segments method",
+        "Add has_speaker_data? method",
+        "Handle confidence threshold filtering"
+      ],
+      "files": ["lib/ComputerTools/wrappers/deepgram_parser.rb"],
+      "estimated_duration": "60 minutes"
+    },
+    "3": {
+      "name": "Formatter Enhancements",
+      "agent": "ruby-pro",
+      "status": "pending", 
+      "priority": "HIGH",
+      "tasks": [
+        "Modify to_srt method for speaker options",
+        "Implement build_srt_with_speakers method",
+        "Add speaker label formatting logic",
+        "Maintain backward compatibility"
+      ],
+      "files": ["lib/ComputerTools/wrappers/deepgram_formatter.rb"],
+      "estimated_duration": "45 minutes"
+    },
+    "4": {
+      "name": "Action Coordination",
+      "agent": "ruby-pro",
+      "status": "pending",
+      "priority": "MEDIUM", 
+      "tasks": [
+        "Add speaker configuration loading",
+        "Pass speaker options to formatter",
+        "Update error handling and validation",
+        "Update success messages"
+      ],
+      "files": ["lib/ComputerTools/actions/deepgram/deepgram_convert_action.rb"],
+      "estimated_duration": "30 minutes"
+    },
+    "5": {
+      "name": "Testing Suite",
+      "agent": "test-automator",
+      "status": "pending",
+      "priority": "HIGH",
+      "tasks": [
+        "Create unit tests for speaker methods",
+        "Test speaker segment generation", 
+        "Test SRT generation with speakers",
+        "Test configuration and edge cases",
+        "Achieve 90%+ test coverage"
+      ],
+      "files": [
+        "spec/wrappers/deepgram_parser_spec.rb",
+        "spec/wrappers/deepgram_formatter_spec.rb",
+        "spec/actions/deepgram/deepgram_convert_action_spec.rb"
+      ],
+      "estimated_duration": "90 minutes"
+    },
+    "6": {
+      "name": "Code Review",
+      "agent": "code-reviewer-pro",
+      "status": "pending",
+      "priority": "MEDIUM",
+      "tasks": [
+        "Review Ruby best practices",
+        "Validate architectural consistency", 
+        "Check performance optimizations",
+        "Ensure proper error handling",
+        "Validate test quality"
+      ],
+      "files": ["all_modified_files"],
+      "estimated_duration": "45 minutes"
+    },
+    "7": {
+      "name": "Documentation Updates", 
+      "agent": "documentation-expert",
+      "status": "pending",
+      "priority": "MEDIUM",
+      "tasks": [
+        "Update YARD documentation",
+        "Add usage examples",
+        "Document configuration options", 
+        "Create feature documentation"
+      ],
+      "files": ["all_modified_files"],
+      "estimated_duration": "60 minutes"
+    }
+  },
+  "configuration": {
+    "backup_created": false,
+    "git_checkpoint": false,
+    "test_coverage_target": 90,
+    "rollback_points": []
+  },
+  "progress": {
+    "analysis_complete": true,
+    "plan_created": true,
+    "agents_selected": true,
+    "ready_for_execution": true
+  },
+  "next_actions": [
+    "Create git checkpoint",
+    "Start Phase 1: Configuration Enhancement with configuration-expert agent"
+  ]
+}
