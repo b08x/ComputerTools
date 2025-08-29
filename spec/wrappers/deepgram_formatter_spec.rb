@@ -15,55 +15,32 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
     ]
   end
 
-  # Sample speaker segments data
+  # Sample speaker segments data - matches the structure after parser.finalize_segment
   let(:sample_speaker_segments) do
     [
       {
         speaker_id: 1,
-        words: [
-          { word: "Hello", start_raw: 0.0, end_raw: 0.5, speaker: 1, speaker_confidence: 0.95 },
-          { word: "there,", start_raw: 0.5, end_raw: 1.0, speaker: 1, speaker_confidence: 0.90 },
-          { word: "how", start_raw: 1.0, end_raw: 1.2, speaker: 1, speaker_confidence: 0.92 },
-          { word: "are", start_raw: 1.2, end_raw: 1.4, speaker: 1, speaker_confidence: 0.88 },
-          { word: "you", start_raw: 1.4, end_raw: 1.6, speaker: 1, speaker_confidence: 0.94 },
-          { word: "doing", start_raw: 1.6, end_raw: 2.0, speaker: 1, speaker_confidence: 0.96 },
-          { word: "today?", start_raw: 2.0, end_raw: 2.5, speaker: 1, speaker_confidence: 0.93 }
-        ],
-        confidences: [0.95, 0.90, 0.92, 0.88, 0.94, 0.96, 0.93],
-        start_raw: 0.0,
-        end_raw: 5.0,
         text: "Hello there, how are you doing today?",
-        avg_confidence: 0.925
+        start: "00:00:00",
+        end: "00:00:05",
+        confidence: 0.925,
+        word_count: 7
       },
       {
         speaker_id: 2,
-        words: [
-          { word: "I'm", start_raw: 5.0, end_raw: 5.3, speaker: 2, speaker_confidence: 0.91 },
-          { word: "doing", start_raw: 5.3, end_raw: 5.7, speaker: 2, speaker_confidence: 0.89 },
-          { word: "great,", start_raw: 5.7, end_raw: 6.2, speaker: 2, speaker_confidence: 0.94 },
-          { word: "thanks", start_raw: 6.2, end_raw: 6.6, speaker: 2, speaker_confidence: 0.92 },
-          { word: "for", start_raw: 6.6, end_raw: 6.8, speaker: 2, speaker_confidence: 0.87 },
-          { word: "asking!", start_raw: 6.8, end_raw: 7.5, speaker: 2, speaker_confidence: 0.95 }
-        ],
-        confidences: [0.91, 0.89, 0.94, 0.92, 0.87, 0.95],
-        start_raw: 5.0,
-        end_raw: 10.0,
         text: "I'm doing great, thanks for asking!",
-        avg_confidence: 0.913
+        start: "00:00:05",
+        end: "00:00:10", 
+        confidence: 0.913,
+        word_count: 6
       },
       {
         speaker_id: 1,
-        words: [
-          { word: "That's", start_raw: 10.0, end_raw: 10.4, speaker: 1, speaker_confidence: 0.96 },
-          { word: "wonderful", start_raw: 10.4, end_raw: 11.0, speaker: 1, speaker_confidence: 0.93 },
-          { word: "to", start_raw: 11.0, end_raw: 11.2, speaker: 1, speaker_confidence: 0.89 },
-          { word: "hear.", start_raw: 11.2, end_raw: 11.6, speaker: 1, speaker_confidence: 0.91 }
-        ],
-        confidences: [0.96, 0.93, 0.89, 0.91],
-        start_raw: 10.0,
-        end_raw: 13.0,
         text: "That's wonderful to hear.",
-        avg_confidence: 0.922
+        start: "00:00:10",
+        end: "00:00:13",
+        confidence: 0.922,
+        word_count: 4
       }
     ]
   end
@@ -181,15 +158,15 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
         expected_output = <<~SRT.strip
           1
           00:00:00,000 --> 00:00:05,000
-          [Speaker 1]: Hello there, how are you doing today?
+          [Speaker 2]: Hello there, how are you doing today?
 
           2
           00:00:05,000 --> 00:00:10,000
-          [Speaker 2]: I'm doing great, thanks for asking!
+          [Speaker 3]: I'm doing great, thanks for asking!
 
           3
           00:00:10,000 --> 00:00:13,000
-          [Speaker 1]: That's wonderful to hear.
+          [Speaker 2]: That's wonderful to hear.
         SRT
 
         expect(formatter.to_srt(speaker_options: speaker_options)).to eq(expected_output)
@@ -208,8 +185,8 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
         it 'uses the custom label format' do
           result = formatter.to_srt(speaker_options: speaker_options)
           
-          expect(result).to include("Speaker 1: Hello there, how are you doing today?")
-          expect(result).to include("Speaker 2: I'm doing great, thanks for asking!")
+          expect(result).to include("Speaker 2: Hello there, how are you doing today?")
+          expect(result).to include("Speaker 3: I'm doing great, thanks for asking!")
         end
       end
 
@@ -218,21 +195,19 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
           [
             {
               speaker_id: 1,
-              words: [{ word: "Hello", start_raw: 0.0, end_raw: 1.0, speaker: 1, speaker_confidence: 0.95 }],
-              confidences: [0.95],
-              start_raw: 0.0,
-              end_raw: 2.0,
               text: "Hello",
-              avg_confidence: 0.95
+              start: "00:00:00",
+              end: "00:00:02",
+              confidence: 0.95,
+              word_count: 1
             },
             {
               speaker_id: 1,
-              words: [{ word: "world!", start_raw: 2.0, end_raw: 3.0, speaker: 1, speaker_confidence: 0.92 }],
-              confidences: [0.92],
-              start_raw: 2.0,
-              end_raw: 4.0,
               text: "world!",
-              avg_confidence: 0.92
+              start: "00:00:02",
+              end: "00:00:04",
+              confidence: 0.92,
+              word_count: 1
             }
           ]
         end
@@ -263,21 +238,19 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
           [
             {
               speaker_id: 1,
-              words: [{ word: "Hi", start_raw: 0.0, end_raw: 0.5, speaker: 1, speaker_confidence: 0.95 }],
-              confidences: [0.95],
-              start_raw: 0.0,
-              end_raw: 0.5,  # Very short segment (0.5 seconds)
               text: "Hi",
-              avg_confidence: 0.95
+              start: "00:00:00",
+              end: "00:00:00",  # Very short segment (0.5 seconds)
+              confidence: 0.95,
+              word_count: 1
             },
             {
               speaker_id: 2,
-              words: [{ word: "Hello there, how are you doing today?", start_raw: 1.0, end_raw: 3.0, speaker: 2, speaker_confidence: 0.92 }],
-              confidences: [0.92],
-              start_raw: 1.0,
-              end_raw: 3.0,  # Long enough segment (2.0 seconds)
               text: "Hello there, how are you doing today?",
-              avg_confidence: 0.92
+              start: "00:00:01",
+              end: "00:00:03",  # Long enough segment (2.0 seconds)
+              confidence: 0.92,
+              word_count: 7
             }
           ]
         end
@@ -308,10 +281,10 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
       context 'with maximum speakers limit' do
         let(:multi_speaker_segments) do
           [
-            { speaker_id: 1, start_raw: 0.0, end_raw: 2.0, text: "Speaker one", words: [], confidences: [] },
-            { speaker_id: 2, start_raw: 2.0, end_raw: 4.0, text: "Speaker two", words: [], confidences: [] },
-            { speaker_id: 3, start_raw: 4.0, end_raw: 6.0, text: "Speaker three", words: [], confidences: [] },
-            { speaker_id: 1, start_raw: 6.0, end_raw: 8.0, text: "Speaker one again", words: [], confidences: [] }
+            { speaker_id: 1, start: "00:00:00", end: "00:00:02", text: "Speaker one", confidence: 0.90, word_count: 2 },
+            { speaker_id: 2, start: "00:00:02", end: "00:00:04", text: "Speaker two", confidence: 0.85, word_count: 2 },
+            { speaker_id: 3, start: "00:00:04", end: "00:00:06", text: "Speaker three", confidence: 0.88, word_count: 2 },
+            { speaker_id: 1, start: "00:00:06", end: "00:00:08", text: "Speaker one again", confidence: 0.92, word_count: 3 }
           ]
         end
 
@@ -389,12 +362,12 @@ RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
     describe '#format_speaker_label' do
       it 'formats speaker labels correctly' do
         label = formatter.send(:format_speaker_label, 1, "[Speaker %d]: ")
-        expect(label).to eq("[Speaker 1]: ")
+        expect(label).to eq("[Speaker 2]: ")
       end
 
       it 'handles invalid format strings gracefully' do
         label = formatter.send(:format_speaker_label, 1, "invalid format")
-        expect(label).to eq("[Speaker 1]: ")
+        expect(label).to eq("[Speaker 2]: ")
       end
     end
   end

@@ -226,39 +226,108 @@ module ComputerTools
       ##
       # Builds SRT content with speaker labels from speaker segments.
       #
+      # This enhanced version provides comprehensive speaker processing with proper error handling,
+      # segment filtering, merging, and robust speaker label formatting.
+      #
       # @param options [Hash] Speaker configuration options
+      # @option options [Float] :confidence_threshold (0.8) Minimum speaker confidence
+      # @option options [Float] :min_segment_duration (1.0) Minimum segment duration in seconds
+      # @option options [Boolean] :merge_consecutive_segments (true) Whether to merge consecutive segments
+      # @option options [Integer] :max_speakers (10) Maximum number of speakers to include
+      # @option options [String] :label_format ("[Speaker %d]: ") Speaker label format template
       # @return [String] The formatted SRT content with speaker labels
       # @private
       def build_srt_with_speakers(options)
-        # Get speaker segments with confidence threshold
-        confidence_threshold = options.fetch(:confidence_threshold, 0.8)
-        segments = @parser.speaker_segments(min_confidence: confidence_threshold)
-        
-        # If no speaker segments available, fall back to paragraphs
-        return build_srt_from_paragraphs if segments.empty?
+        return build_srt_from_paragraphs unless options.is_a?(Hash)
 
-        # Apply additional filtering and processing
-        segments = filter_short_segments(segments, options.fetch(:min_segment_duration, 1.0))
-        segments = merge_consecutive_speaker_segments(segments) if options.fetch(:merge_consecutive_segments, true)
-        segments = limit_speakers(segments, options.fetch(:max_speakers, 10))
-        
-        # Build SRT entries
+        begin
+          # Extract and validate configuration
+          confidence_threshold = extract_float_option(options, :confidence_threshold, 0.8, 0.0..1.0)
+          min_segment_duration = extract_float_option(options, :min_segment_duration, 1.0, 0.0..Float::INFINITY)
+          max_speakers = extract_integer_option(options, :max_speakers, 10, 1..100)
+          merge_segments = options.fetch(:merge_consecutive_segments, true)
+          label_format = options.fetch(:label_format, "[Speaker %d]: ")
+
+          # Get speaker segments from parser
+          segments = @parser.speaker_segments(min_confidence: confidence_threshold)
+          return build_srt_from_paragraphs if segments.empty?
+
+          # Apply processing pipeline
+          segments = filter_short_segments_formatted(segments, min_segment_duration) if min_segment_duration > 0.0
+          segments = merge_consecutive_segments_formatted(segments) if merge_segments
+          segments = limit_speakers(segments, max_speakers) if max_speakers > 0
+
+          return build_srt_from_paragraphs if segments.empty?
+
+          # Generate SRT output
+          build_srt_entries(segments, label_format)
+        rescue StandardError => e
+          # Log the error if logger is available, then fall back gracefully
+          warn "Speaker SRT generation failed: #{e.message}" if respond_to?(:warn)
+          build_srt_from_paragraphs
+        end
+      end
+
+      ##
+      # Builds the actual SRT entries from processed segments.
+      #
+      # @param segments [Array<Hash>] Processed speaker segments
+      # @param label_format [String] Speaker label format template
+      # @return [String] Formatted SRT content
+      # @private
+      def build_srt_entries(segments, label_format)
         output = []
-        label_format = options.fetch(:label_format, "[Speaker %d]: ")
-        
+
         segments.each_with_index do |segment, index|
+          # Validate segment data
+          next unless segment.is_a?(Hash) && segment[:text] && segment[:speaker_id]
+          next unless segment[:start] && segment[:end]
+
+          # Build SRT entry
           output << (index + 1).to_s
-          output << "#{format_timestamp_for_srt_raw(segment[:start_raw])} --> #{format_timestamp_for_srt_raw(segment[:end_raw])}"
-          
+          output << "#{format_timestamp_for_srt(segment[:start])} --> #{format_timestamp_for_srt(segment[:end])}"
+
           speaker_label = format_speaker_label(segment[:speaker_id], label_format)
-          output << "#{speaker_label}#{segment[:text]}"
+          output << "#{speaker_label}#{segment[:text].strip}"
           output << ""
         end
-        
-        output.join("\n").strip
-      rescue StandardError => e
-        # If speaker processing fails, gracefully fall back to paragraph-based SRT
-        build_srt_from_paragraphs
+
+        result = output.join("\n").strip
+        result.empty? ? build_srt_from_paragraphs : result
+      end
+
+      ##
+      # Extracts and validates a float option from the configuration.
+      #
+      # @param options [Hash] Configuration hash
+      # @param key [Symbol] Option key to extract
+      # @param default [Float] Default value if key is missing or invalid
+      # @param range [Range] Valid range for the value
+      # @return [Float] Validated float value
+      # @private
+      def extract_float_option(options, key, default, range)
+        value = options.fetch(key, default)
+        value = value.to_f
+        range.include?(value) ? value : default
+      rescue StandardError
+        default
+      end
+
+      ##
+      # Extracts and validates an integer option from the configuration.
+      #
+      # @param options [Hash] Configuration hash
+      # @param key [Symbol] Option key to extract
+      # @param default [Integer] Default value if key is missing or invalid
+      # @param range [Range] Valid range for the value
+      # @return [Integer] Validated integer value
+      # @private
+      def extract_integer_option(options, key, default, range)
+        value = options.fetch(key, default)
+        value = value.to_i
+        range.include?(value) ? value : default
+      rescue StandardError
+        default
       end
 
       ##
@@ -271,62 +340,101 @@ module ComputerTools
         return false unless options.is_a?(Hash)
         return false unless options[:enable]
         return false unless @parser.respond_to?(:has_speaker_data?)
-        
+
         @parser.has_speaker_data?
       end
 
       ##
       # Formats a speaker label according to the specified format.
       #
-      # @param speaker_id [Integer] The speaker identifier
+      # Handles speaker ID formatting with robust error handling and validation.
+      # Note: Deepgram speaker IDs are 0-based, so we convert to 1-based for display.
+      #
+      # @param speaker_id [Integer] The speaker identifier from Deepgram (0-based)
       # @param format_string [String] The format string with %d placeholder
       # @return [String] The formatted speaker label
       # @private
       def format_speaker_label(speaker_id, format_string)
-        # Check if the format string contains a valid placeholder
-        unless format_string.include?('%d') || format_string.include?('%s')
-          return "[Speaker #{speaker_id}]: "
-        end
-        
-        format_string % speaker_id
-      rescue ArgumentError
-        # If format string is invalid, use a safe default
-        "[Speaker #{speaker_id}]: "
+        return "[Speaker 1]: " if speaker_id.nil?
+
+        # Convert 0-based Deepgram speaker IDs to 1-based display numbers
+        display_number = speaker_id.to_i + 1
+        display_number = 1 if display_number <= 0 # Safety check for negative IDs
+
+        # Validate format string contains appropriate placeholder
+        return "[Speaker #{display_number}]: " unless format_string.include?('%d') || format_string.include?('%s')
+
+        format_string % display_number
+      rescue ArgumentError, TypeError
+        # If format string is invalid or speaker_id is malformed, use a safe default
+        display_number = speaker_id.respond_to?(:to_i) ? [speaker_id.to_i + 1, 1].max : 1
+        "[Speaker #{display_number}]: "
       end
 
       ##
       # Merges consecutive segments from the same speaker into more coherent subtitle entries.
       #
-      # This method is designed to reduce fragmentation in speaker-based subtitle generation.
+      # This version works with processed segments that have formatted timestamps and no raw data.
       # It combines multiple short segments from the same speaker into a single, more
-      # readable segment, which helps create more natural subtitle presentations.
+      # readable segment, helping create more natural subtitle presentations.
       #
-      # @param segments [Array<Hash>] Input array of speaker segments with individual words
-      #   Each segment is expected to have keys like `:speaker_id`, `:words`, `:confidences`
+      # @param segments [Array<Hash>] Input array of processed speaker segments
+      #   Each segment should have :speaker_id, :text, :start, :end, and :confidence
       #
-      # @return [Array<Hash>] An array of merged segments with the following transformations:
-      #   - Consecutive segments from the same speaker are combined
-      #   - Text is merged into a single continuous string
-      #   - Start and end times are adjusted to span the entire merged segment
-      #   - Confidence scores are recalculated to represent the merged segment
+      # @return [Array<Hash>] An array of merged segments with:
+      #   - Consecutive segments from the same speaker combined
+      #   - Text merged into a single continuous string
+      #   - Start and end times adjusted to span the entire merged segment
+      #   - Confidence scores averaged across merged segments
       #
-      # @example How merging works
-      #   # Input: Two short segments from Speaker 1
-      #   # Output: A single, longer segment representing the continuous speech
-      #
-      # @note This method helps prevent rapid speaker label changes in subtitles
-      #   by combining closely related speech segments
-      #
-      # @see #filter_short_segments For removing very brief segments before merging
-      # @since 1.0.0 Speaker segment processing enhancement
       # @private
-      def merge_consecutive_speaker_segments(segments)
+      def merge_consecutive_segments_formatted(segments)
         return segments if segments.length <= 1
-        
+
         merged = []
         current_segment = segments.first.dup
-        
-        segments[1..-1].each do |segment|
+
+        segments[1..].each do |segment|
+          if current_segment[:speaker_id] == segment[:speaker_id]
+            # Merge with current segment
+            current_segment[:text] = "#{current_segment[:text]} #{segment[:text]}".strip
+            current_segment[:end] = segment[:end] # Update end time to latest segment
+
+            # Average the confidence scores
+            current_confidence = current_segment[:confidence] || 0.0
+            segment_confidence = segment[:confidence] || 0.0
+            current_segment[:confidence] = ((current_confidence + segment_confidence) / 2.0).round(3)
+
+            # Update word count if present
+            current_segment[:word_count] += segment[:word_count] if current_segment[:word_count] && segment[:word_count]
+          else
+            # Finalize current segment and start new one
+            merged << current_segment
+            current_segment = segment.dup
+          end
+        end
+
+        merged << current_segment
+        merged
+      rescue StandardError
+        # If merging fails, return original segments to avoid breaking the flow
+        segments
+      end
+
+      ##
+      # Merges consecutive segments from the same speaker (legacy method).
+      #
+      # @param segments [Array<Hash>] Input array of speaker segments with individual words
+      # @return [Array<Hash>] An array of merged segments
+      # @private
+      # @deprecated Use merge_consecutive_segments_formatted instead
+      def merge_consecutive_speaker_segments(segments)
+        return segments if segments.length <= 1
+
+        merged = []
+        current_segment = segments.first.dup
+
+        segments[1..].each do |segment|
           if current_segment[:speaker_id] == segment[:speaker_id]
             # Merge with current segment
             current_segment[:words] += segment[:words]
@@ -340,7 +448,7 @@ module ComputerTools
             current_segment = segment.dup
           end
         end
-        
+
         merged << current_segment
         merged
       end
@@ -348,10 +456,34 @@ module ComputerTools
       ##
       # Filters out segments that are shorter than the minimum duration.
       #
+      # This version works with formatted timestamps since raw timestamps are removed by the parser.
+      #
+      # @param segments [Array<Hash>] Array of speaker segments with :start and :end as formatted timestamps
+      # @param min_duration [Float] Minimum duration in seconds
+      # @return [Array<Hash>] Array of filtered segments
+      # @private
+      def filter_short_segments_formatted(segments, min_duration)
+        return segments if min_duration <= 0.0
+
+        segments.select do |segment|
+          start_seconds = parse_timestamp_seconds(segment[:start])
+          end_seconds = parse_timestamp_seconds(segment[:end])
+          duration = end_seconds - start_seconds
+          duration >= min_duration
+        end
+      rescue StandardError
+        # If filtering fails, return original segments to avoid breaking the flow
+        segments
+      end
+
+      ##
+      # Filters out segments that are shorter than the minimum duration (legacy method).
+      #
       # @param segments [Array<Hash>] Array of speaker segments
       # @param min_duration [Float] Minimum duration in seconds
       # @return [Array<Hash>] Array of filtered segments
       # @private
+      # @deprecated Use filter_short_segments_formatted instead
       def filter_short_segments(segments, min_duration)
         segments.select do |segment|
           duration = segment[:end_raw] - segment[:start_raw]
@@ -368,18 +500,17 @@ module ComputerTools
       # @private
       def limit_speakers(segments, max_speakers)
         return segments if max_speakers <= 0
-        
+
         # Count occurrences of each speaker
         speaker_counts = segments.each_with_object(Hash.new(0)) do |segment, counts|
           counts[segment[:speaker_id]] += 1
         end
-        
+
         # Get the most frequent speakers
         top_speakers = speaker_counts.sort_by { |_, count| -count }
-                                     .first(max_speakers)
-                                     .map { |speaker_id, _| speaker_id }
-                                     .to_set
-        
+          .first(max_speakers)
+          .to_set { |speaker_id, _| speaker_id }
+
         # Filter segments to only include top speakers
         segments.select { |segment| top_speakers.include?(segment[:speaker_id]) }
       end
@@ -394,13 +525,13 @@ module ComputerTools
       # @private
       def format_timestamp_for_srt_raw(timestamp_seconds)
         return "00:00:00,000" unless timestamp_seconds
-        
+
         total_seconds = timestamp_seconds.to_f
         hours = (total_seconds / 3600).to_i
         minutes = ((total_seconds % 3600) / 60).to_i
         seconds = (total_seconds % 60).to_i
         milliseconds = ((total_seconds % 1) * 1000).to_i
-        
+
         format("%02d:%02d:%02d,%03d", hours, minutes, seconds, milliseconds)
       end
 
@@ -414,12 +545,38 @@ module ComputerTools
       # @private
       def format_timestamp_for_srt(timestamp_str)
         # Convert HH:MM:SS to HH:MM:SS,000 format for SRT
-        return "00:00:00,000" unless timestamp_str
+        return "00:00:00,000" unless timestamp_str.is_a?(String) && !timestamp_str.empty?
 
-        parts = timestamp_str.split(':')
+        parts = timestamp_str.strip.split(':')
         return "00:00:00,000" unless parts.length == 3
 
+        # Validate each part is numeric
+        return "00:00:00,000" unless parts.all? { |part| part.match?(/\A\d+\z/) }
+
         "#{parts[0]}:#{parts[1]}:#{parts[2]},000"
+      end
+
+      ##
+      # Parses a timestamp string and returns the duration in seconds.
+      #
+      # Converts HH:MM:SS format timestamps back to seconds for duration calculations.
+      #
+      # @param timestamp_str [String] The timestamp string in HH:MM:SS format
+      # @return [Float] The timestamp converted to seconds, or 0.0 if parsing fails
+      # @private
+      def parse_timestamp_seconds(timestamp_str)
+        return 0.0 unless timestamp_str.is_a?(String) && !timestamp_str.empty?
+
+        parts = timestamp_str.strip.split(':')
+        return 0.0 unless parts.length == 3
+
+        # Validate and convert parts
+        hours, minutes, seconds = parts.map(&:to_f)
+        return 0.0 unless hours >= 0 && minutes >= 0 && seconds >= 0
+
+        (hours * 3600) + (minutes * 60) + seconds
+      rescue StandardError
+        0.0
       end
 
       ##
