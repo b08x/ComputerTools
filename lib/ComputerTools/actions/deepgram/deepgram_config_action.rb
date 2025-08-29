@@ -21,7 +21,7 @@ module ComputerTools
       #   Valid options are 'show', 'setup', 'edit', and 'reset'.
       def initialize(subcommand:)
         @subcommand = subcommand
-        @config_file = File.join(__dir__, '..', 'config', 'deepgram.yml')
+        @config_file = File.join(__dir__, '..', '..', 'config', 'deepgram.yml')
       end
 
       # Executes the specified configuration subcommand.
@@ -94,7 +94,7 @@ module ComputerTools
           },
           'ai' => {
             'provider' => 'gemini',
-            'model' => 'gemini-1.5-flash-latest',
+            'model' => 'gemini-2.0-flash',
             'enable_insights' => true,
             'enable_summaries' => true
           },
@@ -107,6 +107,14 @@ module ComputerTools
               'include_stats' => true,
               'include_metadata' => true
             }
+          },
+          'speaker_diarization' => {
+            'enable' => false,
+            'confidence_threshold' => 0.8,
+            'label_format' => '[Speaker %d]: ',
+            'merge_consecutive_segments' => true,
+            'min_segment_duration' => 1.0,
+            'max_speakers' => 10
           }
         }
 
@@ -189,11 +197,20 @@ module ComputerTools
           puts "     • Line Length: #{formats['srt']['line_length'] || 42}"
         end
 
-        return unless formats['markdown']
+        if formats['markdown']
+          puts "   Markdown:"
+          puts "     • Include Stats: #{formats['markdown']['include_stats'] || true}"
+          puts "     • Include Metadata: #{formats['markdown']['include_metadata'] || true}"
+        end
 
-        puts "   Markdown:"
-        puts "     • Include Stats: #{formats['markdown']['include_stats'] || true}"
-        puts "     • Include Metadata: #{formats['markdown']['include_metadata'] || true}"
+        puts "\n🎤 Speaker Diarization Settings:"
+        speaker = config['speaker_diarization'] || {}
+        puts "   • Enable: #{speaker['enable'] || false}"
+        puts "   • Confidence Threshold: #{speaker['confidence_threshold'] || 0.8}"
+        puts "   • Label Format: \"#{speaker['label_format'] || '[Speaker %d]: '}\""
+        puts "   • Merge Consecutive Segments: #{speaker['merge_consecutive_segments'] || true}"
+        puts "   • Min Segment Duration: #{speaker['min_segment_duration'] || 1.0}s"
+        puts "   • Max Speakers: #{speaker['max_speakers'] || 10}"
       end
 
       # Displays a help message with the available subcommands.

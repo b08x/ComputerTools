@@ -1,0 +1,77 @@
+{
+  "metadata": {
+    "model_uuid": "example-model-123",
+    "model_name": "example-model",
+    "created": "2025-08-29T12:00:00Z"
+  },
+  "results": {
+    "channels": [
+      {
+        "alternatives": [
+          {
+            "transcript": "Hello world. How are you doing today?",
+            "confidence": 0.95,
+            "words": [
+              {
+                "word": "Hello",
+                "start": 0.0,
+                "end": 0.5,
+                "confidence": 0.95,
+                "speaker": 1,
+                "speaker_confidence": 0.95
+              },
+              {
+                "word": "world",
+                "start": 0.5,
+                "end": 1.0,
+                "confidence": 0.92,
+                "speaker": 1,
+                "speaker_confidence": 0.92
+              },
+              {
+                "word": "How",
+                "start": 1.5,
+                "end": 2.0,
+                "confidence": 0.88,
+                "speaker": 2,
+                "speaker_confidence": 0.88
+              },
+              {
+                "word": "are",
+                "start": 2.0,
+                "end": 2.5,
+                "confidence": 0.90,
+                "speaker": 2,
+                "speaker_confidence": 0.90
+              },
+              {
+                "word": "you",
+                "start": 2.5,
+                "end": 3.0,
+                "confidence": 0.93,
+                "speaker": 2,
+                "speaker_confidence": 0.93
+              },
+              {
+                "word": "doing",
+                "start": 3.0,
+                "end": 3.5,
+                "confidence": 0.91,
+                "speaker": 2,
+                "speaker_confidence": 0.91
+              },
+              {
+                "word": "today?",
+                "start": 3.5,
+                "end": 4.0,
+                "confidence": 0.89,
+                "speaker": 2,
+                "speaker_confidence": 0.89
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

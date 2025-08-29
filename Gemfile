@@ -24,7 +24,7 @@ gem 'front_matter_parser', '~> 1.0'
 gem "git", "~> 3.1"
 gem 'pry', '~> 0.14.2'
 gem 'pry-doc', '~> 1.6'
-gem 'ruby_llm', '~> 1.3'
+gem 'ruby_llm'
 gem "terrapin", "~> 1.1"
 gem 'tty-box', '~> 0.7'
 gem 'tty-command', '~> 0.10.1'
@@ -47,7 +47,7 @@ gem "colorize", "~> 1.1"
 gem "sequel", "~> 5.94"
 gem "tty-cursor", "~> 0.7.1"
 gem "pg", "~> 1.5"
-gem "solargraph", "~> 0.56.0"
+gem "solargraph"
 gem "rbs", "~> 3.9"
 gem "dry-container", "~> 0.11.0"
 gem "dry-configurable", "~> 1.0"

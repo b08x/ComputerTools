@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle exec yard:*)",
+      "Bash(bundle exec rubocop:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ruby:*)",
+      "Bash(bundle exec ruby:*)",
+      "Bash(bundle exec:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": []
+  }
+}

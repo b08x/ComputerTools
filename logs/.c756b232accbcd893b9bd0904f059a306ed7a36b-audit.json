@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/b08x/Workspace/RubyAI/ComputerTools/logs/.c756b232accbcd893b9bd0904f059a306ed7a36b-audit.json",
+    "files": [
+        {
+            "date": 1756436845498,
+            "name": "/home/b08x/Workspace/RubyAI/ComputerTools/logs/mcp-puppeteer-2025-08-28.log",
+            "hash": "0e15a524567341269489c1e716c14e5b25af87d22a50f3398f735ba81fc4c77b"
+        }
+    ],
+    "hashType": "sha256"
+}

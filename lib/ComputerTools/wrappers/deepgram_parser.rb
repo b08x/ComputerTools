@@ -156,6 +156,234 @@ module ComputerTools
         end
       end
 
+      # Extracts words with their speaker identification information from the Deepgram response.
+      #
+      # This method processes the transcript data to identify individual words along with
+      # their associated speaker information, including confidence scores and precise timing.
+      # Only words with both speaker ID and speaker confidence data are included.
+      #
+      # @return [Array<Hash>] An array of word hashes containing:
+      #   - `:word` [String] The spoken word
+      #   - `:speaker` [Integer] Speaker identifier (unique integer for each detected speaker)
+      #   - `:speaker_confidence` [Float] Confidence score for speaker identification (0.0-1.0)
+      #   - `:start` [String] Formatted start timestamp in HH:MM:SS
+      #   - `:end` [String] Formatted end timestamp in HH:MM:SS
+      #   - `:start_raw` [Float] Raw start time in seconds
+      #   - `:end_raw` [Float] Raw end time in seconds
+      #
+      # @example Getting words with detailed speaker information
+      #   parser.words_with_speaker_info.each do |word|
+      #     puts "Word: #{word[:word]}"
+      #     puts "Speaker: #{word[:speaker]}"
+      #     puts "Confidence: #{(word[:speaker_confidence] * 100).round(2)}%"
+      #     puts "Start: #{word[:start]}, End: #{word[:end]}"
+      #   end
+      #
+      # @example Filtering words by high speaker confidence
+      #   high_confidence_words = parser.words_with_speaker_info.select do |word|
+      #     word[:speaker_confidence] > 0.9
+      #   end
+      #
+      # @raise [RuntimeError] If the JSON data is malformed or missing required fields
+      # @see #speaker_segments For grouping words into speaker-based segments
+      # @see #has_speaker_data? For checking if speaker data is available
+      # @since 1.0.0 Speaker diarization feature
+      def words_with_speaker_info
+        words = @json_data.dig("results", "channels", 0, "alternatives", 0, "words")
+        return [] unless words
+
+        words.filter_map do |word|
+          next unless word["speaker"] && word["speaker_confidence"]
+
+          {
+            word: word["word"],
+            speaker: word["speaker"],
+            speaker_confidence: word["speaker_confidence"],
+            start: format_timestamp(word["start"]),
+            end: format_timestamp(word["end"]),
+            start_raw: word["start"],
+            end_raw: word["end"]
+          }
+        end
+      end
+
+      # Groups consecutive words by speaker to create speaker-based segments
+      #
+      # @param [Float] min_confidence minimum speaker confidence threshold (0.0-1.0)
+      # @return [Array<Hash>] array of speaker segment hashes
+      # @example Creating speaker segments
+      #   segments = parser.speaker_segments(min_confidence: 0.8)
+      #   segments.each do |segment|
+      #     puts "Speaker #{segment[:speaker_id]}: #{segment[:text]}"
+      #     puts "Time: #{segment[:start]} - #{segment[:end]}"
+      #     puts "Confidence: #{segment[:confidence]}"
+      #   end
+      def speaker_segments(min_confidence: 0.8)
+        words = words_with_speaker_info
+        return [] if words.empty?
+
+        # Filter words by confidence threshold
+        filtered_words = words.select { |word| word[:speaker_confidence] >= min_confidence }
+        return [] if filtered_words.empty?
+
+        segments = []
+        current_segment = nil
+
+        filtered_words.each do |word|
+          if current_segment.nil? || current_segment[:speaker_id] != word[:speaker]
+            # Finalize previous segment if it exists
+            if current_segment
+              finalize_segment(current_segment)
+              segments << current_segment
+            end
+
+            # Start new segment
+            current_segment = {
+              speaker_id: word[:speaker],
+              words: [word],
+              confidences: [word[:speaker_confidence]],
+              start_raw: word[:start_raw],
+              end_raw: word[:end_raw]
+            }
+          else
+            # Continue current segment
+            current_segment[:words] << word
+            current_segment[:confidences] << word[:speaker_confidence]
+            current_segment[:end_raw] = word[:end_raw]
+          end
+        end
+
+        # Don't forget the last segment
+        if current_segment
+          finalize_segment(current_segment)
+          segments << current_segment
+        end
+
+        segments
+      end
+
+      # Checks if the JSON response contains valid speaker diarization data.
+      #
+      # This method verifies the presence of speaker identification information
+      # in the Deepgram transcript by examining the words data. It ensures that
+      # at least one word has both a speaker ID and confidence score.
+      #
+      # @return [Boolean] 
+      #   * `true` if speaker data is present and valid
+      #   * `false` if no speaker information is detected
+      #
+      # @example Basic usage for checking speaker data
+      #   if parser.has_speaker_data?
+      #     puts "Speaker diarization is available"
+      #     segments = parser.speaker_segments
+      #   else
+      #     puts "No speaker information in the transcript"
+      #   end
+      #
+      # @example Complex scenario with conditional processing
+      #   parser.has_speaker_data? && parser.speaker_segments(min_confidence: 0.9).each do |segment|
+      #     puts "High-confidence speaker segment: #{segment[:text]}"
+      #   end
+      #
+      # @note This method does not validate the quality of speaker data,
+      #   only its presence. Use `speaker_statistics` to assess data quality.
+      #
+      # @see #speaker_segments For retrieving speaker-based text segments
+      # @see #speaker_statistics For detailed speaker data analysis
+      # @since 1.0.0 Speaker diarization feature
+      def has_speaker_data?
+        words = @json_data.dig("results", "channels", 0, "alternatives", 0, "words")
+        return false unless words&.any?
+
+        words.any? { |word| word["speaker"] && word["speaker_confidence"] }
+      end
+
+      # Computes comprehensive statistics about speakers in the transcription.
+      #
+      # This method provides a detailed analysis of speaker information, including
+      # the number of speakers, total words with speaker data, and individual
+      # speaker performance metrics. It is useful for understanding the complexity
+      # and quality of speaker diarization in the transcript.
+      #
+      # @return [Hash] A comprehensive hash of speaker statistics containing:
+      #   - `:speaker_count` [Integer] Total number of unique speakers detected
+      #   - `:total_words_with_speaker_data` [Integer] Number of words successfully identified with a speaker
+      #   - `:speakers` [Hash] A hash of individual speaker metrics, keyed by speaker ID
+      #     * `:word_count` [Integer] Number of words spoken by the speaker
+      #     * `:avg_confidence` [Float] Average speaker identification confidence (0.0-1.0)
+      #     * `:min_confidence` [Float] Lowest speaker confidence for the speaker
+      #     * `:max_confidence` [Float] Highest speaker confidence for the speaker
+      #   - `:overall_avg_confidence` [Float] Average confidence across all speaker identifications
+      #
+      # @example Comprehensive speaker statistics analysis
+      #   stats = parser.speaker_statistics
+      #   puts "Speaker Analysis Report"
+      #   puts "Total Speakers: #{stats[:speaker_count]}"
+      #   puts "Words with Speaker Data: #{stats[:total_words_with_speaker_data]}"
+      #   puts "Overall Speaker Confidence: #{(stats[:overall_avg_confidence] * 100).round(2)}%"
+      #
+      #   stats[:speakers].each do |speaker_id, speaker_stats|
+      #     puts "\nSpeaker #{speaker_id} Details:"
+      #     puts "  Words Spoken: #{speaker_stats[:word_count]}"
+      #     puts "  Avg Confidence: #{(speaker_stats[:avg_confidence] * 100).round(2)}%"
+      #     puts "  Min Confidence: #{(speaker_stats[:min_confidence] * 100).round(2)}%"
+      #     puts "  Max Confidence: #{(speaker_stats[:max_confidence] * 100).round(2)}%"
+      #   end
+      #
+      # @note If no speaker data is available, returns a hash with zero values
+      #
+      # @example Handling transcripts without speaker data
+      #   stats = parser.speaker_statistics
+      #   if stats[:speaker_count] == 0
+      #     puts "No speaker information available in the transcript"
+      #   end
+      #
+      # @see #words_with_speaker_info For individual word speaker details
+      # @see #has_speaker_data? To check if speaker data exists
+      # @since 1.0.0 Speaker diarization feature
+      def speaker_statistics
+        words_with_speakers = words_with_speaker_info
+        
+        return {
+          speaker_count: 0,
+          total_words_with_speaker_data: 0,
+          speakers: {},
+          overall_avg_confidence: 0.0
+        } if words_with_speakers.empty?
+
+        speaker_data = {}
+        total_confidence = 0.0
+
+        words_with_speakers.each do |word|
+          speaker_id = word[:speaker]
+          confidence = word[:speaker_confidence]
+          
+          speaker_data[speaker_id] ||= { word_count: 0, total_confidence: 0.0, confidences: [] }
+          speaker_data[speaker_id][:word_count] += 1
+          speaker_data[speaker_id][:total_confidence] += confidence
+          speaker_data[speaker_id][:confidences] << confidence
+          total_confidence += confidence
+        end
+
+        # Calculate averages and additional stats for each speaker
+        speakers_stats = speaker_data.transform_values do |data|
+          confidences = data[:confidences]
+          {
+            word_count: data[:word_count],
+            avg_confidence: (data[:total_confidence] / data[:word_count]).round(3),
+            min_confidence: confidences.min.round(3),
+            max_confidence: confidences.max.round(3)
+          }
+        end
+
+        {
+          speaker_count: speaker_data.keys.size,
+          total_words_with_speaker_data: words_with_speakers.size,
+          speakers: speakers_stats,
+          overall_avg_confidence: (total_confidence / words_with_speakers.size).round(3)
+        }
+      end
+
       # Provides summary statistics about the parsed transcription
       #
       # @return [Hash] hash containing various counts and metrics about the transcription
@@ -164,7 +392,7 @@ module ComputerTools
       #   puts "Total words: #{stats[:total_words]}"
       #   puts "Total sentences: #{stats[:total_sentences]}"
       def summary_stats
-        {
+        base_stats = {
           total_words: words_with_confidence.count,
           total_sentences: segmented_sentences.count,
           total_paragraphs: @paragraphs.count,
@@ -172,6 +400,17 @@ module ComputerTools
           total_intents: @intents.count,
           transcript_length: @transcript&.length || 0
         }
+
+        # Add speaker statistics if available
+        if has_speaker_data?
+          speaker_stats = speaker_statistics
+          base_stats.merge!(
+            speaker_count: speaker_stats[:speaker_count],
+            words_with_speaker_data: speaker_stats[:total_words_with_speaker_data]
+          )
+        end
+
+        base_stats
       end
 
       private
@@ -268,6 +507,31 @@ module ComputerTools
       rescue StandardError => e
         puts "Error formatting timestamp: #{e.message}"
         nil
+      end
+
+      # Finalizes a speaker segment by calculating derived fields
+      #
+      # @param [Hash] segment the segment hash to finalize
+      # @return [Hash] the finalized segment with text, timestamps, confidence, and word count
+      def finalize_segment(segment)
+        words_text = segment[:words].map { |word| word[:word] }
+        avg_confidence = segment[:confidences].sum / segment[:confidences].size.to_f
+
+        segment.merge!(
+          text: words_text.join(" "),
+          start: format_timestamp(segment[:start_raw]),
+          end: format_timestamp(segment[:end_raw]),
+          confidence: avg_confidence.round(3),
+          word_count: words_text.size
+        )
+        
+        # Remove temporary arrays to keep the result clean
+        segment.delete(:words)
+        segment.delete(:confidences)
+        segment.delete(:start_raw)
+        segment.delete(:end_raw)
+        
+        segment
       end
     end
   end

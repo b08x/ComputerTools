@@ -15,3 +15,74 @@ formats:
   markdown:
     include_stats: true
     include_metadata: true
+# Speaker Diarization Configuration for Transcript Processing
+#
+# This configuration controls advanced speaker identification and labeling
+# in transcription and subtitle generation. It provides fine-grained control
+# over how different speakers are detected, labeled, and presented in the output.
+#
+# Key Features:
+# - Dynamic speaker detection with confidence thresholds
+# - Customizable speaker label formatting
+# - Intelligent segment merging to improve readability
+# - Maximum speaker limit to prevent overwhelming output
+#
+# Supported Use Cases:
+# - Subtitle generation (SRT)
+# - Markdown documentation
+# - Speaker analysis reports
+#
+# Configuration Impact:
+# Adjusting these settings can significantly improve the quality and
+# readability of multi-speaker transcripts.
+
+speaker_diarization:
+  # Enable or Disable Speaker Processing
+  # When enabled, attempts to identify and distinguish between different speakers
+  # Recommended for multi-speaker recordings like interviews, meetings, podcasts
+  enable: true
+  
+  # Speaker Confidence Threshold
+  # Controls the strictness of speaker identification
+  # * Range: 0.0 (lenient) to 1.0 (very strict)
+  # * Higher values mean only highly confident speaker assignments are used
+  # * 0.8 means speakers must be identified with 80%+ confidence
+  # * Affects the number and reliability of speaker labels
+  confidence_threshold: 0.5
+  
+  # Speaker Label Format
+  # Defines how speakers are labeled in the output
+  # * Must include a '%d' placeholder for the speaker number
+  # * Supports flexible formatting for different presentation styles
+  # Examples:
+  #   "[Speaker %d]: "    → "[Speaker 1]: Hello"
+  #   "S%d: "             → "S1: Hello"
+  #   "Person %d speaks: " → "Person 1 speaks: Hello"
+  label_format: "[Speaker %d]: "
+  
+  # Merge Consecutive Speaker Segments
+  # Determines how short, consecutive speech segments are handled
+  # * true: Combines multiple short segments from the same speaker
+  # * false: Keeps each segment separate, even if from the same speaker
+  # Helps create more coherent and readable transcripts/subtitles
+  merge_consecutive_segments: true
+  
+  # Minimum Segment Duration
+  # Filters out extremely brief speech segments
+  # * Helps reduce noise and fragmentation in the output
+  # * Segments shorter than this will be merged with adjacent segments
+  # * Useful for handling brief pauses, interruptions, or background noise
+  # * Recommended range: 0.5 to 2.0 seconds
+  min_segment_duration: 1.0
+  
+  # Maximum Speakers to Process
+  # Limits the number of unique speakers that will be individually labeled
+  # * Prevents overwhelming output with too many speaker identifications
+  # * Remaining speakers beyond this limit will be omitted or generically labeled
+  # * Recommended range: 3 to 10 speakers
+  max_speakers: 10
+
+# Performance and Accuracy Notes:
+# - Speaker diarization accuracy depends on recording quality
+# - Background noise and overlapping speech can reduce performance
+# - Always test and adjust settings for your specific use case
