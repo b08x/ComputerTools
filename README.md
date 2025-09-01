@@ -46,7 +46,7 @@ exe/ComputerTools deepgram config setup
 
 ### 📊 Latest Changes Analyzer
 
-Comprehensive file activity tracking across Git, YADM, and Restic with intelligent analysis and beautiful reporting.
+Comprehensive file activity tracking across Git and YADM with intelligent analysis and beautiful reporting.
 
 **Quick Start:**
 
@@ -79,16 +79,6 @@ exe/ComputerTools listmodels
 exe/ComputerTools listmodels --interactive
 ```
 
-#### 🗂️ Restic Repository Management
-Mount and explore Restic backup repositories:
-
-```bash
-# Mount restic repository for browsing
-exe/ComputerTools mount-restic
-
-# Interactive repository explorer
-exe/ComputerTools mount-restic --interactive
-```
 
 #### 🎬 Media Processing (FFmpeg Integration)
 *FFmpeg wrapper functionality for media processing tasks*
@@ -105,8 +95,7 @@ exe/ComputerTools mount-restic --interactive
   - `fd` command (file discovery for latest changes analysis)
   - `git` (repository analysis)
   - `yadm` (optional, for dotfile tracking)
-  - `restic` (optional, for backup repository mounting and analysis)
-  - `ffmpeg` (optional, for media processing features)
+    - `ffmpeg` (optional, for media processing features)
 - PostgreSQL with pgvector extension (optional, for semantic search features)
 
 ### Setup
@@ -167,16 +156,9 @@ graph TB
     
     Wrappers --> External[External Tools]
     
-    subgraph "Restic Integration"
-        ResticWrapper[ResticWrapper] --> MountAction[MountResticRepoAction]
-        MountAction --> Open3[Open3 Process Management]
-        MountAction --> ResticCLI[Restic CLI Tool]
-    end
-    
     subgraph "Latest Changes Architecture"
         LCCmd[LatestChangesCommand] --> LCActions[File Activity Actions]
         LCActions --> GitWrapper[GitWrapper]
-        LCActions --> ResticWrapper
         LCActions --> YadmWrapper[YADM Analysis]
         LCActions --> FileDiscovery[File Discovery]
     end
@@ -220,8 +202,6 @@ User-specific settings are stored in `~/.config/computertools/config.yml`:
 # User configuration example
 paths:
   home_dir: "/home/user"
-  restic_mount_point: "/home/user/mnt/restic"
-  restic_repo: "/path/to/restic/repo"
 
 display:
   time_format: "%Y-%m-%d %H:%M:%S"
@@ -247,9 +227,6 @@ OPENAI_API_KEY=your_openai_key
 # Deepgram API
 DEEPGRAM_API_KEY=your_deepgram_key
 
-# Restic Configuration (for backup integration)
-RESTIC_REPOSITORY=/path/to/restic/repo
-RESTIC_PASSWORD=your_restic_password
 
 # Database Configuration (for blueprint/semantic search features)
 DATABASE_URL=postgresql://user:pass@localhost/computertools
@@ -318,9 +295,6 @@ exe/ComputerTools config edit
 # List available AI models with debug logging
 COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools listmodels
 
-# Mount restic repository with verbose output
-exe/ComputerTools mount-restic --debug
-```
 
 ### Log File Location
 
@@ -371,11 +345,6 @@ exe/ComputerTools latestchanges --time-range 24h
 # 2. Focus on specific file types
 exe/ComputerTools latestchanges --format summary --interactive
 
-# 3. Compare with backup snapshots (if restic configured)
-exe/ComputerTools latestchanges --include-backups
-
-# 4. Mount and explore restic repository
-exe/ComputerTools mount-restic
 
 # 5. List available AI models and providers
 exe/ComputerTools listmodels --format table
@@ -432,8 +401,7 @@ bundle exec yard server
 ### Performance & Reliability
 
 - **Process Management**: Robust Open3-based external process handling
-- **Restic Integration**: Secure backup repository mounting with proper cleanup
-- **Multi-source Analysis**: Efficient tracking across Git, YADM, and Restic
+- **Multi-source Analysis**: Efficient tracking across Git and YADM
 - **Error Handling**: Graceful degradation and helpful error messages
 
 ## 🚦 Roadmap
@@ -449,10 +417,8 @@ bundle exec yard server
 
 - [x] Latest changes analyzer with multi-platform tracking
 - [x] Deepgram audio transcription processing
-- [x] Restic backup integration with Open3 process management
 - [x] Configuration management system
 - [x] AI model management and listing
-- [x] Restic repository mounting and exploration
 - [ ] FFmpeg media processing wrapper (in development)
 - [ ] Code analysis and refactoring tools
 - [ ] Documentation generation utilities
@@ -498,7 +464,6 @@ MIT License - see LICENSE file for details.
 - **TTY Toolkit**: For rich terminal user interfaces
 - **Google Gemini**: For powerful AI language model capabilities
 - **Open3**: For reliable external process management
-- **Restic**: For secure backup repository integration
 
 ---
 

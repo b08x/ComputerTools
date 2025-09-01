@@ -72,6 +72,7 @@ require "ComputerTools/actions/file_activity/file_discovery_action"
 require "ComputerTools/actions/file_activity/git_analysis_action"
 require "ComputerTools/actions/file_activity/latest_changes_action"
 require "ComputerTools/actions/file_activity/restic_analysis_action"
+require "ComputerTools/actions/file_activity/untracked_analysis_action"
 require "ComputerTools/actions/file_activity/yadm_analysis_action"
 
 require "ComputerTools/actions/display_available_models_action"

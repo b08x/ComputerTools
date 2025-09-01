@@ -119,11 +119,11 @@ module ComputerTools
         # Process untracked files
         unless untracked_files.empty?
           puts "  📦 Processing #{untracked_files.length} untracked files...".colorize(:blue)
-          restic_data = ResticAnalysisAction.new(
+          untracked_data = UntrackedAnalysisAction.new(
             files: untracked_files,
             config: @config
           ).call
-          all_data.concat(restic_data) if restic_data
+          all_data.concat(untracked_data) if untracked_data
         end
 
         all_data

@@ -1,6 +1,6 @@
 # Latest Changes Analyzer
 
-The Latest Changes Analyzer is a comprehensive file activity tracking system that monitors and analyzes recent modifications across multiple version control and backup systems. It provides detailed insights into your development workflow by tracking changes in Git repositories, YADM dotfiles, and Restic backups.
+The Latest Changes Analyzer is a comprehensive file activity tracking system that monitors and analyzes recent modifications across version control and file systems. It provides detailed insights into your development workflow by tracking changes in Git repositories and YADM dotfiles.
 
 ## Overview
 
@@ -11,7 +11,6 @@ The analyzer follows a modular Sublayer architecture with dedicated components f
 ### Multi-Platform File Tracking
 - **Git Repositories**: Analyzes committed and staged changes with diff statistics
 - **YADM Dotfiles**: Tracks configuration file modifications in your home directory
-- **Restic Backups**: Compares current files against backup snapshots (with passphrase support)
 - **Untracked Files**: Identifies new files not under version control
 
 ### Intelligent Analysis
@@ -28,8 +27,7 @@ The analyzer follows a modular Sublayer architecture with dedicated components f
 
 ### Advanced Configuration
 - **Flexible Time Ranges**: 1h, 6h, 24h, 2d, 7d, or custom periods
-- **Configurable Paths**: Customize home directory, Restic mount points, and repositories
-- **Terminal Preferences**: Support for multiple terminal emulators for Restic mounting
+- **Configurable Paths**: Customize home directory and repositories
 - **Display Customization**: Configurable time formats and output preferences
 
 ## Architecture
@@ -46,11 +44,9 @@ The Latest Changes Analyzer is built using the Sublayer framework with a clean, 
 - **`FileDiscoveryAction`**: File finding and categorization using `fd` command
 - **`GitAnalysisAction`**: Git repository analysis and diff calculation
 - **`YadmAnalysisAction`**: YADM dotfile tracking and status analysis
-- **`ResticAnalysisAction`**: Backup comparison and snapshot analysis
 
 ### Wrapper Layer
 - **`GitWrapper`**: Git operations abstraction with error handling
-- **`ResticWrapper`**: Restic mounting and file comparison with passphrase support
 
 ### Generator Layer
 - **`FileActivityReportGenerator`**: Multi-format report generation with interactive features
@@ -128,18 +124,11 @@ This will prompt you to configure:
 
 #### Paths
 - **Home Directory**: Base directory for analysis (default: `~`)
-- **Restic Mount Point**: Where to mount Restic snapshots (default: `~/mnt/restic`)
-- **Restic Repository**: Path to your Restic backup repository
 
 #### Display Settings
 - **Time Format**: How timestamps are displayed (default: `%Y-%m-%d %H:%M:%S`)
 
-#### Restic Settings
-- **Mount Timeout**: Seconds to wait for Restic mount (default: 60)
 
-#### Terminal Preferences
-- **Preferred Order**: Terminal emulators for Restic mounting
-- Supports: alacritty, kitty, gnome-terminal, konsole, xterm
 
 ### Configuration File
 
@@ -148,18 +137,8 @@ Settings are stored in `~/.config/computertools/config.yml`:
 ```yaml
 paths:
   home_dir: "/home/username"
-  restic_mount_point: "/home/username/mnt/restic"
-  restic_repo: "/path/to/restic/repository"
 display:
   time_format: "%Y-%m-%d %H:%M:%S"
-restic:
-  mount_timeout: 60
-terminals:
-  preferred_order:
-  - cmd: alacritty
-    args: "-e"
-  - cmd: kitty
-    args: "-e"
 ```
 
 ## Output Examples
@@ -174,7 +153,6 @@ terminals:
 🔄 Modified files: 12
 📊 Git tracked: 38
 📊 YADM tracked: 3
-📊 Restic tracked: 1
 📈 Total additions: 156
 📉 Total deletions: 23
 
@@ -227,8 +205,7 @@ terminals:
     "modified_files": 12,
     "by_tracking": {
       "Git": 38,
-      "YADM": 3,
-      "Restic": 1
+      "YADM": 3
     },
     "total_additions": 156,
     "total_deletions": 23
@@ -272,8 +249,6 @@ When using `--interactive` mode:
 
 ### Optional Tools
 - **`yadm`**: For dotfile tracking (install: `sudo pacman -S yadm`)
-- **`restic`**: For backup comparison (install: `sudo pacman -S restic`)
-- **Terminal emulators**: alacritty, kitty, gnome-terminal, konsole, or xterm
 
 ### System Requirements
 - Ruby 3.0+
@@ -297,11 +272,6 @@ brew install fd          # macOS
 - Verify the directory has recent activity
 - Ensure file timestamps are recent
 
-#### Restic mounting fails
-- Verify Restic repository path in configuration
-- Ensure you have a supported terminal emulator installed
-- Check repository passphrase is accessible
-- Verify mount point directory exists and is writable
 
 #### Git diff errors
 - Ensure you're in a Git repository or specify a Git-tracked directory
@@ -365,7 +335,6 @@ fi
 ### Optimization Tips
 - Use shorter time ranges for faster analysis
 - Exclude large directories with many files
-- Configure Restic timeout based on repository size
 - Use summary format for quick overviews
 
 ### Scalability

@@ -3,13 +3,16 @@
 module ComputerTools
   module Generators
     #
-    # Generates and displays reports on file activity based on provided data.
+    # Generates and displays daily development activity reports based on file data.
     #
     # This class takes a collection of file activity data and transforms it into
-    # a human-readable report in various formats, such as a detailed table,
-    # a concise summary, or a machine-readable JSON output. It is designed to
-    # be used in command-line tools to provide insights into file changes over
-    # a specified period.
+    # human-readable reports in various formats, such as detailed tables,
+    # concise summaries, or machine-readable JSON output. It focuses on daily
+    # developer productivity insights by analyzing file modifications, additions,
+    # and tracking across different version control systems.
+    #
+    # The reports emphasize development workflow patterns and provide actionable
+    # insights for understanding daily coding activity and productivity metrics.
     #
     class FileActivityReportGenerator < Sublayer::Generators::Base
       #
@@ -95,7 +98,7 @@ module ComputerTools
       end
 
       #
-      # Generates and prints a text-based summary report.
+      # Generates and prints a text-based daily development summary report.
       #
       # @private
       #
@@ -103,11 +106,11 @@ module ComputerTools
         stats = generate_summary_stats
 
         puts "\n#{'=' * 60}"
-        puts "📊 FILE ACTIVITY SUMMARY (#{@time_range})".colorize(:blue)
+        puts "📊 DAILY DEVELOPMENT ACTIVITY SUMMARY (#{@time_range})".colorize(:blue)
         puts "=" * 60
 
         puts "📁 Total files analyzed: #{stats[:total_files]}".colorize(:green)
-        puts "⏰ Active time periods: #{stats[:hours_with_activity]}".colorize(:cyan)
+        puts "⏰ Active development periods: #{stats[:hours_with_activity]}".colorize(:cyan)
         puts "🔄 Modified files: #{stats[:modified_files]}".colorize(:yellow)
 
         puts "\n📈 By tracking method:".colorize(:blue)
@@ -115,10 +118,11 @@ module ComputerTools
           puts "  #{method}: #{count}".colorize(:cyan)
         end
 
-        puts "\n📝 Change statistics:".colorize(:blue)
+        puts "\n📝 Development statistics:".colorize(:blue)
         puts "  + Lines added: #{stats[:total_additions]}".colorize(:green)
         puts "  - Lines removed: #{stats[:total_deletions]}".colorize(:red)
         puts "  📦 Total chunks: #{stats[:total_chunks]}".colorize(:cyan)
+        puts "  📊 Productivity score: #{calculate_productivity_score(stats)}".colorize(:magenta)
 
         return unless stats[:top_files].any?
 
@@ -148,7 +152,7 @@ module ComputerTools
       end
 
       #
-      # Displays the high-level summary for the table report.
+      # Displays the high-level daily development summary for the table report.
       #
       # @private
       #
@@ -156,12 +160,13 @@ module ComputerTools
         stats = generate_summary_stats
 
         puts "\n#{'=' * 80}"
-        puts "📊 OVERALL SUMMARY - File Activity Analysis (#{@time_range})".colorize(:blue)
+        puts "📊 DAILY DEVELOPMENT ACTIVITY OVERVIEW (#{@time_range})".colorize(:blue)
         puts "=" * 80
 
         puts "📁 Total files: #{stats[:total_files]}".colorize(:green)
-        puts "⏰ Hours with activity: #{stats[:hours_with_activity]}".colorize(:cyan)
+        puts "⏰ Active development hours: #{stats[:hours_with_activity]}".colorize(:cyan)
         puts "🔄 Modified files: #{stats[:modified_files]}".colorize(:yellow)
+        puts "📊 Productivity score: #{calculate_productivity_score(stats)}".colorize(:magenta)
 
         stats[:by_tracking].each do |method, count|
           puts "📊 #{method} tracked: #{count}".colorize(:cyan)
@@ -255,7 +260,7 @@ module ComputerTools
             value.colorize(:blue)
           when 'YADM'
             value.colorize(:magenta)
-          when 'Restic'
+          when 'Untracked'
             value.colorize(:cyan)
           else
             value.to_s
@@ -398,9 +403,10 @@ module ComputerTools
       end
 
       #
-      # Calculates aggregate statistics from the full dataset.
+      # Calculates aggregate daily development statistics from the full dataset.
       #
-      # @return [Hash] A hash containing summary statistics.
+      # @return [Hash] A hash containing comprehensive development activity statistics
+      #   including productivity metrics and development workflow insights.
       # @private
       #
       def generate_summary_stats
@@ -452,6 +458,37 @@ module ComputerTools
         date_time.strftime('%A, %B %d, %Y at %I:%M %p - %I:59 %p')
       rescue ArgumentError
         hour_key
+      end
+
+      #
+      # Calculates a productivity score based on development activity metrics.
+      #
+      # The productivity score is a normalized value (0-100) that considers:
+      # - File activity intensity (modifications per hour)
+      # - Code change volume (additions vs deletions ratio)
+      # - Development consistency (distribution across time periods)
+      #
+      # @param stats [Hash] The statistics hash from generate_summary_stats
+      # @return [Integer] A productivity score between 0 and 100
+      # @private
+      #
+      def calculate_productivity_score(stats)
+        return 0 if stats[:total_files] == 0
+
+        # Base activity score (0-40 points)
+        activity_ratio = [stats[:modified_files].to_f / stats[:total_files], 1.0].min
+        activity_score = (activity_ratio * 40).round
+
+        # Code change intensity (0-30 points)  
+        total_changes = stats[:total_additions] + stats[:total_deletions]
+        change_intensity = [total_changes.to_f / stats[:total_files] / 10, 1.0].min
+        change_score = (change_intensity * 30).round
+
+        # Time distribution consistency (0-30 points)
+        time_consistency = [stats[:hours_with_activity].to_f / 8, 1.0].min
+        time_score = (time_consistency * 30).round
+
+        [activity_score + change_score + time_score, 100].min
       end
     end
   end

@@ -3,13 +3,14 @@
 module ComputerTools
   module Commands
     ##
-    # LatestChangesCommand provides functionality to analyze recent file changes across
-    # multiple tracking systems including Git, YADM, and Restic. This command helps
-    # developers track modifications in their projects and dotfiles over specified time periods.
+    # LatestChangesCommand provides a comprehensive daily report generator for tracking
+    # file activity across development environments. This command helps developers
+    # gain insights into their daily productivity by analyzing changes in projects,
+    # repositories, and personal workspaces over specified time periods.
     #
     # The command supports multiple output formats and can operate in interactive mode
-    # for better user experience. It serves as a comprehensive tool for monitoring file
-    # activity across different version control and backup systems.
+    # for better user experience. It serves as a powerful tool for monitoring
+    # development activities, tracking file modifications, and understanding daily progress.
     #
     # == Usage Examples
     #
@@ -33,7 +34,7 @@ module ComputerTools
       #
       # @return [String] A description of the command's purpose
       def self.description
-        "Analyze recent file changes across Git, YADM, and Restic tracking methods"
+        "Generate daily reports tracking file activities and development progress"
       end
 
       ##
@@ -169,11 +170,11 @@ module ComputerTools
             latest-changes --interactive        # Interactive browsing mode
             latest-changes config               # Configure settings
 
-          The analyzer tracks files across:
-          • Git repositories (with diff analysis)
-          • YADM dotfile management
-          • Restic backup comparisons
-          • Untracked files
+          The daily report generator tracks activities across:
+          • Git repositories (with comprehensive diff analysis)
+          • YADM dotfile management and personal workspace changes
+          • Untracked file modifications
+          • Cross-environment development tracking
 
         HELP
       end
