@@ -33,29 +33,6 @@ module ComputerTools
         implements_interface?(object, required_methods)
       end
 
-      ##
-      # Validates that an object implements the BackupInterface.
-      #
-      # @param object [Object] The object to validate
-      # @return [Boolean] true if object implements BackupInterface, false otherwise
-      # @example
-      #   restic_wrapper = ResticWrapper.new(config)
-      #   Validation.implements_backup_interface?(restic_wrapper) # => true
-      def self.implements_backup_interface?(object)
-        required_methods = %i[
-          ensure_mounted
-          mounted?
-          mount_backup
-          unmount
-          snapshot_path
-          compare_with_snapshot
-          cleanup
-          mount_point
-          repository
-        ]
-
-        implements_interface?(object, required_methods)
-      end
 
       ##
       # Validates that an object implements the DatabaseInterface.
@@ -189,8 +166,6 @@ module ComputerTools
         interface_valid = case expected_interface
                           when :git
                             implements_git_interface?(object)
-                          when :backup
-                            implements_backup_interface?(object)
                           when :database
                             implements_database_interface?(object)
                           when :processor

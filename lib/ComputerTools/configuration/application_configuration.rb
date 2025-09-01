@@ -6,20 +6,18 @@ require_relative 'logging_configuration'
 require_relative 'path_configuration'
 require_relative 'terminal_configuration'
 require_relative 'display_configuration'
-require_relative 'backup_configuration'
 
 module ComputerTools
   module Configurations
     class ApplicationConfiguration
       attr_reader :logging_config, :path_config, :terminal_config,
-                  :display_config, :backup_config
+                  :display_config
 
       def initialize(yaml_data=nil)
         @logging_config = ConfigurationFactory.create_logging_config(yaml_data)
         @path_config = ConfigurationFactory.create_path_config(yaml_data)
         @terminal_config = ConfigurationFactory.create_terminal_config(yaml_data)
         @display_config = ConfigurationFactory.create_display_config(yaml_data)
-        @backup_config = ConfigurationFactory.create_backup_config(yaml_data)
       end
 
       def self.from_yaml_files(file_paths=nil)
@@ -43,7 +41,6 @@ module ComputerTools
         @path_config.validate!
         @terminal_config.validate!
         @display_config.validate!
-        @backup_config.validate!
       end
 
       # Backward compatibility methods
@@ -57,8 +54,6 @@ module ComputerTools
           delegate_to_terminal_config(keys[1..-1])
         when :display
           delegate_to_display_config(keys[1..-1])
-        when :restic
-          delegate_to_backup_config(keys[1..-1])
         else
           raise ArgumentError, "Unknown configuration section: #{keys.first}"
         end
@@ -85,10 +80,6 @@ module ComputerTools
         case keys.first
         when :home_dir
           @path_config.config.home_dir
-        when :restic_mount_point
-          @path_config.config.restic_mount_point
-        when :restic_repo
-          @path_config.config.restic_repo
         else
           raise ArgumentError, "Unknown path configuration key: #{keys.first}"
         end
@@ -114,14 +105,6 @@ module ComputerTools
         end
       end
 
-      def delegate_to_backup_config(keys)
-        case keys.first
-        when :mount_timeout
-          @backup_config.config.mount_timeout
-        else
-          raise ArgumentError, "Unknown backup configuration key: #{keys.first}"
-        end
-      end
     end
   end
 end

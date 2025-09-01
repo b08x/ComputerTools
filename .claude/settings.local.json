@@ -10,7 +10,8 @@
       "Bash(bundle exec:*)",
       "Bash(mv:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": []
   }

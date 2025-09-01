@@ -53,7 +53,7 @@ module ComputerTools
       # Register wrapper dependencies
       #
       # Wrapper classes provide interfaces to external tools and services.  This method registers
-      # wrappers for Git, Restic, Docling, Trafilatura, DeepgramParser,
+      # wrappers for Git, Docling, Trafilatura, DeepgramParser,
       # DeepgramAnalyzer, and DeepgramFormatter.
       #
       # @return [void]
@@ -63,14 +63,7 @@ module ComputerTools
           ComputerTools::Wrappers::GitWrapper.new
         end
 
-        # Restic wrapper for backup operations
-        ComputerTools::Container.register('restic_wrapper') do
-          ComputerTools::Wrappers::ResticWrapper.new(
-            ComputerTools::Container['configuration']
-          )
-        end
-
-        # Docling wrapper for document processing
+# Docling wrapper for document processing
         ComputerTools::Container.register('docling_wrapper') do
           ComputerTools::Wrappers::Docling.new
         end
@@ -132,13 +125,7 @@ module ComputerTools
           )
         end
 
-        ComputerTools::Container.register('restic_analysis_action') do
-          ComputerTools::Actions::FileActivity::ResticAnalysisAction.new(
-            restic_wrapper: ComputerTools::Container['restic_wrapper']
-          )
-        end
-
-        ComputerTools::Container.register('yadm_analysis_action') do
+ComputerTools::Container.register('yadm_analysis_action') do
           ComputerTools::Actions::FileActivity::YadmAnalysisAction.new
         end
 
@@ -160,10 +147,6 @@ module ComputerTools
           ComputerTools::Actions::RunShellCommand.new
         end
 
-        # Mount restic repository action
-        ComputerTools::Container.register('mount_restic_repo_action') do
-          ComputerTools::Actions::MountResticRepoAction.new
-        end
       end
 
       def self.register_generators
@@ -195,7 +178,7 @@ module ComputerTools
       # Register configuration dependencies
       #
       # Configuration objects provide typed access to application settings. This method registers
-      # configurations for logging, paths, terminal, display, backup, and application settings.
+      # configurations for logging, paths, terminal, display, and application settings.
       # It also ensures backward compatibility by registering the 'configuration' key if it's not
       # already registered.
       #
@@ -221,11 +204,7 @@ module ComputerTools
           ComputerTools::Configurations::ConfigurationFactory.create_display_config(yaml_data)
         end
 
-        ComputerTools::Container.register('backup_configuration') do
-          ComputerTools::Configurations::ConfigurationFactory.create_backup_config(yaml_data)
-        end
-
-        ComputerTools::Container.register('application_configuration') do
+ComputerTools::Container.register('application_configuration') do
           ComputerTools::Configurations::ConfigurationFactory.create_application_config
         end
 

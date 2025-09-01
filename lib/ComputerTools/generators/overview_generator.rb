@@ -72,9 +72,9 @@ module ComputerTools
           - Output formats: markdown (rich analysis), SRT (subtitles), JSON (structured data), summary (concise overview)
 
           2. LATEST CHANGES ANALYZER:
-          - Comprehensive file activity tracking across Git, YADM, and Restic with intelligent analysis
+          - Comprehensive file activity tracking across Git, YADM, and untracked files with intelligent analysis
           - Features: Multi-platform file tracking, intelligent analysis, multiple output formats, advanced configuration
-          - Tracks: Git repositories, YADM dotfiles, Restic backups, untracked files
+          - Tracks: Git repositories, YADM dotfiles, untracked files
           - Commands: analyze, config
           - Output formats: table view, summary view, JSON export, interactive mode
 

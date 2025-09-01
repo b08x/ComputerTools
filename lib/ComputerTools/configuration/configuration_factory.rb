@@ -4,7 +4,6 @@ require_relative 'logging_configuration'
 require_relative 'path_configuration'
 require_relative 'terminal_configuration'
 require_relative 'display_configuration'
-require_relative 'backup_configuration'
 
 module ComputerTools
   module Configurations
@@ -25,11 +24,7 @@ module ComputerTools
         yaml_data ? DisplayConfiguration.from_yaml(yaml_data) : DisplayConfiguration.new
       end
 
-      def self.create_backup_config(yaml_data=nil)
-        yaml_data ? BackupConfiguration.from_yaml(yaml_data) : BackupConfiguration.new
-      end
-
-      def self.create_application_config(yaml_file_paths=nil)
+def self.create_application_config(yaml_file_paths=nil)
         ApplicationConfiguration.from_yaml_files(yaml_file_paths)
       end
 

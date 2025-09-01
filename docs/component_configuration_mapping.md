@@ -18,7 +18,6 @@ This document provides a detailed mapping of which components use which configur
 
 | Component | File | Config Sections | Keys Used | Usage Pattern |
 |-----------|------|-----------------|-----------|---------------|
-| **ResticWrapper** | `lib/ComputerTools/wrappers/restic_wrapper.rb` | `:paths`, `:restic`, `:terminal` | `:restic_mount_point`, `:restic_repo`, `:home_dir`, `:mount_timeout`, `:command`, `:args` | Constructor injection from container |
 | **GitWrapper** | `lib/ComputerTools/wrappers/git_wrapper.rb` | None | None | No configuration usage |
 | **BlueprintDatabase** | `lib/ComputerTools/wrappers/blueprint_database.rb` | None | None | No configuration usage |
 | **Docling** | `lib/ComputerTools/wrappers/docling.rb` | None | None | No configuration usage |
@@ -34,7 +33,6 @@ This document provides a detailed mapping of which components use which configur
 | **LatestChangesAction** | `lib/ComputerTools/actions/file_activity/latest_changes_action.rb` | All sections | All keys | Direct instantiation |
 | **FileDiscoveryAction** | `lib/ComputerTools/actions/file_activity/file_discovery_action.rb` | `:paths` | `:home_dir` | Direct instantiation |
 | **GitAnalysisAction** | `lib/ComputerTools/actions/file_activity/git_analysis_action.rb` | None | None | No configuration usage |
-| **ResticAnalysisAction** | `lib/ComputerTools/actions/file_activity/restic_analysis_action.rb` | None | None | No configuration usage |
 | **YadmAnalysisAction** | `lib/ComputerTools/actions/file_activity/yadm_analysis_action.rb` | None | None | No configuration usage |
 | **Blueprint Actions** | `lib/ComputerTools/actions/blueprint/*.rb` | None | None | No configuration usage |
 | **Deepgram Actions** | `lib/ComputerTools/actions/deepgram/*.rb` | None | None | No configuration usage |
@@ -68,12 +66,12 @@ This document provides a detailed mapping of which components use which configur
 **Usage**: Singleton logger configuration
 
 ### `:paths` Section
-**Used By**: ResticWrapper, FileDiscoveryAction, LatestChangesAction (3 components)
-**Keys**: `:home_dir`, `:restic_mount_point`, `:restic_repo`
+**Used By**: FileDiscoveryAction, LatestChangesAction (2 components)
+**Keys**: `:home_dir`
 **Usage**: File system operations and path resolution
 
 ### `:terminal` Section
-**Used By**: ResticWrapper, LatestChangesAction (2 components)
+**Used By**: LatestChangesAction (1 component)
 **Keys**: `:command`, `:args`
 **Usage**: Terminal emulator operations
 
@@ -82,15 +80,9 @@ This document provides a detailed mapping of which components use which configur
 **Keys**: `:time_format`
 **Usage**: Output formatting
 
-### `:restic` Section
-**Used By**: ResticWrapper, LatestChangesAction (2 components)
-**Keys**: `:mount_timeout`
-**Usage**: Restic backup tool configuration
-
 ## Configuration Coupling Analysis
 
 ### High Coupling (3+ sections)
-- **ResticWrapper**: Uses `:paths`, `:restic`, `:terminal`
 - **LatestChangesAction**: Uses all sections (setup operations)
 
 ### Medium Coupling (2 sections)
@@ -110,7 +102,6 @@ This document provides a detailed mapping of which components use which configur
 - **FileDiscoveryAction**: Single section usage, simple interface
 
 ### Priority 2: Medium-Impact, Medium-Risk
-- **ResticWrapper**: Multiple sections, but well-defined interface
 - **FileActivityReportGenerator**: Simple usage, clear boundaries
 
 ### Priority 3: Low-Impact, High-Risk
@@ -125,8 +116,7 @@ This document provides a detailed mapping of which components use which configur
 3. FileActivityReportGenerator → DisplayConfiguration
 
 ### Phase 2: Multi-Section Components
-1. ResticWrapper → PathConfiguration + TerminalConfiguration + BackupConfiguration
-2. Update container registrations for multi-section components
+1. Update container registrations for multi-section components
 
 ### Phase 3: Complex Components
 1. LatestChangesAction → ApplicationConfiguration (coordinator)
