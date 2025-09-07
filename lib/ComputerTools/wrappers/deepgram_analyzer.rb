@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'deepgram_response_parser'
+
 module ComputerTools
   module Wrappers
     # Analyzes Deepgram transcription JSON files to extract structured information about segments,
@@ -30,7 +32,15 @@ module ComputerTools
         "Relevant Keywords" => "keywords",
         "AI Analysis of Segment" => "gemini_analysis",
         "Software Detected in Segment" => "software_detected",
-        "List of Software Detections" => "software_detections"
+        "List of Software Detections" => "software_detections",
+        "Speaker" => "speaker",
+        "Confidence Score" => "confidence",
+        "Word Count" => "word_count",
+        "Summary" => "summary",
+        "Sentiment" => "sentiment",
+        "Intents" => "intents",
+        "Topics" => "topics",
+        "Utterance Topics" => "utterance_topics"
       }.freeze
 
       # @return [Array<Hash>] the loaded segments data
@@ -124,7 +134,27 @@ module ComputerTools
       #
       # @return [Array<String>] array of unique topic strings
       def get_all_topics
-        @segments.map { |segment| segment["topic"] }.compact.uniq
+        topics = []
+        
+        @segments.each do |segment|
+          # Get single topic field (compatibility)
+          topics << segment["topic"] if segment["topic"]
+          
+          # Get topics array from metadata
+          if segment["topics"].is_a?(Array)
+            topics.concat(segment["topics"])
+          elsif segment["topics"].is_a?(String)
+            # Handle case where topics were joined as string
+            topics.concat(segment["topics"].split(", "))
+          end
+          
+          # Get utterance-specific topics
+          if segment["utterance_topics"].is_a?(Array)
+            topics.concat(segment["utterance_topics"])
+          end
+        end
+        
+        topics.compact.uniq
       end
 
       # Retrieves all unique software mentions found in the segments
@@ -149,7 +179,16 @@ module ComputerTools
       # @param [String] topic the topic to filter by
       # @return [Array<Hash>] array of segments that match the topic
       def filter_by_topic(topic)
-        @segments.select { |segment| segment["topic"] == topic }
+        @segments.select do |segment|
+          # Check single topic field
+          segment["topic"] == topic ||
+          # Check topics array
+          (segment["topics"].is_a?(Array) && segment["topics"].include?(topic)) ||
+          # Check topics string (joined format)
+          (segment["topics"].is_a?(String) && segment["topics"].split(", ").include?(topic)) ||
+          # Check utterance-specific topics
+          (segment["utterance_topics"].is_a?(Array) && segment["utterance_topics"].include?(topic))
+        end
       end
 
       # Filters segments by a specific software mention
@@ -172,7 +211,14 @@ module ComputerTools
       def load_segments_data(file_path)
         data = JSON.parse(File.read(file_path))
 
-        # Handle both array and single segment formats
+        # Check if this is a raw Deepgram API response
+        if DeepgramResponseParser.raw_deepgram_response?(data)
+          # Parse raw Deepgram response into normalized segments
+          parser = DeepgramResponseParser.new
+          return parser.parse_response(data)
+        end
+
+        # Handle both array and single segment formats (legacy support)
         data.is_a?(Array) ? data : [data]
       end
 
