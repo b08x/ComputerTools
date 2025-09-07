@@ -14,7 +14,7 @@ module ComputerTools
     #
     # @example Showing the current configuration
     #   ComputerTools::Actions::DeepgramConfigAction.new(subcommand: 'show').call
-    class DeepgramConfigAction < Sublayer::Actions::Base
+    class DeepgramConfigAction < ComputerTools::Actions::BaseAction
       # Initializes the configuration action.
       #
       # @param subcommand [String] The configuration command to execute.

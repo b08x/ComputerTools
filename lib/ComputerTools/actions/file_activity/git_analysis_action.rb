@@ -2,7 +2,7 @@
 
 module ComputerTools
   module Actions
-    class GitAnalysisAction < Sublayer::Actions::Base
+    class GitAnalysisAction < ComputerTools::Actions::BaseAction
       def initialize(files:, config:)
         @files = files
         @config = config

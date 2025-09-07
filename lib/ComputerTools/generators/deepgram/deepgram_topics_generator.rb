@@ -29,10 +29,7 @@ module ComputerTools
     #   topics = generator.generate
     #   # => ["Deployment Issue Analysis", "Software Deployment"]
     #
-    class DeepgramTopicsGenerator < Sublayer::Generators::Base
-      llm_output_adapter type: :list_of_strings,
-                         name:        "topics",
-                         description: "Enhanced topic extraction and categorization"
+    class DeepgramTopicsGenerator < ComputerTools::Generators::BaseGenerator
 
       ##
       # Initializes a new DeepgramTopicsGenerator instance.
@@ -42,20 +39,45 @@ module ComputerTools
       #   already been identified (e.g., by Deepgram's base topic detection). Each hash
       #   is expected to have a `:topic` key. This provides context to the LLM.
       def initialize(transcript:, existing_topics: [])
+        super()
         @transcript = transcript
         @existing_topics = existing_topics
       end
 
       ##
-      # Executes the topic generation process.
+      # Executes the topic generation process using ruby_llm-schema.
       #
-      # This method calls the parent class's `generate` method, which orchestrates
-      # the interaction with the LLM using the prompt defined in this class.
+      # This method constructs a detailed prompt and uses schema validation
+      # to ensure the response contains a proper array of topic strings.
       #
-      # @return [Array<String>] An array of generated topic strings, based on the
-      #   `llm_output_adapter` configuration.
-      def generate
-        super
+      # @return [Array<String>] An array of generated topic strings.
+      def call
+        with_generation_handling("deepgram topic extraction") do
+          schema = ComputerTools::Schemas::DeepgramTopicsResponse.new
+          schema_json = schema.to_json_schema
+          full_prompt = build_structured_prompt(schema_json)
+          
+          response_content = generate_llm_content(
+            full_prompt,
+            system_prompt: build_system_prompt(
+              task_description: "comprehensive topic extraction and categorization from conversation transcripts",
+              output_format: "structured JSON array matching the provided schema",
+              additional_instructions: "Focus on specific, actionable topics that provide insight beyond basic keyword extraction"
+            ),
+            temperature: 0.2,  # Lower temperature for more consistent topic extraction
+            max_tokens: 1000
+          )
+          
+          # Parse and validate the response
+          begin
+            parsed_response = JSON.parse(response_content)
+            parsed_response["topics"] || []
+          rescue JSON::ParserError => e
+            log(:warn, "JSON parsing failed, returning fallback topics", { error: e.message })
+            # Fallback to raw content extraction
+            extract_fallback_topics(response_content)
+          end
+        end
       end
 
       ##
@@ -109,6 +131,55 @@ module ComputerTools
       end
 
       private
+
+      # Builds a structured prompt that includes the schema instructions.
+      #
+      # @param schema_json [Hash] The JSON schema from ruby_llm-schema
+      # @return [String] The complete structured prompt
+      def build_structured_prompt(schema_json)
+        schema_text = JSON.pretty_generate(schema_json[:schema])
+        
+        <<~PROMPT
+          #{prompt}
+
+          IMPORTANT: Your response must be a valid JSON object that matches this exact schema:
+
+          #{schema_text}
+
+          Respond ONLY with valid JSON. Do not include any explanatory text outside the JSON structure.
+        PROMPT
+      end
+
+      # Extracts fallback topics when schema validation fails.
+      #
+      # @param content [String] The raw LLM response
+      # @return [Array<String>] The extracted topics or empty array
+      def extract_fallback_topics(content)
+        # Try to extract JSON and get the topics array
+        begin
+          parsed = JSON.parse(content)
+          return parsed["topics"] if parsed["topics"].is_a?(Array)
+        rescue JSON::ParserError
+          # Fall through to text parsing
+        end
+        
+        # Try to extract topics from text using patterns
+        topics = []
+        content.scan(/^[-*]\s*(.+)$/m) do |match|
+          topic = match[0].strip
+          topics << topic unless topic.empty?
+        end
+        
+        # If no patterns found, try line-by-line extraction
+        if topics.empty?
+          content.split("\n").each do |line|
+            cleaned = line.strip.gsub(/^[-*•]\s*/, "")
+            topics << cleaned unless cleaned.empty? || cleaned.length < 3
+          end
+        end
+        
+        topics.uniq.first(20) # Limit to 20 topics max
+      end
 
       ##
       # @private

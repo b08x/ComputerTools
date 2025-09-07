@@ -1,0 +1,2 @@
+ # dnf install link-grammar-devel.x86_64
+# dnf install postgresql-server-devel.x86_64

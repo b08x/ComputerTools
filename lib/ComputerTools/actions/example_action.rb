@@ -2,7 +2,7 @@
 
 module ComputerTools
   module Actions
-    class ExampleAction < Sublayer::Actions::Base
+    class ExampleAction < ComputerTools::Actions::BaseAction
       def initialize(input:)
         @input = input
       end

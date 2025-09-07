@@ -14,7 +14,7 @@ module ComputerTools
     # The reports emphasize development workflow patterns and provide actionable
     # insights for understanding daily coding activity and productivity metrics.
     #
-    class FileActivityReportGenerator < Sublayer::Generators::Base
+    class FileActivityReportGenerator < ComputerTools::Generators::BaseGenerator
       #
       # Initializes a new FileActivityReportGenerator instance.
       #
@@ -63,6 +63,8 @@ module ComputerTools
           generate_json_report
         when :summary
           generate_summary_report
+        when :ai_summary
+          generate_ai_summary_report
         when :table
           generate_table_report
         else
@@ -77,6 +79,19 @@ module ComputerTools
       end
 
       private
+
+      #
+      # Generates an AI-powered summary report using ruby_llm.
+      #
+      # @private
+      #
+      def generate_ai_summary_report
+        ComputerTools::Generators::AiSummaryGenerator.new(
+          data: @data,
+          config: @config,
+          time_range: @time_range
+        ).call
+      end
 
       #
       # Generates and prints a JSON-formatted report.

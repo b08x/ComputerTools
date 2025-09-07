@@ -25,7 +25,7 @@ module ComputerTools
     #     console_output: true
     #   )
     #   action.call
-    class DeepgramParseAction < Sublayer::Actions::Base
+    class DeepgramParseAction < ComputerTools::Actions::BaseAction
       # Initializes the parsing action with necessary parameters.
       #
       # @param json_file [String] The path to the input Deepgram JSON file.

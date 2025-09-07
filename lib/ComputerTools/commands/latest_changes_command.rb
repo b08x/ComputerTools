@@ -159,7 +159,7 @@ module ComputerTools
             --directory PATH                    Directory to analyze (default: current)
             --time-range RANGE                  Time range for analysis (default: 24h)
                                                Examples: 1h, 6h, 24h, 2d, 1w
-            --format FORMAT                     Output format (table, json, summary)
+            --format FORMAT                     Output format (table, json, summary, ai_summary)
             --interactive                       Interactive mode with browsing
 
           Examples:
@@ -167,6 +167,7 @@ module ComputerTools
             latest-changes --directory ~/code   # Analyze specific directory
             latest-changes --time-range 7d      # Analyze last week
             latest-changes --format json        # Output as JSON
+            latest-changes --format ai_summary  # AI-powered development summary
             latest-changes --interactive        # Interactive browsing mode
             latest-changes config               # Configure settings
 

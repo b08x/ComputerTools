@@ -6,7 +6,7 @@ require 'ruby_llm'
 
 module ComputerTools
   module Actions
-    class DisplayAvailableModelsAction < Sublayer::Actions::Base
+    class DisplayAvailableModelsAction < ComputerTools::Actions::BaseAction
       def initialize(provider: nil)
         @provider = provider
       end

@@ -59,8 +59,10 @@ require "ComputerTools/interfaces/parser_interface"
 require "ComputerTools/interfaces/formatter_interface"
 require "ComputerTools/interfaces/validation"
 
-require "ComputerTools/providers/sublayer/ollama"
-require "ComputerTools/providers/sublayer/openrouter"
+require "ComputerTools/actions/base_action"
+require "ComputerTools/generators/base_generator"
+require "ComputerTools/providers/ruby_llm/ollama"
+require "ComputerTools/providers/ruby_llm/openrouter"
 
 require "ComputerTools/actions/deepgram/deepgram_analyze_action"
 require "ComputerTools/actions/deepgram/deepgram_config_action"
@@ -94,7 +96,12 @@ require "ComputerTools/generators/deepgram/deepgram_insights_generator"
 require "ComputerTools/generators/deepgram/deepgram_summary_generator"
 require "ComputerTools/generators/deepgram/deepgram_topics_generator"
 
+require "ComputerTools/schemas/deepgram_insights_response"
+require "ComputerTools/schemas/deepgram_topics_response"
+require "ComputerTools/schemas/deepgram_summary_response"
+
 require "ComputerTools/generators/file_activity/file_activity_report_generator"
+require "ComputerTools/generators/file_activity/ai_summary_generator"
 
 require "ComputerTools/generators/overview_generator"
 

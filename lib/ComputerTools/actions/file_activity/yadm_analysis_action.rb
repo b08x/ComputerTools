@@ -9,7 +9,7 @@ module ComputerTools
     # It requires the `yadm` executable to be present in the system's PATH.
     # If `yadm` is not found, the action will issue a warning and return an
     # empty result.
-    class YadmAnalysisAction < Sublayer::Actions::Base
+    class YadmAnalysisAction < ComputerTools::Actions::BaseAction
       # Initializes the YadmAnalysisAction.
       #
       # @param files [Array<Hash>] An array of file information hashes. Each hash

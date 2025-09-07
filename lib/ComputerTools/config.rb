@@ -4,54 +4,139 @@ module ComputerTools
   # Provides a mechanism for loading configuration settings.
   module Config
     ##
-    # Loads and applies configuration for the Sublayer gem from a YAML file.
+    # Loads and applies configuration for ruby_llm from a YAML file.
     #
-    # This method searches for a `sublayer.yml` file within a `config` directory
-    # located relative to this source file (`lib/ComputerTools/config/sublayer.yml`).
-    # If the file exists, it uses the settings to configure the `Sublayer` gem,
-    # setting the AI provider, model, and a default JSON logger.
+    # This method searches for a `ruby_llm.yml` file within a `config` directory
+    # located relative to this source file (`lib/ComputerTools/config/ruby_llm.yml`).
+    # If the file exists, it uses the settings to configure ruby_llm,
+    # setting the provider, model, API keys, and logging configuration.
     #
-    # The logger is configured to write to `log/sublayer.log` in the current
-    # working directory from which the script is executed.
+    # The configuration supports multiple providers including OpenRouter, Ollama,
+    # OpenAI, Anthropic, and others supported by ruby_llm.
     #
-    # If the configuration file is not found, a warning is printed to STDOUT,
-    # and no configuration is performed.
+    # If the configuration file is not found, default ruby_llm configuration
+    # is used based on environment variables.
     #
-    # @return [Sublayer::Logging::JsonLogger, nil] The configured logger instance on
-    #   successful configuration, or `nil` if the configuration file is not found.
-    # @raise [NameError] If the `ai_provider` specified in the YAML file does not
-    #   correspond to a valid `Sublayer::Providers` constant.
-    # @raise [Psych::SyntaxError] If the `sublayer.yml` file contains invalid YAML.
+    # @return [Boolean] true if configuration was loaded successfully, false otherwise
+    # @raise [Psych::SyntaxError] If the `ruby_llm.yml` file contains invalid YAML.
     #
     # @example Basic Usage (when config file exists)
-    #   # Given a file at /path/to/gem/lib/ComputerTools/config/sublayer.yml with:
+    #   # Given a file at /path/to/gem/lib/ComputerTools/config/ruby_llm.yml with:
     #   # ---
-    #   # ai_provider: "OpenAI"
-    #   # ai_model: "gpt-4-turbo"
+    #   # provider: "openrouter"
+    #   # chat_model: "anthropic/claude-3.5-sonnet"
+    #   # api_key: "your-api-key"
+    #   # timeout: 30
+    #   # log_level: "info"
     #
-    #   # This will configure the Sublayer gem accordingly.
+    #   # This will configure ruby_llm accordingly.
     #   ComputerTools::Config.load
     #
-    # @example File Not Found
-    #   # When config/sublayer.yml does not exist.
+    # @example Environment Variable Fallback
+    #   # When config/ruby_llm.yml does not exist, uses ENV vars:
+    #   # RUBY_LLM_PROVIDER, RUBY_LLM_MODEL, OPENROUTER_API_KEY, etc.
     #   ComputerTools::Config.load
-    #   # => Prints "Warning: config/sublayer.yml not found. Using default configuration."
-    #   # => Returns nil
     #
     def self.load
-      config_path = File.join(File.dirname(__FILE__), "config", "sublayer.yml")
+      config_path = File.join(File.dirname(__FILE__), "config", "ruby_llm.yml")
 
       if File.exist?(config_path)
-        config = YAML.load_file(config_path)
-
-        Sublayer.configure do |c|
-          c.ai_provider = Object.const_get("Sublayer::Providers::#{config[:ai_provider]}")
-          c.ai_model = config[:ai_model]
-          c.logger = Sublayer::Logging::JsonLogger.new(File.join(Dir.pwd, 'log', 'sublayer.log'))
-        end
+        load_from_file(config_path)
       else
-        puts "Warning: config/sublayer.yml not found. Using default configuration."
+        load_from_environment
       end
+    end
+
+    ##
+    # Loads configuration from a YAML file.
+    #
+    # @param config_path [String] Path to the configuration file
+    # @return [Boolean] true if successful
+    #
+    def self.load_from_file(config_path)
+      config = YAML.load_file(config_path)
+      
+      # Configure ruby_llm directly
+      RubyLLM.configure do |c|
+        # Set API keys for different providers
+        c.openrouter_api_key = config['openrouter_api_key'] || config[:openrouter_api_key] || ENV['OPENROUTER_API_KEY']
+        c.openai_api_key = config['openai_api_key'] || config[:openai_api_key] || ENV['OPENAI_API_KEY']
+        c.anthropic_api_key = config['anthropic_api_key'] || config[:anthropic_api_key] || ENV['ANTHROPIC_API_KEY']
+      end
+      
+      # Also set environment variables for backward compatibility
+      ENV['RUBY_LLM_PROVIDER'] = (config['provider'] || config[:provider] || 'openrouter').to_s
+      ENV['RUBY_LLM_MODEL'] = config['chat_model'] || config[:chat_model] || "anthropic/claude-3.5-sonnet"
+
+      puts "Ruby_llm configured from file: #{config_path}" if ENV['DEBUG']
+      true
+    rescue Psych::SyntaxError => e
+      puts "Error: Invalid YAML in configuration file: #{config_path} - #{e.message}" if ENV['DEBUG']
+      false
+    rescue StandardError => e
+      puts "Error: Failed to load configuration: #{config_path} - #{e.message}" if ENV['DEBUG']
+      false
+    end
+
+    ##
+    # Loads configuration from environment variables.
+    #
+    # @return [Boolean] true if successful
+    #
+    def self.load_from_environment
+      RubyLLM.configure do |c|
+        # Set API keys for different providers
+        c.openrouter_api_key = ENV['OPENROUTER_API_KEY']
+        c.openai_api_key = ENV['OPENAI_API_KEY'] 
+        c.anthropic_api_key = ENV['ANTHROPIC_API_KEY']
+      end
+
+      puts "Ruby_llm configured from environment variables" if ENV['DEBUG']
+      true
+    rescue StandardError => e
+      puts "Error: Failed to load environment configuration - #{e.message}" if ENV['DEBUG']
+      false
+    end
+
+
+    ##
+    # Configures logging for ruby_llm.
+    #
+    # @param config_obj [RubyLLM::Configuration] The configuration object
+    # @param config [Hash] The configuration hash
+    #
+    def self.configure_logging(config_obj, config)
+      log_file = config['log_file'] || config[:log_file]
+      
+      if log_file
+        # Create log directory if it doesn't exist
+        log_dir = File.dirname(log_file)
+        FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
+        
+        # Set up file logging (this will depend on ruby_llm's logging interface)
+        ComputerTools.logger&.info("Ruby_llm logging configured", { log_file: log_file })
+      end
+    end
+
+    ##
+    # Returns the current ruby_llm configuration status.
+    #
+    # @return [Hash] Configuration status information
+    #
+    def self.status
+      {
+        configured: true,
+        provider: ENV['RUBY_LLM_PROVIDER'] || 'openrouter',
+        model: ENV['RUBY_LLM_MODEL'] || "anthropic/claude-3.5-sonnet",
+        has_openrouter_key: !ENV['OPENROUTER_API_KEY'].nil?,
+        has_openai_key: !ENV['OPENAI_API_KEY'].nil?,
+        has_anthropic_key: !ENV['ANTHROPIC_API_KEY'].nil?
+      }
+    rescue StandardError => e
+      {
+        configured: false,
+        error: e.message
+      }
     end
   end
 end

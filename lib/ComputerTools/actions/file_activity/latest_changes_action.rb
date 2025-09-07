@@ -11,7 +11,7 @@ module ComputerTools
     #
     # This is useful for getting a quick overview of recent work, preparing for
     # commits, or ensuring that important changes are properly tracked.
-    class LatestChangesAction < Sublayer::Actions::Base
+    class LatestChangesAction < ComputerTools::Actions::BaseAction
       # Initializes the action with configuration for the file analysis.
       #
       # @param directory [String] The path to the directory to analyze.

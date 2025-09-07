@@ -13,7 +13,7 @@ module ComputerTools
     #   print an error and return an empty array.
     #
     # @see ComputerTools::Actions::LatestChangesAction which uses this action to find files.
-    class FileDiscoveryAction < Sublayer::Actions::Base
+    class FileDiscoveryAction < ComputerTools::Actions::BaseAction
       # Initializes a new FileDiscoveryAction.
       #
       # @param directory [String] The path to the directory to search. Can be '.' for the current directory.

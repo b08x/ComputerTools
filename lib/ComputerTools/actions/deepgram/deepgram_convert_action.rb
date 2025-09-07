@@ -26,7 +26,7 @@ module ComputerTools
     #     console_output: true
     #   )
     #   action.call # => true, and prints summary to STDOUT
-    class DeepgramConvertAction < Sublayer::Actions::Base
+    class DeepgramConvertAction < ComputerTools::Actions::BaseAction
       # A list of the output formats supported by the conversion action.
       SUPPORTED_FORMATS = %w[srt markdown md json summary].freeze
 

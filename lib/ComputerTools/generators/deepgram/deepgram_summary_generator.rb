@@ -27,10 +27,7 @@ module ComputerTools
     #   )
     #   summary = generator.generate
     #   # => "The conversation covers Budget Planning and Q3 Goals..."
-    class DeepgramSummaryGenerator < Sublayer::Generators::Base
-      llm_output_adapter type: :single_string,
-                         name:        "summary",
-                         description: "A comprehensive summary of the transcript content"
+    class DeepgramSummaryGenerator < ComputerTools::Generators::BaseGenerator
 
       # Initializes a new DeepgramSummaryGenerator instance.
       #
@@ -41,20 +38,45 @@ module ComputerTools
       #   should have `:intent`, `:start`, and `:end` keys (e.g.,
       #   `[{ intent: 'ask_question', start: 10.5, end: 12.3 }]`).
       def initialize(transcript:, topics: [], intents: [])
+        super()
         @transcript = transcript
         @topics = topics
         @intents = intents
       end
 
-      # Executes the summary generation process.
+      # Executes the summary generation process using ruby_llm-schema.
       #
-      # This method constructs a prompt using the provided transcript, topics, and
-      # intents, then sends it to the configured LLM. It returns the resulting
-      # summary as a single string.
+      # This method constructs a detailed prompt and uses schema validation
+      # to ensure the response contains a properly formatted summary.
       #
       # @return [String] The generated comprehensive summary of the transcript.
-      def generate
-        super
+      def call
+        with_generation_handling("deepgram summary generation") do
+          schema = ComputerTools::Schemas::DeepgramSummaryResponse.new
+          schema_json = schema.to_json_schema
+          full_prompt = build_structured_prompt(schema_json)
+          
+          response_content = generate_llm_content(
+            full_prompt,
+            system_prompt: build_system_prompt(
+              task_description: "comprehensive conversation transcript summarization",
+              output_format: "structured JSON matching the provided schema",
+              additional_instructions: "Create professional summaries suitable for executive briefings and documentation"
+            ),
+            temperature: 0.3,
+            max_tokens: 1500
+          )
+          
+          # Parse and validate the response
+          begin
+            parsed_response = JSON.parse(response_content)
+            parsed_response["summary"] || response_content
+          rescue JSON::ParserError => e
+            log(:warn, "JSON parsing failed, returning raw content", { error: e.message })
+            # Fallback to raw content extraction
+            extract_fallback_content(response_content, "summary")
+          end
+        end
       end
 
       # @!method prompt
@@ -89,6 +111,42 @@ module ComputerTools
       end
 
       private
+
+      # Builds a structured prompt that includes the schema instructions.
+      #
+      # @param schema_json [Hash] The JSON schema from ruby_llm-schema
+      # @return [String] The complete structured prompt
+      def build_structured_prompt(schema_json)
+        schema_text = JSON.pretty_generate(schema_json[:schema])
+        
+        <<~PROMPT
+          #{prompt}
+
+          IMPORTANT: Your response must be a valid JSON object that matches this exact schema:
+
+          #{schema_text}
+
+          Respond ONLY with valid JSON. Do not include any explanatory text outside the JSON structure.
+        PROMPT
+      end
+
+      # Extracts fallback content when schema validation fails.
+      #
+      # @param content [String] The raw LLM response
+      # @param field_name [String] The field name to extract
+      # @return [String] The extracted content or the full content
+      def extract_fallback_content(content, field_name)
+        # Try to extract JSON and get the field
+        begin
+          parsed = JSON.parse(content)
+          return parsed[field_name] if parsed[field_name]
+        rescue JSON::ParserError
+          # Fall through to return raw content
+        end
+        
+        # Return the content as-is if we can't parse it
+        content
+      end
 
       # @!method topics_section
       #   Formats the list of identified topics for inclusion in the prompt.

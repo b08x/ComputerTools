@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Sublayer.configuration.ai_provider = Sublayer::Providers::Ollama
+# ruby_llm configuration handled by ComputerTools::Config
 
 module ComputerTools
   module Generators
@@ -11,10 +11,7 @@ module ComputerTools
     # architecture, and available tools. It is responsible for creating engaging
     # and informative summaries suitable for different display environments like
     # the console, markdown files, or structured JSON.
-    class OverviewGenerator < Sublayer::Generators::Base
-      llm_output_adapter type: :single_string,
-                         name: "generated_text",
-                         description: "A comprehensive overview of ComputerTools features and functionality"
+    class OverviewGenerator < ComputerTools::Generators::BaseGenerator
 
       # Initializes a new instance of the OverviewGenerator.
       #
@@ -24,7 +21,24 @@ module ComputerTools
       # @example Create a generator for markdown output
       #   generator = ComputerTools::Generators::OverviewGenerator.new(format: 'markdown')
       def initialize(format: 'console')
+        super()
         @format = format
+      end
+
+      # Generates the overview using ruby_llm.
+      #
+      # @return [String, nil] The generated overview or nil on error
+      def call
+        with_generation_handling("overview generation") do
+          system_prompt = build_system_prompt(
+            task_description: "comprehensive tool documentation and overview generation",
+            output_format: @format,
+            additional_instructions: "Focus on practical benefits and clear examples"
+          )
+          
+          content = generate_llm_content(prompt, system_prompt: system_prompt)
+          format_output(content, @format.to_sym)
+        end
       end
 
       # Constructs the detailed prompt sent to the LLM for generating the overview.
@@ -56,9 +70,9 @@ module ComputerTools
 
       def context_information
         "CONTEXT INFORMATION:\n" \
-        "ComputerTools is a comprehensive Ruby CLI toolkit built on the Sublayer framework, " \
+        "ComputerTools is a comprehensive Ruby CLI toolkit built with ruby_llm integration, " \
         "providing AI-enhanced tools for software development and automation. It's a modular " \
-        "collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework."
+        "collection of intelligent CLI utilities that leverage AI capabilities through ruby_llm."
       end
 
       def available_tools_section
@@ -92,7 +106,7 @@ module ComputerTools
           - Developer Experience: Interactive CLI, multiple output formats, flexible configuration
           - Performance & Reliability: Direct database access, vector embeddings, connection pooling
           - Modular Architecture: Commands, Actions, Generators, Wrappers pattern
-          - Framework Integration: Built on Thor CLI framework with Sublayer AI integration
+          - Framework Integration: Built on Thor CLI framework with ruby_llm AI integration
         FEATURES
       end
 

@@ -25,7 +25,7 @@ module ComputerTools
     #     json_file: 'path/to/enriched_transcript.json'
     #   )
     #   action.call
-    class DeepgramAnalyzeAction < Sublayer::Actions::Base
+    class DeepgramAnalyzeAction < ComputerTools::Actions::BaseAction
       # Initializes the DeepgramAnalyzeAction.
       #
       # @param json_file [String] The path to the input Deepgram JSON file.

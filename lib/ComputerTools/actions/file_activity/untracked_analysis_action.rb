@@ -10,7 +10,7 @@ module ComputerTools
     # This is a lightweight replacement for backup comparison functionality,
     # focusing on providing consistent data structure for reporting while
     # maintaining compatibility with the existing report generation system.
-    class UntrackedAnalysisAction < Sublayer::Actions::Base
+    class UntrackedAnalysisAction < ComputerTools::Actions::BaseAction
       # Initializes the UntrackedAnalysisAction.
       #
       # @param files [Array<Hash>] An array of file information hashes. Each hash
