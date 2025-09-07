@@ -42,7 +42,7 @@ RSpec.describe ComputerTools::Interfaces::GitInterface do
     let(:git_wrapper) { ComputerTools::Wrappers::GitWrapper.new }
 
     it 'implements the GitInterface' do
-      expect(git_wrapper).to be_a(ComputerTools::Interfaces::GitInterface)
+      expect(git_wrapper).to be_a(described_class)
     end
 
     it 'implements all required methods' do

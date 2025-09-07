@@ -5,16 +5,14 @@ require 'spec_helper'
 RSpec.describe ComputerTools::Actions::DeepgramConvertAction do
   let(:json_file) { 'test_transcript.json' }
   let(:action) { described_class.new(json_file: json_file, format: 'srt') }
-  let(:mock_parser) { instance_double('ComputerTools::Wrappers::DeepgramParser') }
-  let(:mock_formatter) { instance_double('ComputerTools::Wrappers::DeepgramFormatter') }
+  let(:mock_parser) { instance_double(ComputerTools::Wrappers::DeepgramParser) }
+  let(:mock_formatter) { instance_double(ComputerTools::Wrappers::DeepgramFormatter) }
 
   before do
     allow(ComputerTools::Wrappers::DeepgramParser).to receive(:new).and_return(mock_parser)
     allow(ComputerTools::Wrappers::DeepgramFormatter).to receive(:new).and_return(mock_formatter)
-    allow(File).to receive(:exist?).and_return(true)
     allow(File).to receive(:write)
-    allow(File).to receive(:basename).and_return('test_transcript')
-    allow(File).to receive(:dirname).and_return('/tmp')
+    allow(File).to receive_messages(exist?: true, basename: 'test_transcript', dirname: '/tmp')
   end
 
   describe '#call' do
@@ -33,8 +31,7 @@ RSpec.describe ComputerTools::Actions::DeepgramConvertAction do
       before do
         allow(mock_formatter).to receive(:to_srt).and_return('Mock SRT content')
         allow(action).to receive(:load_speaker_configuration).and_return(speaker_config)
-        allow(mock_parser).to receive(:has_speaker_data?).and_return(true)
-        allow(mock_parser).to receive(:speaker_segments).and_return([
+        allow(mock_parser).to receive_messages(has_speaker_data?: true, speaker_segments: [
           { speaker: 0, text: 'Hello' },
           { speaker: 1, text: 'World' }
         ])

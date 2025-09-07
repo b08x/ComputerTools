@@ -38,8 +38,7 @@ RSpec.describe 'DI Framework Core Functionality' do
 
     it 'can register simple test doubles' do
       test_double = double('api_client')
-      allow(test_double).to receive(:get).and_return({ status: 'success' })
-      allow(test_double).to receive(:post).and_return(true)
+      allow(test_double).to receive_messages(get: { status: 'success' }, post: true)
       
       test_container.register_mock('api_client', test_double)
       

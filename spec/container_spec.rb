@@ -3,7 +3,15 @@
 require 'spec_helper'
 
 RSpec.describe ComputerTools::Container do
-  let(:container) { ComputerTools::Container }
+  let(:container) { described_class }
+
+  # Clean up test registrations after each test
+  after do
+    # Remove any test registrations to avoid interference between tests
+    %w[test_dependency test_object lazy_test singleton_test registered_test resolve_test].each do |key|
+      container._container.delete(key) if container.registered?(key)
+    end
+  end
 
   describe 'basic container functionality' do
     it 'extends Dry::Container::Mixin' do
@@ -169,14 +177,6 @@ RSpec.describe ComputerTools::Container do
       # This test would require more complex setup to create actual circular dependencies
       # For now, just ensure the container can handle basic error scenarios
       expect { container.resolve_dependency('configuration') }.not_to raise_error
-    end
-  end
-
-  # Clean up test registrations after each test
-  after do
-    # Remove any test registrations to avoid interference between tests
-    %w[test_dependency test_object lazy_test singleton_test registered_test resolve_test].each do |key|
-      container._container.delete(key) if container.registered?(key)
     end
   end
 end

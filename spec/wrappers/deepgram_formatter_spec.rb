@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe ComputerTools::Wrappers::DeepgramFormatter do
-  let(:mock_parser) { instance_double('ComputerTools::Wrappers::DeepgramParser') }
+  let(:mock_parser) { instance_double(ComputerTools::Wrappers::DeepgramParser) }
   let(:formatter) { described_class.new(mock_parser) }
 
   # Sample paragraph data

@@ -27,7 +27,7 @@ RSpec.configure do |config|
   end
 
   # Clean up any test container state between examples
-  config.after(:each) do
+  config.after do
     # Reset any modified container state if needed
     if defined?(ComputerTools::TestContainer)
       ComputerTools::TestContainer.reset! rescue nil
