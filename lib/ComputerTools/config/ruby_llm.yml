@@ -1,0 +1,31 @@
+---
+# Ruby LLM Configuration for ComputerTools
+# This configuration supports multiple AI providers through the ruby_llm gem
+
+# Default provider to use
+provider: "gemini"
+
+# Default model for the selected provider
+chat_model: "gemini-2.0-flash"
+
+# API Keys for different providers
+# These will fallback to environment variables if not specified
+openrouter_api_key: <%= ENV['OPENROUTER_API_KEY'] %>
+openai_api_key: <%= ENV['OPENAI_API_KEY'] %>
+anthropic_api_key: <%= ENV['ANTHROPIC_API_KEY'] %>
+gemini_api_key: <%= ENV['GEMINI_API_KEY'] %>
+
+# Request timeout in seconds
+timeout: 30
+
+# Logging configuration
+log_level: "info"
+log_file: "logs/ruby_llm.log"
+
+# Additional provider-specific settings
+temperature: 0.7
+max_tokens: 4000
+
+# Project metadata (migrated from sublayer.yml)
+project_name: "ComputerTools"
+project_template: "CLI"

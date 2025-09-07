@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+require 'erb'
+require 'yaml'
+require 'psych'
+require 'ruby_llm'
+
 module ComputerTools
   # Provides a mechanism for loading configuration settings.
   module Config
@@ -54,7 +59,10 @@ module ComputerTools
     # @return [Boolean] true if successful
     #
     def self.load_from_file(config_path)
-      config = YAML.load_file(config_path)
+      # Read and process ERB templates in YAML
+      template = ERB.new(File.read(config_path))
+      yaml_content = template.result(binding)
+      config = YAML.safe_load(yaml_content)
       
       # Configure ruby_llm directly
       RubyLLM.configure do |c|

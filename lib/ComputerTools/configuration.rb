@@ -54,8 +54,8 @@ module ComputerTools
       # Configure paths
       configure_paths
       configure_display
-      configure_restic
       configure_terminals
+      configure_ai
       configure_logger
 
       save_config
@@ -225,6 +225,13 @@ module ComputerTools
       @config.set(:terminal, :command, value: 'kitty')
       @config.set(:terminal, :args, value: '-e')
 
+      # AI defaults
+      @config.set(:ai, :provider, value: 'gemini')
+      @config.set(:ai, :model, value: 'gemini-2.0-flash')
+      @config.set(:ai, :temperature, value: 0.7)
+      @config.set(:ai, :max_tokens, value: 4000)
+      @config.set(:ai, :timeout, value: 30)
+
       # Logger defaults
       @config.set(:logger, :level, value: 'info')
       @config.set(:logger, :file_logging, value: false)
@@ -255,6 +262,11 @@ module ComputerTools
       @config.set_from_env(:restic, :mount_timeout) { 'COMPUTERTOOLS_RESTIC_TIMEOUT' }
       @config.set_from_env(:terminal, :command) { 'COMPUTERTOOLS_TERMINAL_COMMAND' }
       @config.set_from_env(:terminal, :args) { 'COMPUTERTOOLS_TERMINAL_ARGS' }
+      @config.set_from_env(:ai, :provider) { 'RUBY_LLM_PROVIDER' }
+      @config.set_from_env(:ai, :model) { 'RUBY_LLM_MODEL' }
+      @config.set_from_env(:ai, :temperature) { 'COMPUTERTOOLS_AI_TEMPERATURE' }
+      @config.set_from_env(:ai, :max_tokens) { 'COMPUTERTOOLS_AI_MAX_TOKENS' }
+      @config.set_from_env(:ai, :timeout) { 'COMPUTERTOOLS_AI_TIMEOUT' }
       @config.set_from_env(:logger, :level) { 'COMPUTERTOOLS_LOG_LEVEL' }
       @config.set_from_env(:logger, :file_logging) { 'COMPUTERTOOLS_LOG_FILE_ENABLED' }
       @config.set_from_env(:logger, :file_path) { 'COMPUTERTOOLS_LOG_FILE_PATH' }
@@ -299,6 +311,35 @@ module ComputerTools
       # Validate terminal args
       @config.validate(:terminal, :args) do |_key, value|
         raise TTY::Config::ValidationError, "Terminal args must be a string" unless value.is_a?(String)
+      end
+
+      # Validate AI provider
+      @config.validate(:ai, :provider) do |_key, value|
+        valid_providers = %w[openai anthropic gemini openrouter ollama]
+        unless valid_providers.include?(value.to_s)
+          raise TTY::Config::ValidationError, "AI provider must be one of: #{valid_providers.join(', ')}"
+        end
+      end
+
+      # Validate AI temperature
+      @config.validate(:ai, :temperature) do |_key, value|
+        unless value.is_a?(Numeric) && value >= 0.0 && value <= 2.0
+          raise TTY::Config::ValidationError, "AI temperature must be a number between 0.0 and 2.0"
+        end
+      end
+
+      # Validate AI max_tokens
+      @config.validate(:ai, :max_tokens) do |_key, value|
+        unless value.is_a?(Integer) && value > 0
+          raise TTY::Config::ValidationError, "AI max_tokens must be a positive integer"
+        end
+      end
+
+      # Validate AI timeout
+      @config.validate(:ai, :timeout) do |_key, value|
+        unless value.is_a?(Integer) && value > 0
+          raise TTY::Config::ValidationError, "AI timeout must be a positive integer"
+        end
       end
     end
 
@@ -361,6 +402,44 @@ module ComputerTools
 
       args = @prompt.ask("Terminal arguments:", default: current_args)
       @config.set(:terminal, :args, value: args)
+    end
+
+    # Interactively configures AI settings.
+    #
+    # Prompts user for AI provider, model, and other AI parameters.
+    #
+    # @return [void]
+    def configure_ai
+      puts "\n🤖 AI Configuration".colorize(:blue)
+
+      current_provider = @config.fetch(:ai, :provider) { 'gemini' }
+      provider = @prompt.select("AI Provider:", %w[openai anthropic gemini openrouter ollama], default: current_provider)
+      @config.set(:ai, :provider, value: provider)
+
+      current_model = @config.fetch(:ai, :model) { 'gemini-2.0-flash' }
+      model = @prompt.ask("AI Model:", default: current_model)
+      @config.set(:ai, :model, value: model)
+
+      current_temperature = @config.fetch(:ai, :temperature) { 0.7 }
+      temperature = @prompt.ask("Temperature (0.0-2.0):", default: current_temperature, convert: :float) do |q|
+        q.validate(/^\d*\.?\d+$/, "Please enter a valid number")
+        q.modify :strip
+      end
+      @config.set(:ai, :temperature, value: temperature)
+
+      current_max_tokens = @config.fetch(:ai, :max_tokens) { 4000 }
+      max_tokens = @prompt.ask("Max tokens:", default: current_max_tokens, convert: :int) do |q|
+        q.validate(/^\d+$/, "Please enter a positive integer")
+        q.modify :strip
+      end
+      @config.set(:ai, :max_tokens, value: max_tokens)
+
+      current_timeout = @config.fetch(:ai, :timeout) { 30 }
+      timeout = @prompt.ask("Request timeout (seconds):", default: current_timeout, convert: :int) do |q|
+        q.validate(/^\d+$/, "Please enter a positive integer")
+        q.modify :strip
+      end
+      @config.set(:ai, :timeout, value: timeout)
     end
 
     # Interactively configures logging settings.
