@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ComputerTools
   module Actions
     class ZshellHistoryAction < Sublayer::Actions::Base
