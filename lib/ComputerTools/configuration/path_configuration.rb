@@ -8,8 +8,8 @@ module ComputerTools
       include Dry::Configurable
 
       setting :home_dir, default: File.expand_path('~')
-      setting :restic_mount_point, default: File.expand_path('~/mnt/restic')
-      setting :restic_repo, default: ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo'
+      setting :restic_mount_point, default: File.expand_path('/mnt/restic')
+      setting :restic_repo, default: ENV['RESTIC_REPOSITORY'] || '/mnt/ninjabot/backup00/b08x'
 
       def self.from_yaml(yaml_data)
         instance = new

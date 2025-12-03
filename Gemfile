@@ -18,38 +18,37 @@ group :development, :test do
   gem 'yard'
 end
 
-gem "clipboard", "~> 2.0"
-gem 'dotenv', '~> 3.1'
-gem 'front_matter_parser', '~> 1.0'
-gem "git", "~> 3.1"
-gem 'pry', '~> 0.14.2'
-gem 'pry-doc', '~> 1.6'
-gem 'ruby_llm', '~> 1.3'
-gem "terrapin", "~> 1.1"
-gem 'tty-box', '~> 0.7'
-gem 'tty-command', '~> 0.10.1'
-gem 'tty-config', '~> 0.5'
-gem 'tty-editor', '~> 0.7'
-gem 'tty-file', '~> 0.10.0'
-gem 'tty-link', '~> 0.2.0'
-gem 'tty-markdown', '~> 0.7'
-gem 'tty-pager', '~> 0.14.0'
-gem 'tty-progressbar', '~> 0.18.3'
-gem 'tty-prompt', '~> 0.23'
-gem 'tty-reader', '~> 0.9.0'
-gem 'tty-screen', '~> 0.8.2'
-gem 'tty-spinner', '~> 0.9.3'
-gem 'tty-table', '~> 0.12'
-gem 'tty-tree', '~> 0.4.0'
-gem 'tty-which', '~> 0.5.0'
-gem 'tty-logger', '~> 0.6.0'
-gem "colorize", "~> 1.1"
-gem "sequel", "~> 5.94"
-gem "tty-cursor", "~> 0.7.1"
-gem "pg", "~> 1.5"
-gem "solargraph", "~> 0.56.0"
-gem "rbs", "~> 3.9"
-gem "dry-container", "~> 0.11.0"
-gem "dry-configurable", "~> 1.0"
-
-gem "erb", "~> 5.0"
+gem "clipboard"
+gem 'dotenv'
+gem 'front_matter_parser'
+gem "git"
+gem 'pry'
+gem 'pry-doc'
+gem 'ruby_llm'
+gem "terrapin"
+gem 'tty-box'
+gem 'tty-command'
+gem 'tty-config'
+gem 'tty-editor'
+gem 'tty-file'
+gem 'tty-link'
+gem 'tty-markdown'
+gem 'tty-pager'
+gem 'tty-progressbar'
+gem 'tty-prompt'
+gem 'tty-reader'
+gem 'tty-screen'
+gem 'tty-spinner'
+gem 'tty-table'
+gem 'tty-tree'
+gem 'tty-which'
+gem 'tty-logger'
+gem "colorize"
+gem "sequel"
+gem "tty-cursor"
+gem "pg"
+gem "solargraph"
+gem "rbs"
+gem "dry-container"
+gem "dry-configurable"
+gem "erb"
