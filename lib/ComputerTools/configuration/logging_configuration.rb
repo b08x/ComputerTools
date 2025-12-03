@@ -17,7 +17,7 @@ module ComputerTools
         return instance unless yaml_data&.dig('logger')
 
         logger_config = yaml_data['logger']
-        
+
         instance.configure do |config|
           config.level = logger_config['level'] if logger_config.key?('level')
           config.file_logging = logger_config['file_logging'] if logger_config.key?('file_logging')
@@ -49,25 +49,25 @@ module ComputerTools
 
       def validate_level
         valid_levels = %w[debug info warn error fatal]
-        unless valid_levels.include?(config.level.to_s.downcase)
-          raise ArgumentError, "Invalid log level: #{config.level}. Must be one of #{valid_levels.join(', ')}"
-        end
+        return if valid_levels.include?(config.level.to_s.downcase)
+
+        raise ArgumentError, "Invalid log level: #{config.level}. Must be one of #{valid_levels.join(', ')}"
       end
 
       def validate_file_level
         valid_levels = %w[debug info warn error fatal]
-        unless valid_levels.include?(config.file_level.to_s.downcase)
-          raise ArgumentError, "Invalid file log level: #{config.file_level}. Must be one of #{valid_levels.join(', ')}"
-        end
+        return if valid_levels.include?(config.file_level.to_s.downcase)
+
+        raise ArgumentError, "Invalid file log level: #{config.file_level}. Must be one of #{valid_levels.join(', ')}"
       end
 
       def validate_file_path
-        if config.file_logging
-          file_path = config.file_path || default_log_path
-          if file_path.nil? || file_path.empty?
-            raise ArgumentError, "File logging enabled but no file path specified"
-          end
-        end
+        return unless config.file_logging
+
+        file_path = config.file_path || default_log_path
+        return unless file_path.nil? || file_path.empty?
+
+        raise ArgumentError, "File logging enabled but no file path specified"
       end
 
       def validate!

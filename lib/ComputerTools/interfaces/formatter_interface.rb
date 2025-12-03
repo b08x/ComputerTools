@@ -11,11 +11,11 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyDataFormatter
     #     include ComputerTools::Interfaces::FormatterInterface
-    #     
+    #
     #     def format_data(data, format)
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module FormatterInterface
@@ -38,7 +38,7 @@ module ComputerTools
       # @param data [Hash, Array, Object] The data to convert
       # @return [String] JSON formatted string
       # @raise [NotImplementedError] if not implemented
-      def to_json(data = nil)
+      def to_json(data=nil)
         raise NotImplementedError, "#{self.class} must implement #to_json"
       end
 
@@ -49,7 +49,7 @@ module ComputerTools
       # @param data [Hash, Array, Object] The data to convert
       # @return [String] Markdown formatted string
       # @raise [NotImplementedError] if not implemented
-      def to_markdown(data = nil)
+      def to_markdown(data=nil)
         raise NotImplementedError, "#{self.class} must implement #to_markdown"
       end
 

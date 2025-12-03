@@ -63,11 +63,6 @@ require "ComputerTools/interfaces/validation"
 require "ComputerTools/providers/sublayer/ollama"
 require "ComputerTools/providers/sublayer/openrouter"
 
-require "ComputerTools/actions/deepgram/deepgram_analyze_action"
-require "ComputerTools/actions/deepgram/deepgram_config_action"
-require "ComputerTools/actions/deepgram/deepgram_convert_action"
-require "ComputerTools/actions/deepgram/deepgram_parse_action"
-
 require "ComputerTools/actions/file_activity/file_discovery_action"
 require "ComputerTools/actions/file_activity/git_analysis_action"
 require "ComputerTools/actions/file_activity/latest_changes_action"
@@ -76,9 +71,6 @@ require "ComputerTools/actions/file_activity/yadm_analysis_action"
 
 require "ComputerTools/actions/display_available_models_action"
 
-require "ComputerTools/wrappers/deepgram_analyzer"
-require "ComputerTools/wrappers/deepgram_formatter"
-require "ComputerTools/wrappers/deepgram_parser"
 require "ComputerTools/wrappers/docling"
 require "ComputerTools/wrappers/git_wrapper"
 require "ComputerTools/wrappers/restic_wrapper"
@@ -87,14 +79,9 @@ require "ComputerTools/wrappers/trafilatura"
 require "ComputerTools/commands/base_command"
 require "ComputerTools/commands/menu_command"
 require "ComputerTools/commands/config_command"
-require "ComputerTools/commands/deepgram_command"
 require "ComputerTools/commands/latest_changes_command"
 require "ComputerTools/commands/list_models_command"
 require "ComputerTools/commands/overview_command"
-
-require "ComputerTools/generators/deepgram/deepgram_insights_generator"
-require "ComputerTools/generators/deepgram/deepgram_summary_generator"
-require "ComputerTools/generators/deepgram/deepgram_topics_generator"
 
 require "ComputerTools/generators/file_activity/file_activity_report_generator"
 

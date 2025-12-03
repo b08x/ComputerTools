@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Add dependencies here
+  spec.add_dependency "bundler"
   spec.add_dependency "sublayer"
   spec.add_dependency "thor"
 end
