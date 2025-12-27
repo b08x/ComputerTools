@@ -11,11 +11,11 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyDataProcessor
     #     include ComputerTools::Interfaces::ProcessorInterface
-    #     
+    #
     #     def process(input)
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module ProcessorInterface

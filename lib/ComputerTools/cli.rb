@@ -23,6 +23,13 @@ module ComputerTools
     valid_commands.each do |command_class|
       command = ComputerTools::Commands.const_get(command_class)
       desc command.command_name, command.description
+
+      if command.respond_to?(:thor_options)
+        command.thor_options.each do |name, options|
+          method_option name.to_sym, options
+        end
+      end
+
       define_method(command.command_name) do |*args|
         command.new(options).execute(*args)
       end

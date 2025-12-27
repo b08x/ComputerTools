@@ -11,11 +11,11 @@ module ComputerTools
     # @example Implementing the interface
     #   class MyDataParser
     #     include ComputerTools::Interfaces::ParserInterface
-    #     
+    #
     #     def parse_data(input)
     #       # Implementation here
     #     end
-    #     
+    #
     #     # ... other interface methods
     #   end
     module ParserInterface

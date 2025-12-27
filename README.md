@@ -1,8 +1,8 @@
-# ComputerTools
+# **ComputerTools**
 
-A comprehensive Ruby CLI toolkit built on the Sublayer framework, providing AI-enhanced tools for software development and automation.
+A comprehensive, modular Ruby CLI toolkit built on the **Sublayer** framework. ComputerTools provides AI-enhanced utilities for software development, content extraction, system maintenance, and automated reporting.
 
-## 🚀 Overview
+## **🚀 Overview**
 
 ComputerTools is a modular collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework. Each tool is designed to streamline common development workflows with smart automation and semantic understanding.
 
@@ -69,6 +69,7 @@ exe/ComputerTools latestchanges config
 ### 🔧 Additional Tools
 
 #### 🤖 AI Model Management
+
 List and manage available AI models across different providers:
 
 ```bash
@@ -79,8 +80,8 @@ exe/ComputerTools listmodels
 exe/ComputerTools listmodels --interactive
 ```
 
-
 #### 🎬 Media Processing (FFmpeg Integration)
+
 *FFmpeg wrapper functionality for media processing tasks*
 
 *More AI-powered development tools coming soon*
@@ -104,18 +105,15 @@ exe/ComputerTools listmodels --interactive
 # Install dependencies
 bundle install
 
-# Configure latest changes analyzer (if using tracking tools)
-exe/ComputerTools latestchanges config
+*Note: After installation, you must configure your API keys (see the Configuration section) to enable the AI-powered features.*
 
-# Set required environment variables
-export GEMINI_API_KEY="your_gemini_api_key"
-```
+## **💻 Usage**
 
-## 💻 Usage
+You can use ComputerTools via the interactive menu or direct CLI commands. The toolkit is designed to be flexible, supporting both ad-hoc commands for power users and a guided experience for exploration.
 
-ComputerTools supports two usage modes:
+### **Interactive Mode**
 
-### Interactive Mode (Recommended for Discovery)
+The easiest way to explore available tools is the interactive menu. This mode presents a navigable list of all registered commands, allowing you to select operations without needing to remember exact syntax.
 
 ```bash
 # Launch the interactive menu
@@ -313,6 +311,7 @@ ComputerTools.logger.failure("Restic mount failed", error: "timeout", retry_coun
 ```
 
 This produces JSON output in log files:
+
 ```json
 {"level":"info","message":"Transcript processed","file":"audio.json","format":"markdown","timestamp":"2024-01-01T10:30:00Z"}
 {"level":"error","message":"Restic mount failed","error":"timeout","retry_count":3,"timestamp":"2024-01-01T10:30:05Z"}

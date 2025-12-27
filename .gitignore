@@ -18,3 +18,7 @@
 .env
 /logs/
 /refactor/archive/
+/logs/
+
+.ruby-version
+.ruby-gemset

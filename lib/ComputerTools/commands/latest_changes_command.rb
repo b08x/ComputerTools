@@ -38,6 +38,21 @@ module ComputerTools
       end
 
       ##
+      # Returns the Thor options for this command.
+      #
+      # @return [Hash] Thor option definitions
+      def self.thor_options
+        {
+          'directory' => { type: :string, desc: 'Directory to analyze' },
+          'time_range' => { type: :string, desc: 'Time range for analysis (e.g., 24h, 7d)' },
+          'format' => { type: :string, desc: 'Output format (table, json, summary)' },
+          'interactive' => { type: :boolean, desc: 'Interactive mode' },
+          'exclude' => { type: :array, desc: 'Exclude files/folders matching pattern' },
+          'exclude_file' => { type: :string, desc: 'Path to an ignore file' }
+        }
+      end
+
+      ##
       # Initializes a new LatestChangesCommand with the provided options.
       #
       # @param [Hash] options The options to configure the command
@@ -51,6 +66,8 @@ module ComputerTools
         @time_range = options['time_range'] || '24h'
         @format = options['format'] || 'table'
         @interactive = options['interactive'] || false
+        @exclude_file = options['exclude_file']
+        @exclude_patterns = options['exclude']
       end
 
       ##
@@ -105,7 +122,9 @@ module ComputerTools
           directory: @directory,
           time_range: @time_range,
           format: @format,
-          interactive: @interactive
+          interactive: @interactive,
+          exclude_file: @exclude_file,
+          exclude_patterns: @exclude_patterns
         ).call
       end
 
@@ -161,6 +180,8 @@ module ComputerTools
                                                Examples: 1h, 6h, 24h, 2d, 1w
             --format FORMAT                     Output format (table, json, summary, ai_summary)
             --interactive                       Interactive mode with browsing
+            --exclude PATTERN                   Exclude files/folders matching pattern (glob)
+            --exclude-file FILE                 Path to an ignore file
 
           Examples:
             latest-changes                      # Analyze current directory for last 24h
