@@ -1,25 +1,64 @@
 # frozen_string_literal: true
 
-require 'tty-which'
-require 'fileutils'
-require 'open3'
+require_relative '../actions/mount_restic_repo_action'
 
 module ComputerTools
   module Wrappers
+    # ResticWrapper provides an interface to interact with Restic backup repositories.
+    # It handles mounting, unmounting, and comparing files with snapshots in a Restic repository.
+    #
+    # This wrapper is particularly useful for backup analysis and file comparison tasks,
+    # allowing developers to integrate Restic backup functionality into their applications.
     class ResticWrapper
-      attr_reader :config, :mount_point, :repository
+      include ComputerTools::Interfaces::BackupInterface
+      # The configuration hash used to initialize the wrapper
+      # @return [Hash] the configuration hash
+      attr_reader :config
 
+      # The mount point where the Restic repository will be mounted
+      # @return [String] the mount point path
+      attr_reader :mount_point
+
+      # The Restic repository path
+      # @return [String] the repository path
+      attr_reader :repository
+
+      # The mount action instance
+      # @return [ComputerTools::Actions::MountResticRepoAction] the mount action
+      attr_reader :mount_action
+
+      # Initializes a new ResticWrapper instance.
+      #
+      # @param config [Hash] Configuration hash containing paths and settings
+      # @option config [String] :paths Configuration for various paths including restic_mount_point, restic_repo, and home_dir
+      # @example Initializing with a configuration hash
+      #   config = {
+      #     paths: {
+      #       restic_mount_point: '/mnt/restic',
+      #       restic_repo: '/path/to/repo',
+      #       home_dir: '/home/user'
+      #     }
+      #   }
+      #   wrapper = ComputerTools::Wrappers::ResticWrapper.new(config)
       def initialize(config)
         @config = config
-        @mount_point = config.fetch('paths', 'restic_mount_point')
-        @repository = config.fetch('paths', 'restic_repo')
-        @mounted = false
-        @mount_pid = nil
-        @home_dir = config.fetch('paths', 'home_dir')
+        @mount_point = config.fetch(:paths, :restic_mount_point) || File.expand_path('~/mnt/restic')
+        @repository = config.fetch(:paths, :restic_repo) || ENV['RESTIC_REPOSITORY'] || '/path/to/restic/repo'
+        @home_dir = config.fetch(:paths, :home_dir) || File.expand_path('~')
+
+        @mount_action = ComputerTools::Actions::MountResticRepoAction.new(
+          repository: @repository,
+          mount_point: @mount_point
+        )
 
         setup_cleanup_handler
       end
 
+      # Ensures the Restic backup is mounted.
+      #
+      # @return [Boolean] true if the backup is already mounted or was successfully mounted, false otherwise
+      # @example Ensuring the backup is mounted
+      #   wrapper.ensure_mounted
       def ensure_mounted
         return true if mounted?
 
@@ -27,56 +66,54 @@ module ComputerTools
         mount_backup
       end
 
+      # Checks if the Restic backup is mounted.
+      #
+      # @return [Boolean] true if the backup is mounted and the mount point is not empty, false otherwise
+      # @example Checking if the backup is mounted
+      #   if wrapper.mounted?
+      #     puts "Backup is mounted."
+      #   else
+      #     puts "Backup is not mounted."
+      #   end
       def mounted?
-        File.directory?(@mount_point) && !Dir.empty?(@mount_point)
+        @mount_action.mounted?
       end
 
+      # Returns the path to the latest snapshot.
+      #
+      # @return [String] the path to the latest snapshot
+      # @example Getting the snapshot path
+      #   snapshot_path = wrapper.snapshot_path
       def snapshot_path
         File.join(@mount_point, 'snapshots', 'latest', 'home', File.basename(@home_dir))
       end
 
+      # Mounts the Restic backup repository.
+      #
+      # @return [Boolean] true if the repository was successfully mounted, false otherwise
+      # @example Mounting the backup repository
+      #   success = wrapper.mount_backup
+      #   if success
+      #     puts "Repository mounted successfully."
+      #   else
+      #     puts "Failed to mount repository."
+      #   end
       def mount_backup
-        unless TTY::Which.exist?('restic')
-          puts "❌ 'restic' command not found. Please install restic.".colorize(:red)
-          return false
-        end
-
-        FileUtils.mkdir_p(@mount_point) unless File.directory?(@mount_point)
-
-        puts "🔐 Mounting restic repository...".colorize(:blue)
-        puts "   Repository: #{@repository}".colorize(:cyan)
-        puts "   Mount point: #{@mount_point}".colorize(:cyan)
-        puts "   Note: You will be prompted for the repository passphrase".colorize(:yellow)
-
-        terminal_cmd = detect_terminal_emulator
-        unless terminal_cmd
-          puts "❌ No suitable terminal emulator found.".colorize(:red)
-          puts "   Please install: alacritty, kitty, gnome-terminal, konsole, or xterm".colorize(:red)
-          return false
-        end
-
-        restic_cmd = "restic mount -r '#{@repository}' '#{@mount_point}'"
-
-        # Launch restic mount in a new terminal
-        pid = fork do
-          exec("#{terminal_cmd} '#{restic_cmd}'")
-        end
-
-        if pid
-          @mount_pid = pid
-          puts "🚀 Launched restic mount in new terminal (PID: #{pid})".colorize(:green)
-          puts "⏳ Waiting for mount to be available...".colorize(:blue)
-
-          wait_for_mount
-        else
-          puts "❌ Failed to launch restic mount process.".colorize(:red)
-          false
-        end
-      rescue StandardError => e
-        puts "❌ Error mounting restic backup: #{e.message}".colorize(:red)
-        false
+        @mount_action.call
       end
 
+      # Compares a current file with its snapshot version.
+      #
+      # @param current_file [String] the path to the current file
+      # @param snapshot_file [String] the path to the snapshot file
+      # @return [Hash] a hash containing comparison results with keys :changed, :additions, :deletions, and :chunks
+      # @example Comparing a file with its snapshot
+      #   comparison = wrapper.compare_with_snapshot('/path/to/current/file', '/path/to/snapshot/file')
+      #   if comparison[:changed]
+      #     puts "File has been modified with #{comparison[:additions]} additions and #{comparison[:deletions]} deletions."
+      #   else
+      #     puts "File has not been modified."
+      #   end
       def compare_with_snapshot(current_file, snapshot_file)
         unless TTY::Which.exist?('diff')
           puts "⚠️  Warning: 'diff' command not found. Cannot compare files.".colorize(:yellow)
@@ -100,74 +137,29 @@ module ComputerTools
         { changed: false, additions: 0, deletions: 0, chunks: 0 }
       end
 
+      # Unmounts the Restic repository.
+      #
+      # @return [void]
+      # @example Unmounting the repository
+      #   wrapper.unmount
       def unmount
-        return unless mounted?
-
-        puts "🔒 Unmounting restic repository...".colorize(:blue)
-
-        if TTY::Which.exist?('umount')
-          if system("umount '#{@mount_point}' 2>/dev/null")
-            puts "✅ Restic repository unmounted successfully.".colorize(:green)
-            @mounted = false
-          else
-            puts "⚠️  Warning: Could not unmount #{@mount_point}".colorize(:yellow)
-            puts "   Please manually unmount or terminate the restic process with Ctrl+C".colorize(:yellow)
-          end
-        else
-          puts "⚠️  Warning: 'umount' command not available.".colorize(:yellow)
-          puts "   Please manually unmount #{@mount_point}".colorize(:yellow)
-          puts "   Or terminate the restic process in the terminal with Ctrl+C".colorize(:yellow)
-        end
+        @mount_action.unmount
       end
 
+      # Cleans up by unmounting the repository if it is mounted.
+      #
+      # @return [void]
+      # @example Cleaning up
+      #   wrapper.cleanup
       def cleanup
         unmount if mounted?
       end
 
       private
 
-      def wait_for_mount
-        mount_timeout = @config.fetch('restic', 'mount_timeout', 60)
-
-        mount_timeout.times do |i|
-          sleep 1
-
-          if mounted?
-            puts "\n✅ Mount point is ready!".colorize(:green)
-            @mounted = true
-            return true
-          end
-
-          # Show progress every 5 seconds
-          puts "   Still waiting... (#{i}/#{mount_timeout}s)".colorize(:cyan) if i % 5 == 0
-        end
-
-        puts "\n❌ Timeout waiting for mount point.".colorize(:red)
-        puts "   Please ensure the restic repository is mounted successfully.".colorize(:red)
-        puts "   Check the terminal window for any error messages.".colorize(:yellow)
-        false
-      end
-
-      def detect_terminal_emulator
-        terminal_preferences = @config.fetch('terminals', 'preferred_order', default_terminals)
-
-        terminal_preferences.each do |terminal|
-          return "#{terminal['cmd']} #{terminal['args']}" if TTY::Which.exist?(terminal['cmd'])
-        end
-
-        nil
-      end
-
-      def default_terminals
-        [
-          { 'cmd' => 'alacritty', 'args' => '-e' },
-          { 'cmd' => 'kitty', 'args' => '-e' },
-          { 'cmd' => 'gnome-terminal', 'args' => '--' },
-          { 'cmd' => 'konsole', 'args' => '-e' },
-          { 'cmd' => 'xterm', 'args' => '-e' }
-        ]
-      end
-
+      # Sets up a cleanup handler to ensure the repository is unmounted when the program exits.
+      #
+      # @return [void]
       def setup_cleanup_handler
         at_exit { cleanup }
       end

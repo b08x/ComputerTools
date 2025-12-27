@@ -1,378 +1,124 @@
-# ComputerTools
+# **ComputerTools**
 
-A comprehensive Ruby CLI toolkit built on the Sublayer framework, providing AI-enhanced tools for software development and automation.
+A comprehensive, modular Ruby CLI toolkit built on the **Sublayer** framework. ComputerTools provides AI-enhanced utilities for software development, content extraction, system maintenance, and automated reporting.
 
-## 🚀 Overview
+## **🚀 Overview**
 
-ComputerTools is a modular collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework. Each tool is designed to streamline common development workflows with smart automation and semantic understanding.
+ComputerTools leverages the power of Large Language Models (LLMs) via RubyLLM and the Sublayer framework to turn standard CLI tasks into intelligent workflows. Unlike static scripts that perform rigid operations, ComputerTools injects semantic understanding into your terminal commands.
 
-### 🎯 Interactive Menu System
+It features a robust dependency injection container and a modular architecture allowing for easy extension. By decoupling business logic (Actions) from user interfaces (Commands) and external integrations (Wrappers), the toolkit ensures that adding new AI capabilities or swapping underlying tools is seamless and testable.
 
-For easy discovery and usage, ComputerTools provides an interactive menu system:
+### **Key Capabilities**
 
-```bash
-# Launch interactive menu
-./exe/ComputerTools
+* **AI Model Management**: Query and list available models from various providers (Gemini, Anthropic, OpenAI, etc.). This acts as a central registry to verify which LLMs are currently accessible for your generators.  
+* **Intelligent Reporting**: Generate AI-summarized overviews of project status and file activity.  
+  * **Project Context**: Instantly understand a new codebase by generating high-level architectural summaries.  
+  * **Activity Logs**: Turn raw git diffs and file timestamps into readable, narrative reports about recent development progress.  
+* **Content Extraction**: Wrappers for **Docling** and **Trafilatura** to parse documents and web content.  
+  * **Docling Integration**: sophisticated parsing of complex document formats (PDF, DOCX) into machine-readable text.  
+  * **Trafilatura Integration**: Efficiently scrapes main text from web pages, stripping away boilerplate navigation and ads to feed clean context into your AI agents.  
+* **System & Config Management**: Integrations for **Restic** (backups) and **YADM** (dotfiles analysis).  
+  * **Restic**: automate interactions with your encrypted backup repositories.  
+  * **YADM**: Analyze and manage your dotfiles across different environments using AI to detect configuration drift or improvements.  
+* **Interactive Menu**: A TTY-based interactive menu for easy navigation of tools, perfect for users who prefer a guided UI over memorizing specific CLI flags.
 
-# Traditional CLI usage still works
-./exe/ComputerTools blueprint submit my_file.rb
-```
+## **🛠️ Installation**
 
-The interactive menu guides you through all available commands with parameter prompts and format selections. **📖 For complete details, see [Interactive Menu Documentation](docs/interactive-menu.md)**
+Prerequisites: Ensure you have a recent version of Ruby installed on your system.
 
-## 🛠️ Available Tools
-
-### 📋 Blueprint Manager
-
-AI-enhanced code blueprint management with semantic search and automatic metadata generation.
-
-**Quick Start:**
-
-```bash
-# Submit a code blueprint
-exe/ComputerTools blueprint submit my_script.rb
-
-# Search semantically
-exe/ComputerTools blueprint search "authentication helper"
-
-# Interactive browser
-exe/ComputerTools blueprint browse
-
-# View with AI analysis
-exe/ComputerTools blueprint view 123 --analyze
-```
-
-**📖 For complete setup instructions, features, and Rails server integration, see [Blueprint Manager Documentation](docs/blueprint-manager.md)**
-
-### 🎙️ Deepgram Parser
-
-Parse, analyze, and convert Deepgram JSON output with AI-enhanced insights and multiple output formats.
-
-**Quick Start:**
-
-```bash
-# Parse Deepgram JSON to markdown
-exe/ComputerTools deepgram parse transcript.json
-
-# Convert to SRT subtitles
-exe/ComputerTools deepgram convert transcript.json srt --console
-
-# Interactive segment analysis
-exe/ComputerTools deepgram analyze segments.json --interactive
-
-# Configuration setup
-exe/ComputerTools deepgram config setup
-```
-
-**📖 For detailed usage, formats, and AI features, see [Deepgram Parser Documentation](docs/deepgram-parser.md)**
-
-### 📊 Latest Changes Analyzer
-
-Comprehensive file activity tracking across Git, YADM, and Restic with intelligent analysis and beautiful reporting.
-
-**Quick Start:**
-
-```bash
-# Analyze recent changes (last 24h)
-exe/ComputerTools latestchanges
-
-# Custom time range and format
-exe/ComputerTools latestchanges --time-range 7d --format summary
-
-# Interactive file browser
-exe/ComputerTools latestchanges --interactive
-
-# Configure tracking preferences
-exe/ComputerTools latestchanges config
-```
-
-**📖 For complete setup, configuration, and multi-platform tracking, see [Latest Changes Documentation](docs/latest-changes-analyzer.md)**
-
-### 🔧 Additional Tools
-
-*More AI-powered development tools coming soon*
-
-## 📦 Installation
-
-### Prerequisites
-
-- Ruby 3.4+
-- PostgreSQL with pgvector extension (for blueprint management)
-- Google Gemini API key (for AI features)
-- Additional tools for latest changes analysis:
-  - `fd` command (file discovery)
-  - `git` (repository analysis)
-  - `yadm` (optional, for dotfile tracking)
-  - `restic` (optional, for backup comparison)
-
-### Setup
-
-```bash
-# Install dependencies
+git clone \[<https://github.com/yourusername/ComputerTools.git\>](<https://github.com/yourusername/ComputerTools.git>)  
+cd ComputerTools  
 bundle install
 
-# Configure the blueprint database (if using blueprint tools)
-exe/ComputerTools blueprint config setup
-
-# Configure latest changes analyzer (if using tracking tools)
-exe/ComputerTools latestchanges config
-
-# Set required environment variables
-export GEMINI_API_KEY="your_gemini_api_key"
-export BLUEPRINT_DATABASE_URL="postgresql://user:pass@host:port/database"
-```
-
-## 💻 Usage
-
-ComputerTools supports two usage modes:
-
-### Interactive Mode (Recommended for Discovery)
-
-```bash
-# Launch the interactive menu
-./exe/ComputerTools
-
-# Enable debug mode for troubleshooting
-COMPUTERTOOLS_DEBUG=true ./exe/ComputerTools
-```
-
-Navigate through menus to discover and execute commands with guided parameter collection.
-
-### Command Line Mode (Ideal for Automation)
-
-```bash
-# Direct command execution
-./exe/ComputerTools blueprint submit my_script.rb
-./exe/ComputerTools deepgram parse transcript.json markdown --console
-./exe/ComputerTools latestchanges --time-range 7d --format summary
-./exe/ComputerTools help
-
-# Get help for specific commands
-./exe/ComputerTools blueprint help
-./exe/ComputerTools deepgram help
-./exe/ComputerTools latestchanges help
-```
-
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    CLI[ComputerTools CLI] --> Thor[Thor Framework]
-    Thor --> Commands[Command Classes]
-    
-    Commands --> Actions[Action Classes]
-    Actions --> Wrappers[Database/API Wrappers]
-    Actions --> Generators[AI Generators]
-    
-    Generators --> Sublayer[Sublayer Framework]
-    Sublayer --> Gemini[Google Gemini API]
-    
-    Wrappers --> DB[(PostgreSQL + pgvector)]
-    Wrappers --> External[External Tools]
-    
-    subgraph "Blueprint Tool Architecture"
-        BCmd[BlueprintCommand] --> BActions[Blueprint Actions]
-        BActions --> BDB[BlueprintDatabase]
-        BActions --> BGen[Blueprint Generators]
-        
-        BDB --> Postgres[(PostgreSQL)]
-        BGen --> AI[AI Providers]
-        
-        BGen --> DescGen[Description Generator]
-        BGen --> CatGen[Category Generator] 
-        BGen --> NameGen[Name Generator]
-        BGen --> ImpGen[Improvement Generator]
-    end
-```
+*Note: After installation, you must configure your API keys (see the Configuration section) to enable the AI-powered features.*
 
-### Core Design Principles
+## **💻 Usage**
 
-1. **Modular Architecture**: Each tool follows the same pattern with Commands, Actions, Generators, and Wrappers
-2. **AI Integration**: Sublayer framework provides consistent AI capabilities across all tools
-3. **Database Direct**: Efficient operations through direct database connections
-4. **Framework Consistency**: Thor CLI integration with automatic command registration
-5. **Configuration Management**: YAML-based configuration with environment variable support
+You can use ComputerTools via the interactive menu or direct CLI commands. The toolkit is designed to be flexible, supporting both ad-hoc commands for power users and a guided experience for exploration.
 
-## 🔧 Configuration
+### **Interactive Mode**
 
-### Global Configuration
+The easiest way to explore available tools is the interactive menu. This mode presents a navigable list of all registered commands, allowing you to select operations without needing to remember exact syntax.
 
-Configuration is managed through YAML files in `lib/ComputerTools/config/`:
+./exe/ComputerTools  
+\# or  
+./exe/ComputerTools menu
 
-```yaml
-# Example: blueprints.yml
-database:
-  url: "postgresql://localhost/blueprints_development"
+### **Core Commands**
 
-ai:
-  provider: "gemini"
-  model: "text-embedding-004"
+Based on the latest codebase, the following commands are available:
 
-features:
-  auto_description: true
-  auto_categorize: true
-  improvement_analysis: true
-```
+#### **1\. AI Model Management**
 
-### Environment Variables
+View available LLMs configured in your environment. This is essential for debugging API connections or choosing the right model for specific tasks (e.g., selecting a cheaper model for simple summaries or a reasoning model for complex code analysis).
 
-```bash
-# AI Provider Keys
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+./exe/ComputerTools list\_models  
+\# Optionally filter by provider to narrow down the list  
+./exe/ComputerTools list\_models \--provider google
 
-# Database Connections
-BLUEPRINT_DATABASE_URL=postgresql://...
+#### **2\. Project Overview**
 
-# Editor Preferences  
-EDITOR=vim
-VISUAL=code
-```
+Generate a high-level overview of the current directory or project context using AI generation. This command scans your project structure and uses an LLM to generate a "Read Me" style introduction, explaining what the project does based on its file composition.
 
-## 📚 Usage Examples
+./exe/ComputerTools overview
 
-### Blueprint Management Workflow
+#### **3\. Latest Changes & Activity**
 
-```bash
-# 1. Submit a new blueprint with auto-generated metadata
-exe/ComputerTools blueprint submit app/models/user.rb
+Analyze file activity and recent changes. This is particularly useful for generating daily stand-up notes or drafting detailed commit messages by aggregating scattered file modifications into a coherent narrative.
 
-# 2. Search for similar blueprints
-exe/ComputerTools blueprint search "user authentication model"
+./exe/ComputerTools latest\_changes
 
-# 3. View with AI improvement suggestions
-exe/ComputerTools blueprint view 42 --analyze
+#### **4\. Configuration**
 
-# 4. Edit with automatic re-embedding
-exe/ComputerTools blueprint edit 42
+Manage the internal configuration for the toolkit. This command assists in verifying that your environment is correctly set up to communicate with external APIs and local tools.
 
-# 5. Export for sharing
-exe/ComputerTools blueprint export 42 user_model.rb
-```
+./exe/ComputerTools config
 
-### Interactive Mode
+## **🧩 Architecture & Integrations**
 
-```bash
-# Launch interactive blueprint browser
-exe/ComputerTools blueprint browse
+ComputerTools is designed with a strict separation of concerns using a Dependency Injection container. This architecture allows specific implementations (like swapping a file system wrapper or an AI provider) to be changed without rewriting the core command logic.
 
-# Interactive configuration setup
-exe/ComputerTools blueprint config setup
-```
+### **Directory Structure**
 
-## 🧪 Development
+The codebase is organized to promote modularity:
 
-### Testing
+* **actions/**: Business logic units (e.g., yadm\_analysis\_action, display\_available\_models\_action). These orchestrate the flow of data between wrappers and generators.  
+* **commands/**: Thor-based CLI entry points. These handle user input, argument parsing, and output formatting, delegating the actual work to Actions.  
+* **generators/**: AI-prompting logic (e.g., file\_activity\_report\_generator, overview\_generator). These classes define the specific prompts and expected output schemas sent to the LLM.  
+* **wrappers/**: Interfaces for external tools, providing a Ruby-native way to interact with system binaries:  
+  * **Docling**: For advanced document parsing and structure extraction.  
+  * **Trafilatura**: For web scraping and main text extraction.  
+  * **Restic**: For interacting with Restic backup repositories and snapshots.  
+  * **Git**: For version control operations and diff analysis.  
+  * **YADM**: For managing and analyzing dotfiles configurations.
 
-```bash
-# Run the full test suite
-bundle exec rspec
+### **Adding New Tools**
 
-# Run specific tests
-bundle exec rspec spec/path/to/specific_spec.rb
-```
+To add a new tool, register it in the container and create the corresponding Command and Action. This standardized process ensures that every tool has logging, error handling, and dependency management built-in.
 
-### Code Quality
+1. **Create Command**: Add to lib/ComputerTools/commands/ (defines the CLI interface).  
+2. **Create Action**: Add to lib/ComputerTools/actions/ (defines the logic).  
+3. **Register**: Update lib/ComputerTools/container/registrations.rb to make the new tool available to the DI container.
 
-```bash
-# Lint with RuboCop
-bundle exec rubocop
+## **⚙️ Configuration**
 
-# Auto-fix style issues
-bundle exec rubocop --autocorrect
-```
+Create a .env file in the root directory to configure your AI providers. The toolkit uses RubyLLM to unify requests, so you simply need to provide the keys for the services you wish to use.
 
-### Documentation
+\# Required for Google Gemini models  
+GEMINI\_API\_KEY=your\_key\_here
 
-```bash
-# Generate documentation
-bundle exec yard doc
+\# Required for Anthropic Claude models  
+ANTHROPIC\_API\_KEY=your\_key\_here
 
-# Start documentation server
-bundle exec yard server
-```
+## **🤝 Contributing**
 
-## 🎯 Key Features
+We welcome contributions to expand the toolkit's capabilities\!
 
-### AI-Powered Intelligence
+1. Fork the repository.  
+2. Create a feature branch.  
+3. Ensure code follows the ComputerTools::Container pattern (Command \-\> Action \-\> Generator/Wrapper).  
+4. Submit a pull request.
 
-- **Automatic Metadata Generation**: Smart names, descriptions, and categories
-- **Semantic Search**: Find code by meaning, not just keywords
-- **Improvement Suggestions**: AI analysis for code quality enhancement
-- **Language Detection**: Automatic programming language identification
+## **📄 License**
 
-### Developer Experience
-
-- **Interactive CLI**: Rich TTY interface with colors and prompts
-- **Multiple Output Formats**: JSON, table, summary views
-- **Flexible Configuration**: YAML files + environment variables
-- **Comprehensive Help**: Built-in documentation and examples
-
-### Performance & Reliability
-
-- **Direct Database Access**: No HTTP overhead for local operations
-- **Vector Embeddings**: Efficient semantic search with pgvector
-- **Connection Pooling**: Optimized database connections
-- **Error Handling**: Graceful degradation and helpful error messages
-
-## 🚦 Roadmap
-
-### Phase 1: Foundation ✅
-
-- [x] Blueprint management system
-- [x] AI-powered metadata generation
-- [x] Semantic search with vector embeddings
-- [x] Interactive CLI interface
-
-### Phase 2: Expansion ✅
-
-- [x] Latest changes analyzer with multi-platform tracking
-- [x] Deepgram audio transcription processing
-- [ ] Code analysis and refactoring tools
-- [ ] Documentation generation utilities
-- [ ] Test automation helpers
-
-### Phase 3: Intelligence 📋
-
-- [ ] Multi-language support
-- [ ] Advanced code understanding
-- [ ] Automated code review
-- [ ] Performance optimization suggestions
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-tool`)
-3. Follow the established patterns in `/lib/ComputerTools/`
-4. Add comprehensive tests
-5. Ensure RuboCop compliance (`bundle exec rubocop`)
-6. Submit a pull request
-
-### Adding New Tools
-
-Each new tool should follow the modular pattern:
-
-```
-lib/ComputerTools/
-├── commands/your_tool_command.rb     # CLI interface
-├── actions/your_tool_*.rb            # Business logic
-├── generators/your_tool_*.rb         # AI integration
-├── wrappers/your_tool_*.rb           # External integrations
-└── config/your_tool.yml              # Configuration
-```
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **Sublayer Framework**: For providing the AI integration foundation
-- **Thor**: For robust CLI framework capabilities  
-- **pgvector**: For efficient vector operations in PostgreSQL
-- **TTY Toolkit**: For rich terminal user interfaces
-- **Google Gemini**: For powerful AI language model capabilities
-
----
-
-**ComputerTools** - Making development workflows smarter, faster, and more intuitive through AI-powered automation.
+MIT License

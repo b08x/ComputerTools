@@ -1,23 +1,90 @@
 # frozen_string_literal: true
 
-require 'colorize'
-require_relative 'base_command'
-
 module ComputerTools
   module Commands
+    ##
+    # LatestChangesCommand provides functionality to analyze recent file changes across
+    # multiple tracking systems including Git, YADM, and Restic. This command helps
+    # developers track modifications in their projects and dotfiles over specified time periods.
+    #
+    # The command supports multiple output formats and can operate in interactive mode
+    # for better user experience. It serves as a comprehensive tool for monitoring file
+    # activity across different version control and backup systems.
+    #
+    # == Usage Examples
+    #
+    #   # Basic usage - analyze current directory for last 24 hours
+    #   LatestChangesCommand.new({}).execute
+    #
+    #   # Analyze specific directory with custom time range
+    #   LatestChangesCommand.new({'directory' => '~/projects', 'time_range' => '7d'}).execute
+    #
+    #   # Get output in JSON format
+    #   LatestChangesCommand.new({'format' => 'json'}).execute
+    #
+    #   # Run in interactive mode
+    #   LatestChangesCommand.new({'interactive' => true}).execute
+    #
+    #   # Access configuration options
+    #   LatestChangesCommand.new({}).execute('config')
     class LatestChangesCommand < BaseCommand
+      ##
+      # Provides a description of what this command does.
+      #
+      # @return [String] A description of the command's purpose
       def self.description
         "Analyze recent file changes across Git, YADM, and Restic tracking methods"
       end
 
+      ##
+      # Returns the Thor options for this command.
+      #
+      # @return [Hash] Thor option definitions
+      def self.thor_options
+        {
+          'directory' => { type: :string, desc: 'Directory to analyze' },
+          'time_range' => { type: :string, desc: 'Time range for analysis (e.g., 24h, 7d)' },
+          'format' => { type: :string, desc: 'Output format (table, json, summary)' },
+          'interactive' => { type: :boolean, desc: 'Interactive mode' },
+          'exclude' => { type: :array, desc: 'Exclude files/folders matching pattern' },
+          'exclude_file' => { type: :string, desc: 'Path to an ignore file' }
+        }
+      end
+
+      ##
+      # Initializes a new LatestChangesCommand with the provided options.
+      #
+      # @param [Hash] options The options to configure the command
+      # @option options [String] :directory The directory to analyze (defaults to current directory)
+      # @option options [String] :time_range The time range for analysis (defaults to '24h')
+      # @option options [String] :format The output format (defaults to 'table')
+      # @option options [Boolean] :interactive Whether to run in interactive mode (defaults to false)
       def initialize(options)
         super
         @directory = options['directory'] || '.'
         @time_range = options['time_range'] || '24h'
         @format = options['format'] || 'table'
         @interactive = options['interactive'] || false
+        @exclude_file = options['exclude_file']
+        @exclude_patterns = options['exclude']
       end
 
+      ##
+      # Executes the command based on the provided arguments.
+      #
+      # This method routes to different handlers based on the subcommand provided.
+      # Supported subcommands are 'analyze', 'config', and 'help'.
+      #
+      # @param [Array<String>] args The arguments to process
+      # @return [Boolean, nil] Returns false when an unknown subcommand is provided, otherwise depends on the handler
+      #
+      # @example Execute with default analyze subcommand
+      #   command = LatestChangesCommand.new({})
+      #   command.execute
+      #
+      # @example Execute with config subcommand
+      #   command = LatestChangesCommand.new({})
+      #   command.execute('config')
       def execute(*args)
         subcommand = args.shift
 
@@ -37,6 +104,15 @@ module ComputerTools
 
       private
 
+      ##
+      # Handles the analyze subcommand to track recent file changes.
+      #
+      # This method initiates the analysis process, displaying status messages
+      # and delegating the actual analysis to LatestChangesAction.
+      #
+      # @return [void]
+      #
+      # @see ComputerTools::Actions::LatestChangesAction
       def handle_analyze
         puts "🔍 Analyzing recent changes in #{@directory}...".colorize(:blue)
         puts "⏰ Time range: #{@time_range}".colorize(:cyan)
@@ -45,12 +121,25 @@ module ComputerTools
           directory: @directory,
           time_range: @time_range,
           format: @format,
-          interactive: @interactive
+          interactive: @interactive,
+          exclude_file: @exclude_file,
+          exclude_patterns: @exclude_patterns
         ).call
       end
 
+      ##
+      # Handles the configuration setup for file analysis.
+      #
+      # This method guides the user through an interactive configuration process
+      # and handles any errors that might occur during the setup.
+      #
+      # @return [Boolean] true if configuration was successful, false otherwise
+      #
+      # @example Successful configuration
+      #   command = LatestChangesCommand.new({})
+      #   command.send(:handle_config) # returns true
       def handle_config
-        puts "⚙️  Configuration setup for file analysis...".colorize(:blue)
+        puts "⚙️ Configuration setup for file analysis...".colorize(:blue)
 
         begin
           require_relative '../configuration'
@@ -65,6 +154,17 @@ module ComputerTools
         end
       end
 
+      ##
+      # Displays help information for the latest-changes command.
+      #
+      # This method outputs a comprehensive help message that explains
+      # the available subcommands, options, and examples of usage.
+      #
+      # @return [void]
+      #
+      # @example Display help information
+      #   command = LatestChangesCommand.new({})
+      #   command.send(:show_help)
       def show_help
         puts <<~HELP
           File Activity Analysis Commands:
@@ -79,6 +179,8 @@ module ComputerTools
                                                Examples: 1h, 6h, 24h, 2d, 1w
             --format FORMAT                     Output format (table, json, summary)
             --interactive                       Interactive mode with browsing
+            --exclude PATTERN                   Exclude files/folders matching pattern (glob)
+            --exclude-file FILE                 Path to an ignore file
 
           Examples:
             latest-changes                      # Analyze current directory for last 24h

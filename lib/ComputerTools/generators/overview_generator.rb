@@ -1,16 +1,40 @@
 # frozen_string_literal: true
 
+# Sublayer.configuration.ai_provider = Sublayer::Providers::Ollama
+
 module ComputerTools
   module Generators
+    # Generates a comprehensive overview of the ComputerTools toolkit in various formats.
+    #
+    # This generator leverages a Large Language Model (LLM) by providing it with a
+    # detailed prompt containing extensive context about the ComputerTools features,
+    # architecture, and available tools. It is responsible for creating engaging
+    # and informative summaries suitable for different display environments like
+    # the console, markdown files, or structured JSON.
     class OverviewGenerator < Sublayer::Generators::Base
       llm_output_adapter type: :single_string,
                          name: "generated_text",
                          description: "A comprehensive overview of ComputerTools features and functionality"
 
+      # Initializes a new instance of the OverviewGenerator.
+      #
+      # @param format [String] The desired output format for the overview.
+      #   Acceptable values include 'console', 'markdown', and 'json'.
+      #
+      # @example Create a generator for markdown output
+      #   generator = ComputerTools::Generators::OverviewGenerator.new(format: 'markdown')
       def initialize(format: 'console')
         @format = format
       end
 
+      # Constructs the detailed prompt sent to the LLM for generating the overview.
+      #
+      # This method builds a multi-line string that serves as the master prompt.
+      # It includes all the necessary context about the ComputerTools toolkit and
+      # instructs the LLM to tailor the final output based on the format
+      # specified during initialization.
+      #
+      # @return [String] The complete prompt text to be processed by the LLM.
       def prompt
         <<-PROMPT
           Generate a comprehensive overview of ComputerTools based on the following documentation.

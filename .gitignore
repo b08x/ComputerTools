@@ -15,3 +15,9 @@
 
 /vendor/
 /generated/
+.env
+
+/logs/
+
+.ruby-version
+.ruby-gemset
