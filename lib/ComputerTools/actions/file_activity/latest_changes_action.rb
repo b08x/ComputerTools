@@ -19,11 +19,15 @@ module ComputerTools
       #   This string is passed directly to the `fd` command.
       # @param format [String] The desired output format for the report ('table', 'json', etc.).
       # @param interactive [Boolean] If true, the report may include interactive elements.
-      def initialize(directory:, time_range: '24h', format: 'table', interactive: false)
+      # @param exclude_file [String] Path to an ignore file.
+      # @param exclude_patterns [Array<String>] A list of glob patterns to exclude.
+      def initialize(directory:, time_range: '24h', format: 'table', interactive: false, exclude_file: nil, exclude_patterns: [])
         @directory = File.expand_path(directory)
         @time_range = time_range
         @format = format.to_sym
         @interactive = interactive
+        @exclude_file = exclude_file
+        @exclude_patterns = Array(exclude_patterns)
         @configuration = ComputerTools::Configuration.new
         @config = @configuration
       end
@@ -77,7 +81,9 @@ module ComputerTools
         FileDiscoveryAction.new(
           directory: @directory,
           time_range: @time_range,
-          config: @config
+          config: @config,
+          exclude_file: @exclude_file,
+          exclude_patterns: @exclude_patterns
         ).call
       end
 

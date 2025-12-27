@@ -1,505 +1,124 @@
-# ComputerTools
+# **ComputerTools**
 
-A comprehensive Ruby CLI toolkit built on the Sublayer framework, providing AI-enhanced tools for software development and automation.
+A comprehensive, modular Ruby CLI toolkit built on the **Sublayer** framework. ComputerTools provides AI-enhanced utilities for software development, content extraction, system maintenance, and automated reporting.
 
-## 🚀 Overview
+## **🚀 Overview**
 
-ComputerTools is a modular collection of intelligent CLI utilities that leverage AI capabilities through the Sublayer framework. Each tool is designed to streamline common development workflows with smart automation and semantic understanding.
+ComputerTools leverages the power of Large Language Models (LLMs) via RubyLLM and the Sublayer framework to turn standard CLI tasks into intelligent workflows. Unlike static scripts that perform rigid operations, ComputerTools injects semantic understanding into your terminal commands.
 
-### 🎯 Interactive Menu System
+It features a robust dependency injection container and a modular architecture allowing for easy extension. By decoupling business logic (Actions) from user interfaces (Commands) and external integrations (Wrappers), the toolkit ensures that adding new AI capabilities or swapping underlying tools is seamless and testable.
 
-For easy discovery and usage, ComputerTools provides an interactive menu system:
+### **Key Capabilities**
 
-```bash
-# Launch interactive menu
-./exe/ComputerTools
+* **AI Model Management**: Query and list available models from various providers (Gemini, Anthropic, OpenAI, etc.). This acts as a central registry to verify which LLMs are currently accessible for your generators.  
+* **Intelligent Reporting**: Generate AI-summarized overviews of project status and file activity.  
+  * **Project Context**: Instantly understand a new codebase by generating high-level architectural summaries.  
+  * **Activity Logs**: Turn raw git diffs and file timestamps into readable, narrative reports about recent development progress.  
+* **Content Extraction**: Wrappers for **Docling** and **Trafilatura** to parse documents and web content.  
+  * **Docling Integration**: sophisticated parsing of complex document formats (PDF, DOCX) into machine-readable text.  
+  * **Trafilatura Integration**: Efficiently scrapes main text from web pages, stripping away boilerplate navigation and ads to feed clean context into your AI agents.  
+* **System & Config Management**: Integrations for **Restic** (backups) and **YADM** (dotfiles analysis).  
+  * **Restic**: automate interactions with your encrypted backup repositories.  
+  * **YADM**: Analyze and manage your dotfiles across different environments using AI to detect configuration drift or improvements.  
+* **Interactive Menu**: A TTY-based interactive menu for easy navigation of tools, perfect for users who prefer a guided UI over memorizing specific CLI flags.
 
-# Traditional CLI usage still works
-./exe/ComputerTools deepgram parse transcript.json
-```
+## **🛠️ Installation**
 
-The interactive menu guides you through all available commands with parameter prompts and format selections. **📖 For complete details, see [Interactive Menu Documentation](docs/interactive-menu.md)**
+Prerequisites: Ensure you have a recent version of Ruby installed on your system.
 
-## 🛠️ Available Tools
-
-### 🎙️ Deepgram Parser
-
-Parse, analyze, and convert Deepgram JSON output with AI-enhanced insights and multiple output formats.
-
-**Quick Start:**
-
-```bash
-# Parse Deepgram JSON to markdown
-exe/ComputerTools deepgram parse transcript.json
-
-# Convert to SRT subtitles
-exe/ComputerTools deepgram convert transcript.json srt --console
-
-# Interactive segment analysis
-exe/ComputerTools deepgram analyze segments.json --interactive
-
-# Configuration setup
-exe/ComputerTools deepgram config setup
-```
-
-**📖 For detailed usage, formats, and AI features, see [Deepgram Parser Documentation](docs/deepgram-parser.md)**
-
-### 📊 Latest Changes Analyzer
-
-Comprehensive file activity tracking across Git, YADM, and Restic with intelligent analysis and beautiful reporting.
-
-**Quick Start:**
-
-```bash
-# Analyze recent changes (last 24h)
-exe/ComputerTools latestchanges
-
-# Custom time range and format
-exe/ComputerTools latestchanges --time-range 7d --format summary
-
-# Interactive file browser
-exe/ComputerTools latestchanges --interactive
-
-# Configure tracking preferences
-exe/ComputerTools latestchanges config
-```
-
-**📖 For complete setup, configuration, and multi-platform tracking, see [Latest Changes Documentation](docs/latest-changes-analyzer.md)**
-
-### 🔧 Additional Tools
-
-#### 🤖 AI Model Management
-List and manage available AI models across different providers:
-
-```bash
-# List all available models
-exe/ComputerTools listmodels
-
-# Interactive model browser
-exe/ComputerTools listmodels --interactive
-```
-
-#### 🗂️ Restic Repository Management
-Mount and explore Restic backup repositories:
-
-```bash
-# Mount restic repository for browsing
-exe/ComputerTools mount-restic
-
-# Interactive repository explorer
-exe/ComputerTools mount-restic --interactive
-```
-
-#### 🎬 Media Processing (FFmpeg Integration)
-*FFmpeg wrapper functionality for media processing tasks*
-
-*More AI-powered development tools coming soon*
-
-## 📦 Installation
-
-### Prerequisites
-
-- Ruby 2.6+ (Ruby 3.0+ recommended)
-- Google Gemini API key (for AI features)
-- Additional tools for enhanced functionality:
-  - `fd` command (file discovery for latest changes analysis)
-  - `git` (repository analysis)
-  - `yadm` (optional, for dotfile tracking)
-  - `restic` (optional, for backup repository mounting and analysis)
-  - `ffmpeg` (optional, for media processing features)
-- PostgreSQL with pgvector extension (optional, for semantic search features)
-
-### Setup
-
-```bash
-# Install dependencies
+git clone \[<https://github.com/yourusername/ComputerTools.git\>](<https://github.com/yourusername/ComputerTools.git>)  
+cd ComputerTools  
 bundle install
 
-# Configure latest changes analyzer (if using tracking tools)
-exe/ComputerTools latestchanges config
-
-# Set required environment variables
-export GEMINI_API_KEY="your_gemini_api_key"
-```
-
-## 💻 Usage
-
-ComputerTools supports two usage modes:
-
-### Interactive Mode (Recommended for Discovery)
-
-```bash
-# Launch the interactive menu
-./exe/ComputerTools
-
-# Enable debug mode for troubleshooting
-COMPUTERTOOLS_DEBUG=true ./exe/ComputerTools
-```
-
-Navigate through menus to discover and execute commands with guided parameter collection.
-
-### Command Line Mode (Ideal for Automation)
-
-```bash
-# Direct command execution
-./exe/ComputerTools deepgram parse transcript.json markdown --console
-./exe/ComputerTools latestchanges --time-range 7d --format summary
-./exe/ComputerTools help
-
-# Get help for specific commands
-./exe/ComputerTools deepgram help
-./exe/ComputerTools latestchanges help
-```
-
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    CLI[ComputerTools CLI] --> Thor[Thor Framework]
-    Thor --> Commands[Command Classes]
-    
-    Commands --> Actions[Action Classes]
-    Actions --> Wrappers[External Tool Wrappers]
-    Actions --> Generators[AI Generators]
-    
-    Generators --> Sublayer[Sublayer Framework]
-    Sublayer --> Gemini[Google Gemini API]
-    
-    Wrappers --> External[External Tools]
-    
-    subgraph "Restic Integration"
-        ResticWrapper[ResticWrapper] --> MountAction[MountResticRepoAction]
-        MountAction --> Open3[Open3 Process Management]
-        MountAction --> ResticCLI[Restic CLI Tool]
-    end
-    
-    subgraph "Latest Changes Architecture"
-        LCCmd[LatestChangesCommand] --> LCActions[File Activity Actions]
-        LCActions --> GitWrapper[GitWrapper]
-        LCActions --> ResticWrapper
-        LCActions --> YadmWrapper[YADM Analysis]
-        LCActions --> FileDiscovery[File Discovery]
-    end
-```
-
-### Core Design Principles
-
-1. **Modular Architecture**: Each tool follows the same pattern with Commands, Actions, Generators, and Wrappers
-2. **AI Integration**: Sublayer framework provides consistent AI capabilities across all tools
-3. **Process Management**: Open3 for robust external process handling (especially for restic mounting)
-4. **Framework Consistency**: Thor CLI integration with automatic command registration
-5. **Configuration Management**: YAML-based configuration with environment variable support
-
-## 🔧 Configuration
-
-### Global Configuration
-
-Configuration is managed through YAML files in `lib/ComputerTools/config/`:
-
-```yaml
-# Example: deepgram.yml
-api:
-  key: "your_deepgram_api_key"
-  base_url: "https://api.deepgram.com"
-
-output:
-  default_format: "markdown"
-  console_output: true
-  
-features:
-  auto_analysis: true
-  topic_extraction: true
-  summary_generation: true
-```
-
-### User Configuration
-
-User-specific settings are stored in `~/.config/computertools/config.yml`:
-
-```yaml
-# User configuration example
-paths:
-  home_dir: "/home/user"
-  restic_mount_point: "/home/user/mnt/restic"
-  restic_repo: "/path/to/restic/repo"
+*Note: After installation, you must configure your API keys (see the Configuration section) to enable the AI-powered features.*
 
-display:
-  time_format: "%Y-%m-%d %H:%M:%S"
+## **💻 Usage**
 
-terminal:
-  command: "kitty"
-  args: "-e"
+You can use ComputerTools via the interactive menu or direct CLI commands. The toolkit is designed to be flexible, supporting both ad-hoc commands for power users and a guided experience for exploration.
 
-logger:
-  level: "info"           # Console log level: debug, info, warn, error
-  file_logging: false     # Enable file logging
-  file_path: "~/.local/state/computertools/app.log"
-  file_level: "debug"     # File log level (more verbose than console)
-```
+### **Interactive Mode**
 
-### Environment Variables
+The easiest way to explore available tools is the interactive menu. This mode presents a navigable list of all registered commands, allowing you to select operations without needing to remember exact syntax.
 
-```bash
-# AI Provider Keys
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
+./exe/ComputerTools  
+\# or  
+./exe/ComputerTools menu
 
-# Deepgram API
-DEEPGRAM_API_KEY=your_deepgram_key
+### **Core Commands**
 
-# Restic Configuration (for backup integration)
-RESTIC_REPOSITORY=/path/to/restic/repo
-RESTIC_PASSWORD=your_restic_password
+Based on the latest codebase, the following commands are available:
 
-# Database Configuration (for blueprint/semantic search features)
-DATABASE_URL=postgresql://user:pass@localhost/computertools
+#### **1\. AI Model Management**
 
-# Editor Preferences  
-EDITOR=vim
-VISUAL=code
+View available LLMs configured in your environment. This is essential for debugging API connections or choosing the right model for specific tasks (e.g., selecting a cheaper model for simple summaries or a reasoning model for complex code analysis).
 
-# Logger Configuration (optional)
-COMPUTERTOOLS_LOG_LEVEL=debug
-COMPUTERTOOLS_LOG_FILE_ENABLED=true
-COMPUTERTOOLS_LOG_FILE_PATH=/path/to/app.log
-COMPUTERTOOLS_LOG_FILE_LEVEL=debug
-```
+./exe/ComputerTools list\_models  
+\# Optionally filter by provider to narrow down the list  
+./exe/ComputerTools list\_models \--provider google
 
-## 📝 Logging System
+#### **2\. Project Overview**
 
-ComputerTools features a unified logging system that preserves the rich emoji-driven UI while providing professional debugging capabilities.
+Generate a high-level overview of the current directory or project context using AI generation. This command scans your project structure and uses an LLM to generate a "Read Me" style introduction, explaining what the project does based on its file composition.
 
-### Quick Setup
+./exe/ComputerTools overview
 
-```bash
-# Configure logging interactively
-exe/ComputerTools config setup
+#### **3\. Latest Changes & Activity**
 
-# Or configure just logging
-exe/ComputerTools config edit
-# Select "📝 Logger settings"
-```
+Analyze file activity and recent changes. This is particularly useful for generating daily stand-up notes or drafting detailed commit messages by aggregating scattered file modifications into a coherent narrative.
 
-### Logging Features
+./exe/ComputerTools latest\_changes
 
-- **Rich Console Output**: Emoji-enhanced messages with colors
-- **File Logging**: Structured JSON logs for analysis
-- **Configurable Levels**: Control verbosity per output destination
-- **Structured Data**: Key-value pairs for better debugging
-- **Exception Handling**: Clean user messages + detailed debug traces
+#### **4\. Configuration**
 
-### Log Types
+Manage the internal configuration for the toolkit. This command assists in verifying that your environment is correctly set up to communicate with external APIs and local tools.
 
-| Type | Symbol | Usage |
-|------|--------|--------|
-| `success` | ✅ | Operation completed successfully |
-| `failure` | ❌ | Critical errors that halt operations |
-| `warning` | ⚠️ | Non-critical issues or warnings |
-| `tip` | 💡 | Helpful guidance for users |
-| `step` | 🚀 | Major process steps or milestones |
-| `info` | ℹ️ | General informational messages |
-| `debug` | 🐞 | Verbose diagnostic information |
+./exe/ComputerTools config
 
-### Usage Examples
+## **🧩 Architecture & Integrations**
 
-```bash
-# View current logging configuration
-exe/ComputerTools config show
+ComputerTools is designed with a strict separation of concerns using a Dependency Injection container. This architecture allows specific implementations (like swapping a file system wrapper or an AI provider) to be changed without rewriting the core command logic.
 
-# Set console logging to debug level
-COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools deepgram parse transcript.json
+### **Directory Structure**
 
-# Enable file logging for troubleshooting
-COMPUTERTOOLS_LOG_FILE_ENABLED=true exe/ComputerTools latestchanges --time-range 7d
+The codebase is organized to promote modularity:
 
-# Configure persistent logging settings
-exe/ComputerTools config edit
+* **actions/**: Business logic units (e.g., yadm\_analysis\_action, display\_available\_models\_action). These orchestrate the flow of data between wrappers and generators.  
+* **commands/**: Thor-based CLI entry points. These handle user input, argument parsing, and output formatting, delegating the actual work to Actions.  
+* **generators/**: AI-prompting logic (e.g., file\_activity\_report\_generator, overview\_generator). These classes define the specific prompts and expected output schemas sent to the LLM.  
+* **wrappers/**: Interfaces for external tools, providing a Ruby-native way to interact with system binaries:  
+  * **Docling**: For advanced document parsing and structure extraction.  
+  * **Trafilatura**: For web scraping and main text extraction.  
+  * **Restic**: For interacting with Restic backup repositories and snapshots.  
+  * **Git**: For version control operations and diff analysis.  
+  * **YADM**: For managing and analyzing dotfiles configurations.
 
-# List available AI models with debug logging
-COMPUTERTOOLS_LOG_LEVEL=debug exe/ComputerTools listmodels
+### **Adding New Tools**
 
-# Mount restic repository with verbose output
-exe/ComputerTools mount-restic --debug
-```
+To add a new tool, register it in the container and create the corresponding Command and Action. This standardized process ensures that every tool has logging, error handling, and dependency management built-in.
 
-### Log File Location
+1. **Create Command**: Add to lib/ComputerTools/commands/ (defines the CLI interface).  
+2. **Create Action**: Add to lib/ComputerTools/actions/ (defines the logic).  
+3. **Register**: Update lib/ComputerTools/container/registrations.rb to make the new tool available to the DI container.
 
-By default, log files are written to:
-- **Linux/macOS**: `~/.local/state/computertools/app.log`
-- **Custom Path**: Configurable via settings or environment variables
+## **⚙️ Configuration**
 
-### Structured Logging
+Create a .env file in the root directory to configure your AI providers. The toolkit uses RubyLLM to unify requests, so you simply need to provide the keys for the services you wish to use.
 
-All log messages support structured data for better analysis:
+\# Required for Google Gemini models  
+GEMINI\_API\_KEY=your\_key\_here
 
-```ruby
-# Example: Internal API calls include context
-ComputerTools.logger.success("Transcript processed", file: "audio.json", format: "markdown")
-ComputerTools.logger.failure("Restic mount failed", error: "timeout", retry_count: 3)
-```
+\# Required for Anthropic Claude models  
+ANTHROPIC\_API\_KEY=your\_key\_here
 
-This produces JSON output in log files:
-```json
-{"level":"info","message":"Transcript processed","file":"audio.json","format":"markdown","timestamp":"2024-01-01T10:30:00Z"}
-{"level":"error","message":"Restic mount failed","error":"timeout","retry_count":3,"timestamp":"2024-01-01T10:30:05Z"}
-```
+## **🤝 Contributing**
 
-## 📚 Usage Examples
+We welcome contributions to expand the toolkit's capabilities\!
 
-### Deepgram Processing Workflow
+1. Fork the repository.  
+2. Create a feature branch.  
+3. Ensure code follows the ComputerTools::Container pattern (Command \-\> Action \-\> Generator/Wrapper).  
+4. Submit a pull request.
 
-```bash
-# 1. Parse Deepgram JSON output
-exe/ComputerTools deepgram parse transcript.json
+## **📄 License**
 
-# 2. Convert to different formats
-exe/ComputerTools deepgram convert transcript.json srt --console
-
-# 3. Analyze segments with AI
-exe/ComputerTools deepgram analyze segments.json --interactive
-
-# 4. Generate summaries and insights
-exe/ComputerTools deepgram parse transcript.json --format summary
-```
-
-### Latest Changes Analysis Workflow
-
-```bash
-# 1. Analyze recent changes across all sources
-exe/ComputerTools latestchanges --time-range 24h
-
-# 2. Focus on specific file types
-exe/ComputerTools latestchanges --format summary --interactive
-
-# 3. Compare with backup snapshots (if restic configured)
-exe/ComputerTools latestchanges --include-backups
-
-# 4. Mount and explore restic repository
-exe/ComputerTools mount-restic
-
-# 5. List available AI models and providers
-exe/ComputerTools listmodels --format table
-```
-
-## 🧪 Development
-
-### Testing
-
-```bash
-# Run the full test suite
-bundle exec rspec
-
-# Run specific tests
-bundle exec rspec spec/path/to/specific_spec.rb
-```
-
-### Code Quality
-
-```bash
-# Lint with RuboCop
-bundle exec rubocop
-
-# Auto-fix style issues
-bundle exec rubocop --autocorrect
-```
-
-### Documentation
-
-```bash
-# Generate documentation
-bundle exec yard doc
-
-# Start documentation server
-bundle exec yard server
-```
-
-## 🎯 Key Features
-
-### AI-Powered Intelligence
-
-- **Transcript Analysis**: Smart parsing of Deepgram JSON output
-- **Content Summarization**: AI-generated summaries and insights
-- **Topic Extraction**: Automatic identification of key themes
-- **Format Conversion**: Multiple output formats (markdown, SRT, plain text)
-
-### Developer Experience
-
-- **Interactive CLI**: Rich TTY interface with colors and prompts
-- **Multiple Output Formats**: JSON, table, summary views
-- **Flexible Configuration**: YAML files + environment variables
-- **Comprehensive Help**: Built-in documentation and examples
-
-### Performance & Reliability
-
-- **Process Management**: Robust Open3-based external process handling
-- **Restic Integration**: Secure backup repository mounting with proper cleanup
-- **Multi-source Analysis**: Efficient tracking across Git, YADM, and Restic
-- **Error Handling**: Graceful degradation and helpful error messages
-
-## 🚦 Roadmap
-
-### Phase 1: Foundation ✅
-
-- [x] Interactive CLI interface with Thor framework
-- [x] Modular architecture with Commands, Actions, Generators, and Wrappers
-- [x] AI integration through Sublayer framework
-- [x] Comprehensive logging system
-
-### Phase 2: Core Tools ✅
-
-- [x] Latest changes analyzer with multi-platform tracking
-- [x] Deepgram audio transcription processing
-- [x] Restic backup integration with Open3 process management
-- [x] Configuration management system
-- [x] AI model management and listing
-- [x] Restic repository mounting and exploration
-- [ ] FFmpeg media processing wrapper (in development)
-- [ ] Code analysis and refactoring tools
-- [ ] Documentation generation utilities
-
-### Phase 3: Intelligence 📋
-
-- [ ] Multi-language support
-- [ ] Advanced code understanding
-- [ ] Automated code review
-- [ ] Performance optimization suggestions
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-tool`)
-3. Follow the established patterns in `/lib/ComputerTools/`
-4. Add comprehensive tests
-5. Ensure RuboCop compliance (`bundle exec rubocop`)
-6. Submit a pull request
-
-### Adding New Tools
-
-Each new tool should follow the modular pattern:
-
-```
-lib/ComputerTools/
-├── commands/your_tool_command.rb     # CLI interface
-├── actions/your_tool_*.rb            # Business logic
-├── generators/your_tool_*.rb         # AI integration
-├── wrappers/your_tool_*.rb           # External integrations
-├── config/your_tool.yml              # Configuration
-└── container/registrations.rb        # Dependency injection
-```
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **Sublayer Framework**: For providing the AI integration foundation
-- **Thor**: For robust CLI framework capabilities  
-- **TTY Toolkit**: For rich terminal user interfaces
-- **Google Gemini**: For powerful AI language model capabilities
-- **Open3**: For reliable external process management
-- **Restic**: For secure backup repository integration
-
----
-
-**ComputerTools** - Making development workflows smarter, faster, and more intuitive through AI-powered automation.
+MIT License

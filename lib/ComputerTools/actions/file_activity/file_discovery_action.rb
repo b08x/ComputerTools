@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'shellwords'
+
 module ComputerTools
   module Actions
     # Discovers recently modified files within a specified directory using the `fd` command.
@@ -19,10 +21,14 @@ module ComputerTools
       # @param directory [String] The path to the directory to search. Can be '.' for the current directory.
       # @param time_range [String] A time string compatible with `fd`'s `--changed-within` flag (e.g., '24h', '2d', '1w').
       # @param config [ComputerTools::Configuration] The application configuration object, used to resolve paths like the home directory.
-      def initialize(directory:, time_range:, config:)
+      # @param exclude_file [String] Path to an ignore file (like .gitignore).
+      # @param exclude_patterns [Array<String>] A list of glob patterns to exclude.
+      def initialize(directory:, time_range:, config:, exclude_file: nil, exclude_patterns: [])
         @directory = directory
         @time_range = time_range
         @config = config
+        @exclude_file = exclude_file
+        @exclude_patterns = Array(exclude_patterns)
       end
 
       # Executes the file discovery process.
@@ -46,7 +52,19 @@ module ComputerTools
 
         search_dir = @directory == '.' ? home_dir : @directory
 
-        cmd = "fd --type f --changed-within #{@time_range} . \"#{search_dir}\""
+        # Build fd command with potential exclusions
+        cmd_parts = ["fd", "--type f", "--changed-within", @time_range.shellescape]
+
+        cmd_parts << "--ignore-file" << @exclude_file.shellescape if @exclude_file && File.exist?(@exclude_file)
+
+        @exclude_patterns.each do |pattern|
+          cmd_parts << "--exclude" << pattern.shellescape
+        end
+
+        cmd_parts << "." << search_dir.shellescape
+
+        cmd = cmd_parts.join(' ')
+        puts "💻 Executing: #{cmd}".colorize(:gray) if ENV['DEBUG']
         files_output = `#{cmd}`
 
         files = files_output.split("\n").filter_map do |file|
