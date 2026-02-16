@@ -1,26 +1,23 @@
-# **ComputerTools**
+# ComputerTools
 
-A comprehensive, modular Ruby CLI toolkit built on the **Sublayer** framework. ComputerTools provides AI-enhanced utilities for software development, content extraction, system maintenance, and automated reporting.
+A modular Ruby CLI toolkit built on Sublayer. It provides AI-enhanced utilities for software development, content extraction, system maintenance, and automated reporting.
 
 ## **🚀 Overview**
 
-ComputerTools leverages the power of Large Language Models (LLMs) via RubyLLM and the Sublayer framework to turn standard CLI tasks into intelligent workflows. Unlike static scripts that perform rigid operations, ComputerTools injects semantic understanding into your terminal commands.
+ComputerTools uses RubyLLM and the Sublayer framework to create intelligent CLI workflows. Unlike static scripts that perform rigid operations, it injects semantic understanding into your terminal commands.
 
-It features a robust dependency injection container and a modular architecture allowing for easy extension. By decoupling business logic (Actions) from user interfaces (Commands) and external integrations (Wrappers), the toolkit ensures that adding new AI capabilities or swapping underlying tools is seamless and testable.
+A robust dependency injection container powers the toolkit, enabling easy extension. By decoupling business logic (Actions) from user interfaces (Commands) and external integrations (Wrappers), the toolkit ensures that adding new AI capabilities or swapping underlying tools stays seamless and testable.
 
-### **Key Capabilities**
+### Key Capabilities
 
-* **AI Model Management**: Query and list available models from various providers (Gemini, Anthropic, OpenAI, etc.). This acts as a central registry to verify which LLMs are currently accessible for your generators.  
-* **Intelligent Reporting**: Generate AI-summarized overviews of project status and file activity.  
-  * **Project Context**: Instantly understand a new codebase by generating high-level architectural summaries.  
-  * **Activity Logs**: Turn raw git diffs and file timestamps into readable, narrative reports about recent development progress.  
-* **Content Extraction**: Wrappers for **Docling** and **Trafilatura** to parse documents and web content.  
-  * **Docling Integration**: sophisticated parsing of complex document formats (PDF, DOCX) into machine-readable text.  
-  * **Trafilatura Integration**: Efficiently scrapes main text from web pages, stripping away boilerplate navigation and ads to feed clean context into your AI agents.  
-* **System & Config Management**: Integrations for **Restic** (backups) and **YADM** (dotfiles analysis).  
-  * **Restic**: automate interactions with your encrypted backup repositories.  
-  * **YADM**: Analyze and manage your dotfiles across different environments using AI to detect configuration drift or improvements.  
-* **Interactive Menu**: A TTY-based interactive menu for easy navigation of tools, perfect for users who prefer a guided UI over memorizing specific CLI flags.
+* **AI Model Management**: View available LLMs from various providers (Gemini, Anthropic, OpenAI, etc.). This acts as a central registry to verify which LLMs are currently accessible.
+* **Project Context**: Generate architectural summaries to understand a new codebase instantly.
+* **Activity Logs**: Turn raw git diffs and file timestamps into readable, narrative reports about recent development progress.
+* **Docling Integration**: Parse PDFs and DOCX into machine-readable text.
+* **Trafilatura Integration**: Extract clean text from web pages, stripping boilerplate and ads.
+* **Restic**: Run backup commands for encrypted repositories.
+* **YADM**: Analyze dotfiles across environments using AI to detect configuration drift.
+* **Interactive Menu**: A TTY-based selectable list for navigating all available commands.
 
 ## **🛠️ Installation**
 
@@ -30,15 +27,15 @@ git clone \[<https://github.com/yourusername/ComputerTools.git\>](<https://githu
 cd ComputerTools  
 bundle install
 
-*Note: After installation, you must configure your API keys (see the Configuration section) to enable the AI-powered features.*
+*Note: Configure your API keys (see the Configuration section) to enable AI-powered features.*
 
 ## **💻 Usage**
 
-You can use ComputerTools via the interactive menu or direct CLI commands. The toolkit is designed to be flexible, supporting both ad-hoc commands for power users and a guided experience for exploration.
+Use ComputerTools via the interactive menu or direct CLI commands. The toolkit stays flexible, supporting both ad-hoc commands for power users and a guided experience for exploration.
 
 ### **Interactive Mode**
 
-The easiest way to explore available tools is the interactive menu. This mode presents a navigable list of all registered commands, allowing you to select operations without needing to remember exact syntax.
+The interactive menu displays available commands, letting you select operations without memorizing syntax.
 
 ./exe/ComputerTools  
 \# or  
@@ -70,13 +67,13 @@ Analyze file activity and recent changes. This is particularly useful for genera
 
 #### **4\. Configuration**
 
-Manage the internal configuration for the toolkit. This command assists in verifying that your environment is correctly set up to communicate with external APIs and local tools.
+Manage the internal configuration for the toolkit. This command verifies your environment is correctly set up to communicate with external APIs and local tools.
 
 ./exe/ComputerTools config
 
 ## **🧩 Architecture & Integrations**
 
-ComputerTools is designed with a strict separation of concerns using a Dependency Injection container. This architecture allows specific implementations (like swapping a file system wrapper or an AI provider) to be changed without rewriting the core command logic.
+ComputerTools uses a Dependency Injection container to separate concerns. This architecture lets you swap implementations (file system wrappers, AI providers) without rewriting command logic.
 
 ### **Directory Structure**
 
@@ -94,15 +91,15 @@ The codebase is organized to promote modularity:
 
 ### **Adding New Tools**
 
-To add a new tool, register it in the container and create the corresponding Command and Action. This standardized process ensures that every tool has logging, error handling, and dependency management built-in.
+Add a new tool by registering it in the container and creating the corresponding Command and Action. This process ensures every tool has logging, error handling, and dependency management built-in.
 
-1. **Create Command**: Add to lib/ComputerTools/commands/ (defines the CLI interface).  
-2. **Create Action**: Add to lib/ComputerTools/actions/ (defines the logic).  
-3. **Register**: Update lib/ComputerTools/container/registrations.rb to make the new tool available to the DI container.
+1. **Create Command**: Add to `lib/ComputerTools/commands/` to define the CLI interface.
+2. **Create Action**: Add to `lib/ComputerTools/actions/` to define the logic.
+3. **Register**: Update `lib/ComputerTools/container/registrations.rb` to make the tool available.
 
 ## **⚙️ Configuration**
 
-Create a .env file in the root directory to configure your AI providers. The toolkit uses RubyLLM to unify requests, so you simply need to provide the keys for the services you wish to use.
+Create a `.env` file in the root directory to configure your AI providers. RubyLLM unifies requests, so provide keys only for the services you use.
 
 \# Required for Google Gemini models  
 GEMINI\_API\_KEY=your\_key\_here
@@ -112,11 +109,11 @@ ANTHROPIC\_API\_KEY=your\_key\_here
 
 ## **🤝 Contributing**
 
-We welcome contributions to expand the toolkit's capabilities\!
+We welcome contributions!
 
-1. Fork the repository.  
-2. Create a feature branch.  
-3. Ensure code follows the ComputerTools::Container pattern (Command \-\> Action \-\> Generator/Wrapper).  
+1. Fork the repository.
+2. Create a feature branch.
+3. Follow the Command → Action → Generator pattern in `lib/ComputerTools/`.
 4. Submit a pull request.
 
 ## **📄 License**
